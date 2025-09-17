@@ -1,0 +1,18 @@
+HTTrack3.49-2+htsswf+htsjava launched on Tue, 16 Sep 2025 11:43:38 at https://www.playsport.cc/ +*.png +*.gif +*.jpg +*.jpeg +*.css +*.js -ad.doubleclick.net/* -mime:application/foobar
+(winhttrack -qwr3%e1C2%P%s%u%I0H0%kf2A25000%f#f -F "Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)" -%F "<!-- Mirrored from %s%s by HTTrack Website Copier/3.x [XR&CO'2014], %s -->" -%l "zh_TW, en, *" https://www.playsport.cc/ -O1 "D:\KevinC\web\sgame" +*.png +*.gif +*.jpg +*.jpeg +*.css +*.js -ad.doubleclick.net/* -mime:application/foobar )
+
+Information, Warnings and Errors reported for this mirror:
+note:	the hts-log.txt file, and hts-cache folder, may contain sensitive information,
+	such as username/password authentication for websites mirrored in this project
+	do not share these files/folders if you want these information to remain private
+
+11:43:39	Warning: 	Moved Permanently for https://www.playsport.cc/
+11:43:39	Warning: 	File has moved from https://www.playsport.cc/ to /forum?redirect_from=indexPage
+11:43:56	Warning: 	can not create directory to D:/KevinC/web/sgame/apps.apple.com/us/app/玩運彩討論區/id7302771097210.html.z
+11:45:00	Error: 	"Not Found" (404) at link https://fonts.googleapis.com/ (from https://www.playsport.cc/forum?redirect_from=indexPage)
+11:45:00	Error: 	"Not Found" (404) at link https://fonts.gstatic.com/ (from https://www.playsport.cc/forum?redirect_from=indexPage)
+11:45:05	Error: 	"Error when decompressing" (-1) at link https://apps.apple.com/us/app/%E7%8E%A9%E9%81%8B%E5%BD%A9%E8%A8%8E%E8%AB%96%E5%8D%80/id730277109?pt=1952181&ct=web_head3title_defaultTitle&mt=8 (from https://www.playsport.cc/forum?redirect_from=indexPage)
+11:45:12	Error: 	"Not Found" (404) at link https://www.playsport.cc/login_v3.php?height=260&width=580&modal=true (from https://www.playsport.cc/forum?redirect_from=indexPage)
+
+HTTrack Website Copier/3.49-2 mirror complete in 2 minutes 5 seconds : 295 links scanned, 283 files written (27786332 bytes overall) [4451474 bytes received at 35611 bytes/sec], 27377973 bytes transferred using HTTP compression in 287 files, ratio 11%, 17.4 requests per connection
+(4 errors, 3 warnings, 0 messages)

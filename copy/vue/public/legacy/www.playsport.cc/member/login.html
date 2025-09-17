@@ -1,0 +1,136 @@
+<script src="https://www.playsport.cc/build/js/axios-eb67a2c180.js?v=20210809"></script>
+<link rel="stylesheet" type="text/css" media="screen" href="https://www.playsport.cc/build/css/layout/login_v3-f71c189d00.web.css?v=20210809" />
+<div id="login-block" class="ui-dialog">
+
+    <!-- ============================== 8975 新增第三方登入方式 ============================== -->
+    <!-- 關閉按鈕 -->
+    <div class="ui-dialog-titlebar ui-helper-clearfix">
+        <a href="#" class="ui-dialog-titlebar-close" style="" onclick="tb_remove()">
+            <span class="" style="display:none;">close</span>
+        </a>
+    </div>
+
+    <!-- 第三方登入按鈕 -->
+    <div class="float-l">
+        <a href="https://www.playsport.cc/member/google/auth" class="a-btn-fb loginicon_other loginicon_other--margin"><i class="fa logo_google fa-fw"></i>Google 登入</a>
+        <a href="https://www.playsport.cc/member/facebook/auth" class="a-btn-fb loginicon_other loginicon_other--margin"><i class="fa fa-facebook-square fa-fw"></i>Facebook 登入</a>
+        <a href="https://www.playsport.cc/member/line/auth" class="a-btn-fb loginicon_other loginicon_other--margin"><i class="fa logo_line fa-fw"></i>Line 登入</a>
+    </div>
+
+    <!-- 分隔線 -->
+    <div class="deco-sepline_login">
+        <span>或</span>
+        <hr>
+    </div>
+
+    <!-- 登入 -->
+    <div id="login-panel" class="ui-dialog-content">
+        <form id="loginForm" method="post" action="https://www.playsport.cc/member/auth">
+            <input type="hidden" name="_token" value="UgGr9YVmX0uctPfB1c35hMsJZVkgVQPcu1AAMytf">
+            <input id="loginRedirectUrl" type="hidden" name="redirectUrl" value="">
+            <p id='errorMessage' class="message-error message-error--align"></p>
+            <table class="from from-noneborder">
+                <tbody>
+                    <tr>
+                        <td>
+                            <div>帳號</div>
+                            <input id="userid" class="inputtext wd-200" name="username" type="text" value="">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div>
+                                密碼
+                                <a href="https://www.playsport.cc/member/recover/password" rel="nofollow">( 查帳號/密碼？)</a>
+                            </div>
+                            <input id="password" class="inputtext wd-200" name="password" type="password" value="">
+                            <p id="passwordLengthError" class="message-error" style="display:none;">請輸入密碼至少 6 位數</p>
+                                                        <div>
+                                <input name="rememberme" type="checkbox" id="rememberme" value="yes" class="rememberme" checked>
+                                <label for="rememberme" class="rememberme_text">記住我</label>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input id="submitBtn" class="submit" type="submit" value="登入">
+                            <a href="register.html" class="login_member">免費加入會員</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+<!-- ============================== 8975 新增第三方登入方式 end ============================== -->
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('#submitBtn').on('click', function(e) {
+            e.preventDefault();
+            $('#errorMessage').html('');
+            $('#userid').removeClass('input-error').removeClass('shake');
+            $('#password').removeClass('input-error').removeClass('shake');
+            $('#passwordLengthError').hide();
+            if ($('#userid').val() == '') {
+                return false;
+            }
+            if ($('#password').val() == '') {
+                return false;
+            }
+            if ($('#password').val().length < 6) {
+                $('#passwordLengthError').show();
+                $('#password').addClass('input-error').addClass('shake');
+                return false;
+            }
+            if ($('#login-block .g-recaptcha-response').length != 0 && $('#login-block .g-recaptcha-response').val().length == 0) {
+                alert('請勾選我不是機器人');
+                return false;
+            }
+            axios.post('/member/auth', {
+                username: $('#userid').val(),
+                password: $('#password').val(),
+                rememberme: $('#rememberme').is(':checked') ? 'yes' : 'no',
+                recaptcha: $('.g-recaptcha-response').val(),
+                redirectUrl: $('#loginRedirectUrl').val()
+            }, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                responseType: 'json'
+            }).then(function(response) {
+                if (response.data.success) {
+                    location.href = response.data.redirectUrl;
+                } else {
+                    //失敗太多次要重開登入視窗啟用 recaptcha
+                    if (response.data.reload) {
+                        $.colorbox({
+                            href:"/member/login",
+                            width: 386,
+                            height: 594,
+                            className: 'loginLightbox',
+                            onComplete: function() {
+                                $('.loginLightbox .ui-dialog-titlebar-close').click(function(event) {
+                                    $.colorbox.close()
+                                });
+                                $(this).colorbox.resize();
+                            }
+                        });
+                    } else {
+                        $('#errorMessage').html(response.data.errorMessage);
+                        $('#userid').addClass('input-error').addClass('shake');
+                        $('#password').addClass('input-error').addClass('shake');
+                    }
+                }
+            }).catch(function(error) {
+                console.log(error);
+            });
+        });
+    });
+</script>
+<style>
+    .loginLightbox #cboxContent{
+        border: 0 !important;
+    }
+</style>

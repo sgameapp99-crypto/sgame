@@ -1,0 +1,3 @@
+#!/bin/sh
+cd copy/vue || exit 1
+npx lint-staged
