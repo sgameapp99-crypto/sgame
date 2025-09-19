@@ -249,6 +249,27 @@
         </div>
 
         <div class="api-card">
+          <h3>POST /auth/register</h3>
+          <div class="field">
+            <label>Email</label>
+            <input v-model="form.email" type="email" placeholder="user+demo@example.com" />
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input v-model="form.password" type="password" placeholder="password123" />
+          </div>
+          <div class="field">
+            <label>Name</label>
+            <input v-model="form.name" type="text" placeholder="Demo" />
+          </div>
+          <button class="action-btn" @click="callRegister" :disabled="loading.register">
+            <span class="icon">🆕</span>
+            註冊（並設定 Cookie）
+          </button>
+          <pre class="result" v-text="results.register"></pre>
+        </div>
+
+        <div class="api-card">
           <h3>POST /auth/login</h3>
           <div class="field">
             <label>Email</label>
@@ -419,11 +440,12 @@ function goBack() {
 // ===== API 測試 =====
 const form = reactive({
   email: 'test@example.com',
-  password: 'password'
+  password: 'password',
+  name: 'Demo'
 });
 
-const loading = reactive({ health: false, login: false, session: false, logout: false, profile: false, relationships: false, follow: false, unfollow: false, avatar: false });
-const results = reactive<{ [k: string]: string }>({ health: '', login: '', session: '', logout: '', profile: '', relationships: '', follow: '', unfollow: '', avatar: '' });
+const loading = reactive({ health: false, register: false, login: false, session: false, logout: false, profile: false, relationships: false, follow: false, unfollow: false, avatar: false });
+const results = reactive<{ [k: string]: string }>({ health: '', register: '', login: '', session: '', logout: '', profile: '', relationships: '', follow: '', unfollow: '', avatar: '' });
 const cookies = ref('');
 const member = reactive({ memberId: 'test123' });
 
@@ -488,6 +510,27 @@ async function callLogin() {
   }
   refreshCookies();
   loading.login = false;
+}
+
+async function callRegister() {
+  loading.register = true; results.register = '請求中...';
+  try {
+    const r = await request('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: form.email, password: form.password, name: form.name })
+    });
+    results.register = pretty('POST /auth/register', r);
+    try {
+      const session = useSessionStore();
+      await session.fetchSession(true);
+      results.session = `Session 快照 → ${JSON.stringify({ loggedIn: session.loggedIn, user: session.user }, null, 2)}`;
+    } catch {}
+  } catch (e: any) {
+    results.register = `POST /api/auth/register 失敗: ${String(e)}`;
+  }
+  refreshCookies();
+  loading.register = false;
 }
 
 async function callSession() {

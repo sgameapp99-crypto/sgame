@@ -58,6 +58,42 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: 使用者註冊（Email/Password）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                name:
+                  type: string
+              required: [email, password, name]
+      responses:
+        '201':
+          description: 註冊成功（可能同時以 Set-Cookie 下發 HttpOnly 會話）
+        '409':
+          description: Email 已被使用
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 參數驗證錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /auth/oauth/{provider}/start:
     get:
       tags: [auth]

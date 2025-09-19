@@ -4,7 +4,7 @@
 - 規格格式: OpenAPI 3.1（YAML）
 - 檔案位置: `copy/vue/openapi.yaml`
 - 傳輸格式: `application/json`
-- 授權: `Authorization: Bearer <JWT>`（僅部分端點需要）
+- 授權: 預設以 HttpOnly Cookie（`sgame_session`）維持會話；部分端點可接受 Bearer（依部署設定）
 - 主要領域: 認證、會員資料、預測清單、會員發文、字典（聯盟/日期）
 
 ### 核心約定
@@ -19,7 +19,7 @@
   ```
 
 ### 主要資料模型（節錄）
-- MemberProfile: `id, name, avatar, level, bio, joinedAt, followersCount, followingCount`
+- MemberProfile: `id, name, avatar, level, joinedAt, followersCount, followingCount`
 - MemberStats: `totalPredictions, winRate, winStreak, ranking`
 - PredictionItem: `league, gameDateTime, homeTeam, awayTeam, market, selection, isMainPick, result(win/lose/pending), score?{home,away}`
 - MemberPost: `board, title, url, createdAt, replies, views, push`
@@ -75,8 +75,7 @@
   - `id: string`
   - `name: string`
   - `avatar: string` 頭像 URL
-  - `level: string` 例：`VIP`、`Normal`
-  - `bio: string` 自介
+  - `level: string` 例：`NEWBIE`、`BRONZE`、`SILVER`、`GOLD`、`DIAMOND`
   - `joinedAt: string(date-time)` 加入日期
   - `followersCount: integer`
   - `followingCount: integer`
@@ -86,8 +85,7 @@
   "id": "ydasam",
   "name": "阿達工友",
   "avatar": "/images/avatars/ydasam.jpg",
-  "level": "VIP",
-  "bio": "運彩分析師",
+  "level": "NEWBIE",
   "joinedAt": "2020-01-15T00:00:00+08:00",
   "followersCount": 264,
   "followingCount": 120
@@ -206,10 +204,32 @@
 
 ### 認證（auth）
 - `POST /auth/login` 登入（正式以 Set-Cookie HttpOnly 下發會話；開發期可回 token）
+- `POST /auth/register` 註冊（email/password/name；201 或同時 Set-Cookie）
 - `POST /auth/logout` 登出（204）
 - `GET /auth/session` 取得目前 session 狀態（userId、expiresAt）
 - `GET /auth/oauth/{provider}/start?redirectUrl=/member` 起始第三方登入（302 轉向至供應商；provider=google|facebook|line）
 - `GET /auth/oauth/{provider}/callback` 第三方登入回調（交換授權碼、Set-Cookie、302 導回 redirectUrl 或 /login?error=...）
+
+### 註冊（register）詳述
+- `POST /auth/register`
+  - Request（application/json）
+    - `email: string(email)`
+    - `password: string(>=8)`
+    - `name: string`
+  - Response
+    - 201 Created（可選同時 Set-Cookie: sgame_session）
+    - 409 `{ code: "EMAIL_TAKEN" }`
+    - 422 `{ code: "VALIDATION_FAILED" }`
+
+### 第三方登入策略（單一供應商綁定）
+- 規則：一個帳號僅能綁定一種供應商（`users.oauthProvider + oauth_provider_user_id` 唯一）
+- 首登：找不到 `(provider, providerUserId)` → 自動建立帳號並登入（Just-In-Time Provisioning）
+- 回訪：找到即登入（簽發 HttpOnly Cookie）
+- 錯誤碼建議：
+  - `OAUTH_PROVIDER_DENIED` 使用者於供應商頁面拒絕
+  - `OAUTH_INVALID_STATE` state/PKCE 驗證失敗
+  - `OAUTH_EXCHANGE_FAILED` 授權碼交換失敗
+  - `OAUTH_REDIRECT_INVALID` redirectUrl 不在白名單
 
 ### 會員（members）
 - `GET /members/{id}/profile` 會員基本資料
@@ -243,7 +263,7 @@
   - 415 `AVATAR_FILE_INVALID`
   - 500 `AVATAR_UPLOAD_FAILED`
 
-用法建議：成功後刷新 `GET /members/{id}/profile`，或在頭像 URL 後加 `?v=avatarUpdatedAt` 破快取。
+用法建議：成功後刷新 `GET /members/{id}/profile`，或在頭像 URL 後加 `?v=avatarUpdatedAt` 破快取；靜態資源目前快取 `max-age=3600`。
 
 ## 常見使用情境
 

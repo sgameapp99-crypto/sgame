@@ -114,9 +114,9 @@
                 </RouterLink>
               </li>
               <li class="signupitem">
-                <a href="/member/register" class="tween">
+                <RouterLink to="/register" class="tween">
                   <i class="material-icons md-small">&#xE7FE;</i>加入會員
-                </a>
+                </RouterLink>
               </li>
             </template>
             <!-- 登入狀態 -->
