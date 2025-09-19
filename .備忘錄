@@ -1,0 +1,17 @@
+重啟時 IP會變動 
+需要修改 前端IP 後端IP 
+虛擬雲 前往後 front2back須設定
+
+
+建議實施順序（由影響面最廣、回收最多重複成本者優先）：
+1) 先建 Pinia session store
+統一維護 loggedIn/user/cookies/lastFetched 與 actions（fetchSession、login、logout、refresh）。
+讓 AppHeader、測試頁、會員頁等全走 store，立即消除重複打 API 與狀態分散問題。
+2) 路由層保護（global beforeEach）
+注入 store 後，在需要登入的路由（meta.requiresAuth）先檢查 store.loggedIn；未登入導向 /login?redirect=原路由。
+可在守門時若 store 尚未初始化，先 await store.fetchSession（含節流避免重複請求）。
+3) 加入節流/快取策略
+在 store 的 fetchSession 內加 TTL（例如 60 秒）與 inFlight promise 去抑制重入；應用啟動時只打一次。
+重要事件（login/logout）後主動 set 狀態，不再立即重打 session。
+4) 再考慮 SSE/WebSocket
+若後端可推送 session 變更（例如被迫登出），再接入單一入口更新 store（onMessage → store.setLoggedOut）。

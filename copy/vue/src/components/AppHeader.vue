@@ -1,20 +1,701 @@
 <template>
-  <header class="px-2 py-2 bg-neutral-900 text-white flex items-center gap-3">
-    <strong>Playsport (Vue)</strong>
-    <LegacyHeader />
-    <nav class="flex gap-2 ml-auto">
-      <RouterLink to="/">Home</RouterLink>
-      <RouterLink to="/forum">Forum</RouterLink>
-      <RouterLink to="/login">Login</RouterLink>
-      <RouterLink to="/register">Register</RouterLink>
-      <RouterLink to="/member">Member</RouterLink>
-      <RouterLink to="/predict">Predict</RouterLink>
-      <RouterLink to="/predict/buy">Buy</RouterLink>
-      <RouterLink to="/games">Games</RouterLink>
-      <RouterLink to="/games/list">Games List</RouterLink>
-    </nav>
-  </header>
+  <div class="headerbox">
+    <div class="headerboxin">
+      <!-- logo start -->
+      <div class="logobox">
+        <RouterLink to="/forum?redirect_from=headerLogo">
+          <img src="/images/logo.png" alt="玩運彩" border="0" width="140" height="57">
+        </RouterLink>
+      </div>
+      <!-- logo end -->
+
+      <!-- header menu start -->
+      <div id="smoothmenu1" class="ddsmoothmenu">
+        <ul class="drop-down-menu">
+          <li class="ddsmoothmenu-outer">
+            <a class="ddsmoothmenu-item js-header-menu--guess" href="/guess?from=header">
+              <span></span>玩競猜
+            </a>
+            <ul>
+              <li>
+                <a class="ddsmoothmenu-link js-header-menu--guess" href="/guess?from=header">遊戲區</a>
+              </li>
+            </ul>
+          </li>
+          <li class="ddsmoothmenu-outer">
+            <a class="ddsmoothmenu-item" href="/predict/games?allianceid=1&type=p&from=header">
+              <span></span>預測賽事
+            </a>
+            <ul>
+              <li>
+                <a class="ddsmoothmenu-link" href="/predict/games?allianceid=1&from=header">預測賽事</a>
+              </li>
+              <li>
+                <a class="ddsmoothmenu-link" href="/predict/scale?allianceid=1&from=header">觀看預測比例</a>
+              </li>
+            </ul>
+          </li>
+          <li class="ddsmoothmenu-outer">
+            <a class="ddsmoothmenu-item" href="/forum?from=header">
+              <span></span>討論區
+            </a>
+            <ul>
+              <li>
+                <a class="ddsmoothmenu-link" href="/forum?from=header">運彩版</a>
+              </li>
+            </ul>
+          </li>
+          <li class="ddsmoothmenu-outer">
+            <a class="ddsmoothmenu-item" href="/buyPredict/medalFire/1?from=header">
+              <span></span>找高手
+            </a>
+            <ul>
+              <li>
+                <a class="ddsmoothmenu-link" href="/buyPredict/medalFire/1?ck=1&from=header">莊家殺手</a>
+              </li>
+              <li>
+                <a class="ddsmoothmenu-link" href="/buyPredict/singleKiller/1?ck=2&from=header">單場殺手</a>
+              </li>
+              <li>
+                <a class="ddsmoothmenu-link" href="/billboard/winRate?allianceid=1&from=header">勝率榜</a>
+              </li>
+              <li>
+                <a class="ddsmoothmenu-link" href="/billboard/mainPrediction?allianceid=1&from=header">主推榜</a>
+              </li>
+            </ul>
+          </li>
+          <li class="ddsmoothmenu-outer">
+            <a class="ddsmoothmenu-item" href="/livescore/1?from=header">
+              <span></span>即時比分
+            </a>
+            <ul></ul>
+          </li>
+          <li class="ddsmoothmenu-outer">
+            <a class="ddsmoothmenu-item" href="/gamesData/battle?allianceid=1&from=header">
+              <span></span>看數據
+            </a>
+            <ul>
+              <li>
+                <a class="ddsmoothmenu-link" href="/gamesData/battle?allianceid=1&from=header">對戰資訊</a>
+              </li>
+              <li>
+                <a class="ddsmoothmenu-link" href="/gamesData/teams?allianceid=1&from=header">球隊資訊</a>
+              </li>
+              <li>
+                <a class="ddsmoothmenu-link" href="/gamesData/standings/3?from=header">戰績排名</a>
+              </li>
+              <li>
+                <a class="ddsmoothmenu-link" href="/gamesData/result?allianceid=1">賽事結果查詢</a>
+              </li>
+            </ul>
+          </li>
+          <li class="ddsmoothmenu-outer">
+            <a class="ddsmoothmenu-item" href="/member/search">
+              <span></span>玩家搜尋
+            </a>
+          </li>
+        </ul>
+        <br style="clear: left" />
+      </div>
+
+      <style>
+        #menu-limited img, #menu-prizeDraw img { width: 70px; margin-top: 4px; }
+      </style>
+
+      <!-- header menu end -->
+      <div id="navi" class="default">
+        <div class="fixedpos" id="fixedposid">
+          <ul id="functionbarid" class="functionbar">
+            <!-- 未登入狀態 -->
+            <template v-if="!isLoggedIn">
+              <li class="loginitem">
+                <RouterLink id="headerLoginButton" class="headerLoginButton tween" to="/login">
+                  <i class="material-icons md-small">&#xE897;</i>登入
+                </RouterLink>
+              </li>
+              <li class="signupitem">
+                <a href="/member/register" class="tween">
+                  <i class="material-icons md-small">&#xE7FE;</i>加入會員
+                </a>
+              </li>
+            </template>
+            <!-- 登入狀態 -->
+            <template v-else>
+              <li class="iditem">
+                <a href="#" class="function-item-button" @click="toggleUserMenu">
+                  <i class="material-icons md-small">account_circle</i>
+                  {{ displayName || '會員' }}
+                </a>
+                <ul class="functionbar-ullv2" v-show="showUserMenu">
+                  <li><a href="/member/profile">個人資料</a></li>
+                  <li><a href="/member/settings">帳戶設定</a></li>
+                  <li><a href="#" @click.prevent="logout">登出</a></li>
+                </ul>
+              </li>
+              <li class="carditem">
+                <a href="#" class="function-item-button" @click="toggleCardMenu">
+                  <i class="material-icons md-small">shopping_cart</i>
+                  購物車
+                </a>
+                <ul id="carditem-ullv2" class="functionbar-ullv2" v-show="showCardMenu">
+                  <li><a href="/cart">查看購物車</a></li>
+                  <li><a href="/checkout">結帳</a></li>
+                </ul>
+              </li>
+              <li class="messageitem">
+                <a href="#" class="function-item-button" @click="toggleMessageMenu">
+                  <i class="material-icons md-small">notifications</i>
+                  訊息
+                </a>
+                <ul id="message-ullv2" class="functionbar-ullv2" v-show="showMessageMenu">
+                  <li><a href="/messages">查看訊息</a></li>
+                  <li><a href="/notifications">通知設定</a></li>
+                </ul>
+              </li>
+              <li class="coinitem">
+                <a href="/member/coins" class="function-item-button">
+                  <i class="material-icons md-small">monetization_on</i>
+                  彩幣
+                </a>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 調試按鈕 - 可拖拽浮動式 -->
+    <div 
+      class="debug-toggle-container" 
+      ref="debugContainer"
+      @mousedown="startDrag"
+      :style="{ left: debugPosition.x + 'px', top: debugPosition.y + 'px' }"
+    >
+      <button class="debug-button" @click="toggleLoginStatus">
+        {{ isLoggedIn ? '切換為未登入' : '切換為已登入' }}
+      </button>
+    </div>
+  </div>
 </template>
+
 <script setup lang="ts">
-import LegacyHeader from './LegacyHeader.vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useSessionStore } from '../stores/session';
+
+// 登入狀態（由 Pinia 提供）
+const session = useSessionStore();
+const isLoggedIn = computed(() => session.loggedIn);
+const displayName = computed(() => session.user?.name || session.user?.email || '');
+const router = useRouter();
+
+// 下拉選單狀態
+const showUserMenu = ref(false);
+const showCardMenu = ref(false);
+const showMessageMenu = ref(false);
+
+// 調試按鈕拖拽功能
+const debugContainer = ref<HTMLElement | null>(null);
+const debugPosition = ref({ x: 10, y: 10 });
+const isDragging = ref(false);
+const dragOffset = ref({ x: 0, y: 0 });
+
+// 切換登入狀態（調試用）
+const toggleLoginStatus = () => {
+  session.loggedIn = !session.loggedIn;
+  // 關閉所有下拉選單
+  showUserMenu.value = false;
+  showCardMenu.value = false;
+  showMessageMenu.value = false;
+};
+
+// 切換用戶選單
+const toggleUserMenu = (event: Event) => {
+  event.preventDefault();
+  showUserMenu.value = !showUserMenu.value;
+  showCardMenu.value = false;
+  showMessageMenu.value = false;
+};
+
+// 切換購物車選單
+const toggleCardMenu = (event: Event) => {
+  event.preventDefault();
+  showCardMenu.value = !showCardMenu.value;
+  showUserMenu.value = false;
+  showMessageMenu.value = false;
+};
+
+// 切換訊息選單
+const toggleMessageMenu = (event: Event) => {
+  event.preventDefault();
+  showMessageMenu.value = !showMessageMenu.value;
+  showUserMenu.value = false;
+  showCardMenu.value = false;
+};
+
+// 點擊外部關閉下拉選單
+const handleClickOutside = (event: Event) => {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.iditem') && !target.closest('.carditem') && !target.closest('.messageitem') && !target.closest('.debug-toggle-container')) {
+    showUserMenu.value = false;
+    showCardMenu.value = false;
+    showMessageMenu.value = false;
+  }
+};
+
+// 拖拽功能
+const startDrag = (event: MouseEvent) => {
+  if (event.target instanceof HTMLButtonElement) return; // 如果點擊的是按鈕，不開始拖拽
+  
+  isDragging.value = true;
+  dragOffset.value = {
+    x: event.clientX - debugPosition.value.x,
+    y: event.clientY - debugPosition.value.y
+  };
+  
+  event.preventDefault();
+};
+
+const handleMouseMove = (event: MouseEvent) => {
+  if (!isDragging.value) return;
+  
+  debugPosition.value = {
+    x: event.clientX - dragOffset.value.x,
+    y: event.clientY - dragOffset.value.y
+  };
+};
+
+const handleMouseUp = () => {
+  isDragging.value = false;
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseUp);
+  session.fetchSession().then(() => session.ensureProfile());
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('mousemove', handleMouseMove);
+  document.removeEventListener('mouseup', handleMouseUp);
+});
+
+async function logout() {
+  try { await session.logout(); }
+  finally { router.push('/'); }
+}
 </script>
+
+<style scoped>
+/* 完全按照原始CSS樣式 */
+.headerbox {
+  color: #666;
+  font-family: "微軟正黑體","Microsoft JhengHei","新細明體",PMingLiU,Arial,Helvetica,sans-serif;
+  font-size: 12px;
+  padding: 0;
+  margin: 0 auto;
+  position: relative;
+  width: 100%;
+  min-width: 1000px;
+  height: 148px;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  z-index: 100;
+  overflow: visible;
+}
+
+.headerboxin {
+  width: 1000px;
+  height: 148px;
+  text-align: center;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* 主導航菜單 - 按照原始CSS */
+.ddsmoothmenu {
+  position: absolute;
+  width: auto;
+  right: 20px;
+  z-index: 80;
+  top: 64px;
+  color: #fff;
+}
+
+.default {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  height: 36px;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  z-index: 90;
+}
+
+.fixedpos {
+  width: 1000px;
+  height: 36px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.drop-down-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ddsmoothmenu-outer {
+  float: left;
+  height: 68px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+  position: relative;
+}
+
+.ddsmoothmenu-item {
+  display: block;
+  padding: 20px 15px 0;
+  height: 43px;
+  margin-top: 5px;
+  text-align: center;
+  color: #fff;
+  text-decoration: none;
+  font-size: 16px;
+  text-shadow: 1px 1px 1px #00243a;
+}
+
+.ddsmoothmenu-item:hover {
+  /* 移除頂層黃色特效：僅調整字色微亮，背景不變，無邊框 */
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.ddsmoothmenu-item:hover span {
+  /* 移除頂部黃色指示 */
+  display: none;
+}
+
+/* 下拉選單 - 按照原始CSS */
+.ddsmoothmenu-outer ul {
+  position: absolute;
+  left: 0;
+  display: none;
+  margin: -1px 0 0;
+  padding: 0;
+  width: 100%;
+  border-radius: 0 0 5px 5px;
+  z-index: 9999;
+}
+
+.ddsmoothmenu-outer:hover ul {
+  display: block;
+}
+
+.ddsmoothmenu-outer ul li {
+  position: relative;
+  display: block;
+  float: none;
+  margin: 0;
+  padding: 0;
+  height: auto;
+  width: 100%;
+  border: 1px solid #27c3e1;
+  border-bottom: 0;
+  background: 0 0;
+  box-sizing: border-box;
+}
+
+.ddsmoothmenu-outer ul li:last-child {
+  border-bottom: 1px solid #27c3e1;
+  border-radius: 0 0 5px 5px;
+}
+
+.ddsmoothmenu-link {
+  height: auto;
+  padding: 10px 0;
+  text-align: center;
+  margin: 0;
+  display: block;
+  background: #095a8b;
+  border-radius: 0;
+  text-shadow: none;
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.ddsmoothmenu-link:hover {
+  color: #000;
+  background: #ffde00;
+  border: 0;
+  margin: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-radius: 0;
+  text-decoration: none;
+}
+
+/* 功能按鈕區域 - 按照原始CSS */
+.functionbar {
+  width: auto;
+  height: 36px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  border-right: 1px solid #e0e0e0;
+  background: transparent;
+  z-index: 91;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.functionbar li {
+  float: left;
+  border-left: 1px solid #e0e0e0;
+  text-align: center;
+  line-height: normal;
+  position: relative;
+}
+
+/* 取消 登入 與 加入會員 之間的分隔線 */
+.functionbar li.loginitem,
+.functionbar li.signupitem {
+  border-left: none;
+}
+
+/* 登入/註冊按鈕 - 按照原始樣式 */
+.headerLoginButton,
+.signupitem a {
+  display: inline-block;
+  text-align: left;
+  height: 24px;
+  padding: 8px 16px 0 4px;
+  text-decoration: none;
+  color: #757575;
+}
+
+.headerLoginButton:hover,
+.signupitem a:hover {
+  color: #212121;
+  text-decoration: none;
+}
+
+/* 登入狀態按鈕 - 按照原始CSS */
+.function-item-button {
+  display: inline-block;
+  text-align: left;
+  height: 24px;
+  padding: 8px 16px 0 4px;
+  text-decoration: none;
+  color: #757575;
+}
+
+.function-item-button:hover {
+  color: #212121;
+  text-decoration: none;
+}
+
+/* 彩幣按鈕特殊樣式 */
+.functionbar li.coinitem a {
+  background: #e3ffbf;
+  color: #212121;
+  padding: 8px 16px 0;
+}
+
+.functionbar li.coinitem a:visited {
+  color: #212121;
+}
+
+.functionbar li.coinitem a:hover {
+  background: #fff;
+  color: #212121;
+}
+
+.functionbar li.coinitem a:active,
+.functionbar li.coinitem a:active i {
+  color: #212121;
+}
+
+.functionbar li.coinitem a i,
+.functionbar li.loginitem a i,
+.functionbar li.signupitem a i {
+  padding: 0 4px 0 0;
+}
+
+/* 下拉選單 - 按照原始CSS */
+.functionbar-ullv2 {
+  display: none;
+  position: absolute;
+  width: 100%;
+  min-width: 50px;
+  top: 32px;
+  right: -1px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.functionbar li:hover .functionbar-ullv2 {
+  display: block;
+}
+
+.functionbar-ullv2 li {
+  float: none;
+  border: none;
+}
+
+.functionbar-ullv2 a {
+  float: none;
+  display: block;
+  text-align: center;
+  height: 28px;
+  padding: 13px 0 0;
+  color: #757575;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.functionbar-ullv2 a:hover {
+  color: #212121;
+  text-decoration: none;
+}
+
+/* 購物車和訊息選單右對齊 */
+#carditem-ullv2,
+#message-ullv2 {
+  left: auto;
+  right: 0;
+}
+
+/* Logo - 按照原始CSS */
+.logobox {
+  position: absolute;
+  top: 70px;
+  left: 10px;
+}
+
+.logobox img {
+  display: block;
+}
+
+/* 調試按鈕 - 可拖拽浮動式 */
+.debug-toggle-container {
+  position: fixed;
+  z-index: 10000;
+  cursor: move;
+  user-select: none;
+  background: rgba(255, 107, 107, 0.9);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.debug-toggle-container:hover {
+  background: rgba(255, 82, 82, 0.95);
+  transform: scale(1.05);
+}
+
+.debug-button {
+  padding: 6px 12px;
+  background: transparent;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  pointer-events: auto;
+}
+
+.debug-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 響應式設計 */
+@media (max-width: 1024px) {
+  .headerbox {
+    min-width: 800px;
+  }
+  
+  .ddsmoothmenu-item {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  .headerbox {
+    min-width: 600px;
+    height: auto;
+    padding: 10px 0;
+  }
+  
+  .headerboxin {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .ddsmoothmenu {
+    margin: 0;
+    order: 2;
+  }
+  
+  .drop-down-menu {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+  }
+  
+  .ddsmoothmenu-item {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .functionbar {
+    order: 1;
+    justify-content: center;
+  }
+  
+  .logobox {
+    margin-left: 0;
+    order: 3;
+  }
+  
+  /* 調試按鈕現在是可拖拽的，不需要固定位置 */
+}
+
+@media (max-width: 480px) {
+  .headerbox {
+    min-width: 400px;
+  }
+  
+  .ddsmoothmenu-item {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  
+  .headerLoginButton,
+  .signupitem a {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .debug-button {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}
+</style>

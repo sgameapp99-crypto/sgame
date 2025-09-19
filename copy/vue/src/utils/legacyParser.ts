@@ -6,12 +6,15 @@ export interface ForumPostRow {
 	authorDate?: string;
 	lastReplyUser?: string;
 	lastReplyDate?: string;
+	lastReplyAuthor?: string; // 別名
 	subjectId?: string;
 	pinned?: boolean;
 	pushCount?: number;
 	boardTag?: string;
 	replyCount?: number;
 	viewCount?: number;
+	avatar?: string;
+	pages?: number[];
 }
 
 export interface ForumPagination { current: number; pages: number[] }

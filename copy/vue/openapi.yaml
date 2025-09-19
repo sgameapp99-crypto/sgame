@@ -1,0 +1,564 @@
+openapi: 3.1.0
+info:
+  title: SGame Member API
+  version: 0.1.0
+  description: |
+    前後端協作用 API 規格（對外 REST + JSON）。
+    - 對外傳輸格式：application/json
+    - 規格文件格式：OpenAPI (YAML)
+servers:
+  - url: https://api.example.com
+    description: Production
+  - url: https://staging-api.example.com
+    description: Staging
+  - url: http://localhost:3000
+    description: Dev
+tags:
+  - name: auth
+    description: 認證
+  - name: members
+    description: 會員資料/頁面主體
+  - name: me
+    description: 個人設定/資料維護
+  - name: filters
+    description: 篩選/字典資料
+  - name: posts
+    description: 會員發文
+
+paths:
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: 使用者登入
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required: [username, password]
+      responses:
+        '200':
+          description: 登入成功（同時以 Set-Cookie 下發 HttpOnly 會話）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redirectUrl:
+                    type: string
+                    description: 登入後導回路徑，若缺省則由前端決定（如首頁）
+        '204':
+          description: 登入成功（無回應內容；以 Set-Cookie 下發 HttpOnly 會話）
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/oauth/{provider}/start:
+    get:
+      tags: [auth]
+      summary: 第三方登入起始（導向供應商授權頁）
+      description: |
+        產生 state（與可選 PKCE）並 302 導向供應商授權頁；成功授權後將回到 `/auth/oauth/{provider}/callback`。
+        注意：此端點會回傳 302，並不回應 JSON 內容。
+      parameters:
+        - $ref: '#/components/parameters/OAuthProvider'
+        - $ref: '#/components/parameters/RedirectUrl'
+      responses:
+        '302':
+          description: 重新導向至供應商授權頁
+
+  /auth/oauth/{provider}/callback:
+    get:
+      tags: [auth]
+      summary: 第三方登入回調（交換授權碼、建立會話）
+      description: |
+        使用授權碼交換 access/id token，建立或綁定使用者後以 Set-Cookie（HttpOnly）下發會話並 302 導回 redirectUrl。
+        若錯誤則可 302 回 `/login?error=...`。
+      parameters:
+        - $ref: '#/components/parameters/OAuthProvider'
+      responses:
+        '302':
+          description: 建立會話並導回 redirectUrl 或導回 /login 顯示錯誤
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: 登出
+      responses:
+        '204':
+          description: 已登出
+
+  /auth/session:
+    get:
+      tags: [auth]
+      summary: 查詢目前 Session/Token 有效性
+      responses:
+        '200':
+          description: Session 資訊
+  /me/avatar:
+    post:
+      tags: [me]
+      summary: 上傳並設定我的大頭貼（本機儲存，固定檔名 {userId}.webp）
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: 上傳成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                  updatedAt:
+                    type: string
+                    format: date-time
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '413':
+          description: 檔案過大
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '415':
+          description: 檔案格式不支援
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 上傳失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  expiresAt:
+                    type: string
+                    format: date-time
+
+  /members/{id}/profile:
+    get:
+      tags: [members]
+      summary: 會員基本資料
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberProfile'
+
+  /members/{id}/relationships:
+    get:
+      tags: [members]
+      summary: 會員與目前使用者的關係
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: 關係資訊
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isSelf:
+                    type: boolean
+                  isFollowing:
+                    type: boolean
+                  isMutual:
+                    type: boolean
+
+  /members/{id}/follow:
+    post:
+      tags: [members]
+      summary: 追蹤會員
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '204': { description: 成功 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    delete:
+      tags: [members]
+      summary: 取消追蹤會員
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '204': { description: 成功 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /members/{id}/stats:
+    get:
+      tags: [members]
+      summary: 會員統計資訊
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberStats'
+
+  /members/{id}/honors:
+    get:
+      tags: [members]
+      summary: 會員榮譽列表
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: honors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemberHonor'
+
+  /members/{id}/predictions:
+    get:
+      tags: [members]
+      summary: 會員預測列表
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - $ref: '#/components/parameters/League'
+        - $ref: '#/components/parameters/DateRange'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: 預測清單（分頁）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictionsResponse'
+
+  /members/{id}/posts:
+    get:
+      tags: [posts]
+      summary: 會員發文列表
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: 發文清單（分頁）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostsResponse'
+
+  /filters/leagues:
+    get:
+      tags: [filters]
+      summary: 聯盟字典
+      responses:
+        '200':
+          description: leagues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/League'
+
+  /filters/dates:
+    get:
+      tags: [filters]
+      summary: 日期字典（近 N 天）
+      parameters:
+        - in: query
+          name: range
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 31
+          description: 回傳最近 N 天（含今天）
+      responses:
+        '200':
+          description: dates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DateFilterItem'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    MemberId:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      description: 會員 ID 或代號
+    League:
+      in: query
+      name: league
+      schema:
+        type: string
+        description: 聯盟代碼（例如 MLB/NPB/CPBL）
+    DateRange:
+      in: query
+      name: dateRange
+      schema:
+        type: string
+        enum: [today, week, month]
+      description: 預設用 today/week/month；若採用精確日期，改走 /filters/dates 與額外 date=YYYY-MM-DD 參數
+    Page:
+      in: query
+      name: page
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Size:
+      in: query
+      name: size
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    OAuthProvider:
+      in: path
+      name: provider
+      required: true
+      schema:
+        type: string
+        enum: [google, facebook, line]
+      description: 第三方登入供應商
+    RedirectUrl:
+      in: query
+      name: redirectUrl
+      required: false
+      schema:
+        type: string
+      description: 登入完成後導回的相對路徑，後端需做白名單檢查
+
+  responses:
+    Unauthorized:
+      description: 未授權
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    OAuthError:
+      description: 第三方登入錯誤
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OAuthError'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+    OAuthError:
+      type: object
+      properties:
+        code:
+          type: string
+          enum: [OAUTH_PROVIDER_DENIED, OAUTH_INVALID_STATE, OAUTH_EXCHANGE_FAILED, OAUTH_REDIRECT_INVALID]
+        message:
+          type: string
+        reload:
+          type: boolean
+
+    PageMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+
+    League:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+          example: MLB
+        name:
+          type: string
+
+    DateFilterItem:
+      type: object
+      properties:
+        key:
+          type: string
+          example: '2025-09-16'
+        label:
+          type: string
+          example: '09/16(二)'
+
+    MemberProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        avatar:
+          type: string
+        level:
+          type: string
+        bio:
+          type: string
+        joinedAt:
+          type: string
+          format: date-time
+        followersCount:
+          type: integer
+        followingCount:
+          type: integer
+
+    MemberStats:
+      type: object
+      properties:
+        totalPredictions:
+          type: integer
+        winRate:
+          type: number
+          format: float
+        winStreak:
+          type: integer
+        ranking:
+          type: integer
+
+    MemberHonor:
+      type: object
+      properties:
+        id:
+          type: integer
+        icon:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+
+    MemberPost:
+      type: object
+      properties:
+        id:
+          type: integer
+        board:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        replies:
+          type: integer
+        views:
+          type: integer
+        push:
+          type: integer
+
+    PredictionItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        league:
+          type: string
+          example: MLB
+        gameDateTime:
+          type: string
+          format: date-time
+        homeTeam:
+          type: string
+        awayTeam:
+          type: string
+        market:
+          type: string
+          example: 讓分
+        selection:
+          type: string
+          example: 主 -1.5
+        isMainPick:
+          type: boolean
+        result:
+          type: string
+          enum: [win, lose, pending]
+        score:
+          type: object
+          properties:
+            home:
+              type: integer
+            away:
+              type: integer
+
+    PredictionsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PredictionItem'
+        pageMeta:
+          $ref: '#/components/schemas/PageMeta'
+
+    PostsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemberPost'
+        pageMeta:
+          $ref: '#/components/schemas/PageMeta'
+
+security:
+  - bearerAuth: []
+
+

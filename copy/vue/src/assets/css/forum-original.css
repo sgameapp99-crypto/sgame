@@ -1,0 +1,363 @@
+/* 原始論壇樣式 - 完整複製 */
+
+/* 基本表格樣式 */
+.forum.helpTf {
+  width: 100%;
+  cellspacing: 0;
+  margin-top: 20px;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.helpHedf {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  padding: 8px;
+  font-weight: bold;
+  text-align: center;
+  color: #333;
+}
+
+.helpBodf {
+  border: 1px solid #ddd;
+  padding: 8px;
+  vertical-align: top;
+  background: #fff;
+}
+
+/* 文章標題樣式 */
+.article-title {
+  height: 55px;
+  padding: 10px;
+}
+
+.article-title_content {
+  width: 99%;
+  padding: 20px 0 18px;
+}
+
+.article-title_content_ab {
+  width: 100%;
+}
+
+.list_titlefont {
+  font-size: 16px;
+}
+
+/* 推文標籤樣式 */
+.betrec {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.listlabel_ab {
+  width: 0;
+  margin: 0;
+  visibility: hidden;
+}
+
+/* 頭像樣式 */
+.avatartd {
+  height: 55px;
+  text-align: center;
+  width: 41px;
+}
+
+.avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+}
+
+/* 文章時間樣式 */
+.articleDateTime {
+  color: #666666;
+  font-size: 12px;
+}
+
+/* 分頁樣式 */
+.pg_mini {
+  font-size: 12px;
+  color: #3c3c3c;
+}
+
+.pg_mini a {
+  color: #3c3c3c;
+  text-decoration: none;
+  margin: 0 2px;
+}
+
+.pg_mini a:hover {
+  color: #069;
+  text-decoration: underline;
+}
+
+/* 看板分類樣式 */
+.menu_title {
+  width: 40px;
+  font-weight: bold;
+  color: #333;
+  float: left;
+  line-height: 34px;
+}
+
+.menu_content {
+  float: left;
+  line-height: 34px;
+}
+
+.subtitle {
+  color: #009900;
+  padding-right: 10px;
+  vertical-align: top;
+  font-weight: bold;
+}
+
+.subtitle_item {
+  display: inline-block;
+  margin-right: 15px;
+}
+
+.subtitle_item a {
+  color: #069;
+  text-decoration: none;
+  margin-right: 8px;
+  padding: 2px 6px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background: #f9f9f9;
+}
+
+.subtitle_item a:hover {
+  background: #e9e9e9;
+  color: #333;
+}
+
+/* 排序區域樣式 */
+.menu_category {
+  float: right;
+}
+
+.menu_category .row {
+  margin-bottom: 10px;
+}
+
+.menu_category .title {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.menu_category .content {
+  color: #666;
+}
+
+.menu_category .content a {
+  color: #069;
+  text-decoration: none;
+  margin-left: 10px;
+}
+
+.menu_category .content a:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+.menu_category .content span[style*="color:red"] {
+  color: red !important;
+  font-weight: bold;
+}
+
+/* 置頂文章樣式 */
+tr[bgcolor="#ffff99"] {
+  background-color: #ffff99 !important;
+}
+
+tr[bgcolor="#ffffff"] {
+  background-color: #ffffff !important;
+}
+
+tr[bgcolor="#f4f4f4"] {
+  background-color: #f4f4f4 !important;
+}
+
+/* 交替行背景色 */
+.forum.helpTf tr:nth-child(even) {
+  background-color: #f4f4f4;
+}
+
+.forum.helpTf tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+/* 置頂文章優先級 */
+.forum.helpTf tr[bgcolor="#ffff99"] {
+  background-color: #ffff99 !important;
+}
+
+/* 文章連結樣式 */
+.article-title_content a {
+  color: #069;
+  text-decoration: none;
+}
+
+.article-title_content a:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+/* 作者連結樣式 */
+.helpBodf a {
+  color: #3C3C3C;
+  text-decoration: none;
+}
+
+.helpBodf a:hover {
+  color: #069;
+  text-decoration: underline;
+}
+
+/* 看板標籤樣式 */
+.board-tag {
+  display: inline-block;
+  background: #f0f0f0;
+  color: #333;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  margin-right: 8px;
+  border: 1px solid #ddd;
+}
+
+/* 推文數標籤 */
+.push-tag {
+  display: inline-block;
+  background: #ff4444;
+  color: white;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: 10px;
+  margin-right: 5px;
+  font-weight: bold;
+}
+
+/* 容器樣式 */
+.forum-container {
+  width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* 看板分類區域樣式 */
+.board-categories {
+  margin-bottom: 20px;
+}
+
+.helpTfTop {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #ddd;
+  margin-bottom: 20px;
+}
+
+.helpClearf {
+  padding: 15px;
+  vertical-align: top;
+  background: #fff;
+}
+
+/* 載入和錯誤訊息樣式 */
+.loading-message,
+.error-message {
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+  color: #666;
+}
+
+.error-message {
+  color: #d32f2f;
+}
+
+/* 表頭樣式 */
+.helpHedf-title,
+.helpHedf-author,
+.helpHedf-newreply {
+  margin: 0;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 按鈕樣式 */
+.button.orange {
+  background: #ff9800;
+  border: 1px solid #f57c00;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.button.orange:hover {
+  background: #f57c00;
+  text-decoration: none;
+}
+
+/* 推文圖標樣式 */
+.betrec img {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+}
+
+/* 響應式調整 */
+@media (max-width: 1024px) {
+  .forum-container {
+    width: 95%;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .forum.helpTf {
+    font-size: 12px;
+  }
+  
+  .article-title_content {
+    padding: 10px 0;
+  }
+  
+  .list_titlefont {
+    font-size: 14px;
+  }
+  
+  .avatar {
+    width: 25px;
+    height: 25px;
+  }
+  
+  .menu_title,
+  .menu_content {
+    float: none;
+    line-height: normal;
+  }
+  
+  .subtitle_item {
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  .helpTfTop {
+    display: block;
+  }
+  
+  .helpClearf {
+    display: block;
+    width: 100% !important;
+  }
+}

@@ -1,108 +1,159 @@
 <template>
-  <div class="min-h-screen bg-neutral-50">
-    <div class="bg-primary-600 text-neutral-50">
-      <div class="container mx-auto px-lg py-lg">
-        <h1 class="heading-1">運動彩券論壇</h1>
-        <p class="mt-sm text-neutral-100">重構為 Vue 的首頁，快速進入各看板與最新文章</p>
-        <div class="mt-md flex gap-sm">
-          <RouterLink class="btn btn-secondary" :to="{ name: 'forum' }">進入論壇</RouterLink>
-          <RouterLink
-            class="btn btn-outline text-neutral-50 border-neutral-100"
-            :to="{ name: 'login' }"
-            >會員登入</RouterLink
-          >
-        </div>
-      </div>
-    </div>
-
-    <div class="container mx-auto px-lg py-xl grid grid-cols-1 lg:grid-cols-3 gap-lg">
-      <div class="lg:col-span-2 space-y-lg">
-        <section class="card">
-          <div class="flex items-center justify-between gap-md">
-            <div class="heading-2">最新文章</div>
-            <div class="flex items-center gap-sm">
-              <label class="text-sm text-neutral-600">排序</label>
-              <select v-model="sortBy" class="input text-sm">
-                <option value="latestReply">最新回覆</option>
-                <option value="latestPost">最新發文</option>
-              </select>
-            </div>
-          </div>
-          <div v-if="loading" class="mt-md text-neutral-600">載入中…</div>
-          <div v-else-if="errorMessage" class="mt-md text-red-600">{{ errorMessage }}</div>
-          <ul class="mt-md divide-y divide-neutral-200">
-            <li v-for="post in latestPosts" :key="post.href" class="py-sm flex items-start gap-md">
-              <span
-                v-if="post.boardTag"
-                class="px-xs py-1 rounded-sm bg-neutral-200 text-neutral-700 text-xs shrink-0"
-                >{{ post.boardTag }}</span
-              >
-              <div class="min-w-0">
-                <RouterLink
-                  class="text-primary-700 hover:underline break-words"
-                  :to="postRoute(post)"
-                  >{{ cleanTitle(post.title) }}</RouterLink
-                >
-                <div class="text-neutral-500 text-sm mt-1">
-                  <span>作者：{{ post.author }}</span>
-                  <span v-if="post.authorDate"> · {{ post.authorDate }}</span>
-                  <span v-if="post.replyCount !== undefined"> · 回覆 {{ post.replyCount }}</span>
-                  <span v-if="post.viewCount !== undefined"> · 閱讀 {{ post.viewCount }}</span>
-                  <span v-if="post.pushCount !== undefined"> · 推 {{ post.pushCount }}</span>
+  <div class="forum-container">
+    <!-- 看板分類區域 -->
+    <div class="board-categories">
+      <table class="helpTfTop" width="100%">
+        <tr>
+          <td class="helpClearf" width="660">
+            <div class="menu_title">看板</div>
+            <div class="menu_content">
+              <div v-for="cat in categories" :key="cat.title">
+                <span class="subtitle">{{ cat.title }}</span>
+                <div class="subtitle_item">
+                  <a 
+                    v-for="board in cat.boards" 
+                    :key="board" 
+                    :href="`forum/${typeof board === 'string' ? board : board}.html`"
+                    class="js-forum-alliances-list-link"
+                  >
+                    {{ board }}
+                  </a>
                 </div>
               </div>
-            </li>
-          </ul>
-          <div class="mt-md">
-            <RouterLink class="btn btn-outline" :to="{ name: 'forum' }">瀏覽更多</RouterLink>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="heading-2">公告 / 精華</div>
-          <div class="text-neutral-600">（預留區塊：可接後端或以置頂文自動填入）</div>
-        </section>
-      </div>
-
-      <aside class="space-y-lg">
-        <section class="card">
-          <div class="heading-3">看板分類</div>
-          <div class="mt-sm space-y-md">
-            <div v-for="cat in categories" :key="cat.title">
-              <div class="font-semibold text-neutral-800">{{ cat.title }}</div>
-              <div class="mt-xs flex flex-wrap gap-xs">
-                <RouterLink
-                  v-for="b in cat.boards"
-                  :key="b"
-                  :to="{ name: 'forum', query: { board: b } }"
-                  class="btn btn-outline text-sm"
-                >
-                  {{ b }}
-                </RouterLink>
+            </div>
+          </td>
+          <td class="helpClearf" colspan="2" valign="top">
+            <div class="menu_category">
+              <div class="row">
+                <div class="title">排序</div>
+                <div class="content">
+                  <span v-if="sortBy === 'latestReply'" style="font:bold;color:red;">最新回覆</span>
+                  <a v-else href="#" @click.prevent="sortBy = 'latestReply'">最新回覆</a>
+                  <a v-if="sortBy !== 'latestReply'" href="#" @click.prevent="sortBy = 'latestPost'">最新文章</a>
+                  <span v-else style="font:bold;color:red;">最新文章</span>
+                </div>
+              </div>
+              <div class="row" style="display: block;margin-top:30px;" align="right">
+                <a href="#" class="headerLoginButton">
+                  <span class="button orange" style="color:black;font-size:16px;padding:6px 15px; font-family:微軟正黑體,Arial, Helvetica, sans-serif;">發表文章</span>
+                </a>
+                <a href="/test-nav" style="margin-left: 10px;">
+                  <span class="button" style="background:#28a745;color:white;font-size:14px;padding:6px 15px; font-family:微軟正黑體,Arial, Helvetica, sans-serif;">🧪 測試導覽</span>
+                </a>
               </div>
             </div>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="heading-3">快速連結</div>
-          <ul class="mt-sm list-disc list-inside text-primary-700">
-            <li>
-              <RouterLink :to="{ name: 'forum' }">論壇首頁</RouterLink>
-            </li>
-            <li>
-              <RouterLink :to="{ name: 'login' }">會員登入</RouterLink>
-            </li>
-          </ul>
-        </section>
-      </aside>
+          </td>
+        </tr>
+      </table>
     </div>
+
+    <!-- 文章列表表格 -->
+    <div v-if="loading" class="loading-message">載入中…</div>
+    <div v-else-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+    <table v-else class="forum helpTf" width="100%" cellspacing="0" style="margin-top:20px;">
+      <!-- 表頭 -->
+      <tr>
+        <td class="helpHedf" width="584" height="50">
+          <p class="helpHedf-title">主題</p>
+        </td>
+        <td class="helpHedf" width="41">&nbsp;</td>
+        <td class="helpHedf" width="120">
+          <p class="helpHedf-author">作者</p>
+        </td>
+        <td class="helpHedf" width="120">
+          <p class="helpHedf-newreply">最新回覆</p>
+        </td>
+      </tr>
+
+      <!-- 置頂文章 -->
+      <tr v-for="post in pinnedPosts" :key="post.href" bgcolor="#ffff99">
+        <td class="helpBodf article-title" height="55">
+          <span>
+            <div class="betrec listlabel_ab">
+              <img v-if="post.pushCount && post.pushCount > 60" src="/images/forum/icon_push_over60.gif" alt="推文">
+            </div>
+          </span>
+          <span class="article-title_content article-title_content_ab list_titlefont">
+            <span v-if="post.boardTag" class="board-tag">[{{ post.boardTag }}]</span>
+            <a :href="postRoute(post).href || '#'">{{ cleanTitle(post.title) }}</a>
+            <span v-if="post.pages && post.pages.length > 0" class="pg_mini"> …
+              <a 
+                v-for="page in post.pages" 
+                :key="page" 
+                :href="`${postRoute(post).href}?pageno=${page}`"
+                style="color:#3c3c3c;"
+              >
+                {{ page }}
+              </a>
+            </span>
+          </span>
+        </td>
+        <td class="helpBodf avatartd" height="55">
+          <a :href="`visit_member.html?visit=${post.author}`" style="color:#3C3C3C;">
+            <img class="avatar" :src="post.avatar || '/images/default-avatar.jpg'" width="35" height="35" border="0">
+          </a>
+        </td>
+        <td class="helpBodf" style="text-align:center;" nowrap>
+          <a :href="`visit_member.html?visit=${post.author}`" style="color:#3C3C3C;">
+            {{ post.author }}<br>
+            <span class="articleDateTime">{{ post.authorDate }}</span>
+          </a>
+        </td>
+        <td class="helpBodf" style="text-align:center;">
+          <a :href="`visit_member.html?visit=${post.lastReplyAuthor || post.lastReplyUser || post.author}`" style="color:#3C3C3C;">
+            {{ post.lastReplyAuthor || post.lastReplyUser || post.author }}<br>
+            <span class="articleDateTime">{{ post.lastReplyDate || post.authorDate }}</span>
+          </a>
+        </td>
+      </tr>
+
+      <!-- 一般文章 -->
+      <tr v-for="post in normalPosts" :key="post.href" bgcolor="#ffffff">
+        <td class="helpBodf article-title" height="55">
+          <div class="betrec listlabel_ab">
+            <span v-if="post.pushCount && post.pushCount > 0" class="push-tag">{{ post.pushCount }}</span>
+          </div>
+          <span class="article-title_content article-title_content_ab list_titlefont">
+            <span v-if="post.boardTag" class="board-tag">[{{ post.boardTag }}]</span>
+            <a :href="postRoute(post).href || '#'">{{ cleanTitle(post.title) }}</a>
+            <span v-if="post.pages && post.pages.length > 0" class="pg_mini"> …
+              <a 
+                v-for="page in post.pages" 
+                :key="page" 
+                :href="`${postRoute(post).href}?pageno=${page}`"
+                style="color:#3c3c3c;"
+              >
+                {{ page }}
+              </a>
+            </span>
+          </span>
+        </td>
+        <td class="helpBodf avatartd" height="55">
+          <a :href="`visit_member.html?visit=${post.author}`" style="color:#3C3C3C;">
+            <img class="avatar" :src="post.avatar || '/images/default-avatar.jpg'" width="35" height="35" border="0">
+          </a>
+        </td>
+        <td class="helpBodf" style="text-align:center;" nowrap>
+          <a :href="`visit_member.html?visit=${post.author}`" style="color:#3C3C3C;">
+            {{ post.author }}<br>
+            <span class="articleDateTime">{{ post.authorDate }}</span>
+          </a>
+        </td>
+        <td class="helpBodf" style="text-align:center;">
+          <a :href="`visit_member.html?visit=${post.lastReplyAuthor || post.lastReplyUser || post.author}`" style="color:#3C3C3C;">
+            {{ post.lastReplyAuthor || post.lastReplyUser || post.author }}<br>
+            <span class="articleDateTime">{{ post.lastReplyDate || post.authorDate }}</span>
+          </a>
+        </td>
+      </tr>
+    </table>
   </div>
 </template>
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import type { ForumCategory, ForumPostRow } from '../utils/legacyParser';
 import { loadLegacyForumHtml, parseForum } from '../utils/legacyParser';
+import '../assets/css/forum-original.css';
 
 const categories = ref<ForumCategory[]>([]);
 const posts = ref<ForumPostRow[]>([]);
@@ -123,7 +174,11 @@ function extractSubjectId(href: string | undefined): string | undefined {
 
 function postRoute(post: ForumPostRow) {
   const id = post.subjectId || extractSubjectId(post.href);
-  return id ? { name: 'post', params: { id } } : { name: 'forum' };
+  return {
+    name: id ? 'post' : 'forum',
+    params: id ? { id } : {},
+    href: post.href || (id ? `forum/post/${id}.html` : 'forum.html')
+  };
 }
 
 function cleanTitle(title: string): string {
@@ -147,15 +202,24 @@ function toTimestamp(value: string | undefined): number {
   return 0;
 }
 
-const latestPosts = computed(() => {
-  const sorted = [...posts.value].sort((a, b) => {
+// 分離置頂文章和一般文章
+const pinnedPosts = computed(() => {
+  return posts.value.filter(post => post.pinned).slice(0, 5);
+});
+
+const normalPosts = computed(() => {
+  const sorted = [...posts.value.filter(post => !post.pinned)].sort((a, b) => {
     if (sortBy.value === 'latestReply') {
       return toTimestamp(b.lastReplyDate) - toTimestamp(a.lastReplyDate);
     }
     // latestPost
     return toTimestamp(b.authorDate) - toTimestamp(a.authorDate);
   });
-  return sorted.slice(0, 12);
+  return sorted.slice(0, 20);
+});
+
+const latestPosts = computed(() => {
+  return [...pinnedPosts.value, ...normalPosts.value];
 });
 
 onMounted(async () => {
