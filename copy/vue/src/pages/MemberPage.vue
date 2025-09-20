@@ -1102,7 +1102,7 @@ async function unfollowUser() {
     min-height: 300px;
     border-bottom: #e0e0e0 1px solid;
     border-radius: 10px;
-    background: url(/images/member_maincon_bg.jpg) center top repeat-y;
+    background: linear-gradient(135deg, #f5f5f5 0%, #e9ecef 100%);
     font-family: "微軟正黑體", "Microsoft JhengHei", "新細明體", PMingLiU, Arial, Helvetica, sans-serif;
     overflow: hidden;
   }

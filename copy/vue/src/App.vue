@@ -7,11 +7,15 @@
     <main class="main-content">
       <RouterView />
     </main>
+    
+    <!-- 底部欄位 -->
+    <AppFooter />
   </div>
 </template>
 
 <script setup lang="ts">
 import AppHeader from './components/AppHeader.vue';
+import AppFooter from './components/AppFooter.vue';
 import { onMounted } from 'vue';
 import { useSessionStore } from './stores/session';
 
@@ -39,10 +43,11 @@ body {
   background: #f0f8ff; /* 淺藍色背景，類似原始設計 */
 }
 
-/* 主要內容區域 */
+/* 主要內容區域 - 調整高度計算，預留底部空間 */
 .main-content {
-  min-height: calc(100vh - 60px); /* 減去頂部導航高度 */
+  min-height: calc(100vh - 60px - 120px); /* 減去頂部導航高度和底部欄位高度 */
   background: #f5f5f5;
+  padding-bottom: 20px; /* 額外底部間距 */
 }
 
 /* 全域樣式重置 */
