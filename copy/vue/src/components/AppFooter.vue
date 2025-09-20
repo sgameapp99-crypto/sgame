@@ -87,7 +87,8 @@
   margin-right: 10px;
 }
 
-.service_phone {
+.service_phone,
+.service_email {
   color: #333;
   margin-right: 5px;
 }

@@ -32,6 +32,8 @@ const router = createRouter({
       name: 'game-detail',
       component: () => import('../pages/GameDetailPage.vue'),
     },
+    // 法律條款頁面
+    { path: '/legal', name: 'legal', component: () => import('../pages/LegalPage.vue') },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',

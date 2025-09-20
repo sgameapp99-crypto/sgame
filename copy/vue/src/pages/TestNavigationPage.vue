@@ -198,6 +198,39 @@
         </div>
       </div>
 
+      <!-- 法律條款測試 -->
+      <div class="section">
+        <h2>⚖️ 法律條款測試 <span class="color-badge normal">功能頁面</span></h2>
+        <div class="button-group">
+          <RouterLink to="/legal" class="nav-button">
+            <div class="icon">📜</div>
+            <div class="content">
+              <h3>法律條款頁面</h3>
+              <p>服務條款、隱私權政策、販售預測規範</p>
+              <span class="url">/legal</span>
+            </div>
+          </RouterLink>
+
+          <RouterLink to="/legal#privacy" class="nav-button">
+            <div class="icon">🔒</div>
+            <div class="content">
+              <h3>隱私權政策</h3>
+              <p>直接跳轉到隱私權政策標籤</p>
+              <span class="url">/legal#privacy</span>
+            </div>
+          </RouterLink>
+
+          <RouterLink to="/legal#sales" class="nav-button">
+            <div class="icon">💰</div>
+            <div class="content">
+              <h3>販售預測規範</h3>
+              <p>直接跳轉到販售預測規範標籤</p>
+              <span class="url">/legal#sales</span>
+            </div>
+          </RouterLink>
+        </div>
+      </div>
+
       <!-- 錯誤處理測試 -->
       <div class="section">
         <h2>❌ 錯誤處理測試 <span class="color-badge error">錯誤測試</span></h2>
@@ -225,6 +258,10 @@
         <button @click="openInNewTab('/forum-test')" class="action-btn">
           <span class="icon">🧪</span>
           新分頁開啟測試頁
+        </button>
+        <button @click="openInNewTab('/legal')" class="action-btn">
+          <span class="icon">📜</span>
+          新分頁開啟法律條款
         </button>
         <button @click="refreshPage" class="action-btn">
           <span class="icon">🔄</span>
