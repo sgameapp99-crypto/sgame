@@ -88,6 +88,32 @@
               <span class="url">/member</span>
             </div>
           </RouterLink>
+
+          <RouterLink :to="{ path: '/member', state: { memberId: 'test123' } }" class="nav-button">
+            <div class="icon">🔎</div>
+            <div class="content">
+              <h3>查看他人會員頁</h3>
+              <p>隱藏 ID（history.state）導覽</p>
+              <span class="url">/member (with state)</span>
+            </div>
+          </RouterLink>
+
+          <!-- 可輸入目標 ID 的隱藏式導覽 -->
+          <div class="nav-button" style="display:flex; align-items:center; gap:12px;">
+            <div class="icon">🆔</div>
+            <div class="content" style="flex:1;">
+              <h3>輸入目標 ID（隱藏 ID 導覽）</h3>
+              <p>在網址不顯示 ID 的情況下，前往他人會員頁</p>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input v-model="member.memberId" placeholder="例如：test123" style="flex:1; border: 2px solid #e9ecef; border-radius: 8px; padding: 8px 10px; font-size: 0.95rem;" />
+                <button class="action-btn" @click="navigateToMemberHidden" :disabled="!member.memberId">
+                  <span class="icon">➡️</span>
+                  前往
+                </button>
+              </div>
+              <span class="url">/member (with state)</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -696,6 +722,13 @@ async function callUploadAvatar() {
   } finally {
     loading.avatar = false;
   }
+}
+
+// ===== 導覽：隱藏 ID 版本 =====
+function navigateToMemberHidden() {
+  const id = (member.memberId || '').trim();
+  if (!id) return;
+  router.push({ path: '/member', state: { memberId: id } });
 }
 </script>
 

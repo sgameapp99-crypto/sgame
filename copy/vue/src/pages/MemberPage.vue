@@ -428,8 +428,23 @@
             </div>
           </div>
           <div class="friend-actions" v-if="session.userId !== memberInfo.id">
-            <button class="follow-btn follow-btn--lamp" @click="followUser" aria-label="加為明燈">
+            <button
+              v-if="!isFollowing"
+              class="follow-btn follow-btn--lamp"
+              @click="followUser"
+              :disabled="followLoading"
+              aria-label="加為明燈"
+            >
               <i class="fa fa-lightbulb-o"></i> 加為明燈
+            </button>
+            <button
+              v-else
+              class="unfollow-btn"
+              @click="unfollowUser"
+              :disabled="unfollowLoading"
+              aria-label="取消明燈"
+            >
+              <i class="fa fa-times"></i> 取消明燈
             </button>
           </div>
         </div>
@@ -469,6 +484,8 @@ const activeTab = ref('predict');
 const selectedLeague = ref('');
 const selectedDate = ref('');
 const isFollowing = ref(false);
+const followLoading = ref(false);
+const unfollowLoading = ref(false);
   // 遊戲紀錄狀態
   const showCopyPrompt = ref(false);
   const betAccountId = ref('23333762');
@@ -651,8 +668,14 @@ function setActiveTab(tab: string) {
 // follow/unfollow 實作見上方：followUser / unfollowUser
 
 // 載入會員資料的函數
+function getViewingMemberId(): string {
+  // 優先使用 history.state（不顯示於網址列的內部導航）
+  const fromState = (history.state && (history.state as any).memberId) as string | undefined;
+  return fromState || (route.params.id as string) || session.userId || (session.user?.id as string) || '';
+}
+
 async function loadMemberData() {
-  const targetId = (route.params.id as string) || session.userId || session.user?.id || '';
+  const targetId = getViewingMemberId();
   if (!targetId) return;
 
   // 載入會員基本資料
@@ -692,7 +715,7 @@ async function loadMemberData() {
 // 監聽大頭貼更新事件
 function handleAvatarUpdate(event: Event) {
   // 如果是自己的會員頁面，重新載入資料
-  const targetId = (route.params.id as string) || session.userId || session.user?.id || '';
+  const targetId = getViewingMemberId();
   if (targetId === session.userId) {
     // 立即更新大頭貼 URL 避免快取
     const customEvent = event as CustomEvent;
@@ -728,6 +751,8 @@ onUnmounted(() => {
 
 // 追蹤/取消追蹤串接 API
 async function followUser() {
+  if (isFollowing.value || followLoading.value) return;
+  followLoading.value = true;
   try {
     const id = memberInfo.value.id;
     const res = await fetch(`/api/members/${encodeURIComponent(String(id))}/follow`, {
@@ -735,13 +760,18 @@ async function followUser() {
       credentials: 'include',
     });
     if (res.ok) {
-      isFollowing.value = true;
-      memberInfo.value.followers++;
+      if (!isFollowing.value) {
+        isFollowing.value = true;
+        memberInfo.value.followers++;
+      }
     }
   } catch {}
+  followLoading.value = false;
 }
 
 async function unfollowUser() {
+  if (!isFollowing.value || unfollowLoading.value) return;
+  unfollowLoading.value = true;
   try {
     const id = memberInfo.value.id;
     const res = await fetch(`/api/members/${encodeURIComponent(String(id))}/follow`, {
@@ -749,10 +779,13 @@ async function unfollowUser() {
       credentials: 'include',
     });
     if (res.ok) {
-      isFollowing.value = false;
-      if (memberInfo.value.followers > 0) memberInfo.value.followers--;
+      if (isFollowing.value) {
+        isFollowing.value = false;
+        if (memberInfo.value.followers > 0) memberInfo.value.followers--;
+      }
     }
   } catch {}
+  unfollowLoading.value = false;
 }
 </script>
 

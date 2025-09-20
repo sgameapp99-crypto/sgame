@@ -12,7 +12,9 @@ const router = createRouter({
     { path: '/login', name: 'login', component: () => import('../pages/LoginPage.vue') },
     { path: '/register', name: 'register', component: () => import('../pages/RegisterPage.vue') },
     { path: '/post/:id', name: 'post', component: () => import('../pages/PostPage.vue') },
+    // 會員頁：自己的頁面與他人頁面
     { path: '/member', name: 'member', component: () => import('../pages/MemberPage.vue'), meta: { requiresAuth: true } },
+    { path: '/member/:id', name: 'member-view', component: () => import('../pages/MemberPage.vue') },
     { path: '/predict', name: 'predict', component: () => import('../pages/PredictPage.vue') },
     {
       path: '/predict/buy',
