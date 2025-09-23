@@ -38,7 +38,7 @@
         </label>
 
         <div class="action-row">
-          <button class="submit" type="submit" :disabled="submitting">{{ submitting ? '登入中…' : '登入' }}</button>
+          <button class="submit" type="submit" :disabled="submitting || cooldown>0">{{ submitting ? '登入中…' : (cooldown>0 ? `稍後再試 (${cooldown}s)` : '登入') }}</button>
           <RouterLink class="signup" to="/register">免費加入會員</RouterLink>
         </div>
       </form>
@@ -47,15 +47,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 const username = ref('');
 const password = ref('');
 const rememberMe = ref(true);
 const errorMessage = ref('');
 const submitting = ref(false);
+const cooldown = ref(0);
+let cooldownTimer: any = null;
 
 const showPwdLenErr = ref(false);
 
@@ -65,13 +68,24 @@ function goBack() {
 }
 
 function oauth(provider: 'google' | 'facebook' | 'line') {
-  // 先簡化為導向；之後可由後端提供實際 OAuth 起點。
-  const map: Record<string, string> = {
-    google: '/member/google/auth',
-    facebook: '/member/facebook/auth',
-    line: '/member/line/auth',
-  };
-  window.location.href = map[provider];
+  if (provider === 'google') {
+    const redirectUrl = typeof route.query.redirect === 'string' && route.query.redirect
+      ? String(route.query.redirect)
+      : '/member';
+    // 與測試頁一致的後端起點
+    const url = `/api/auth/oauth/google/start?redirectUrl=${encodeURIComponent(redirectUrl)}`;
+    window.location.href = url;
+    return;
+  }
+  if (provider === 'facebook') {
+    const redirectUrl = typeof route.query.redirect === 'string' && route.query.redirect
+      ? String(route.query.redirect)
+      : '/member';
+    const url = `/api/auth/oauth/facebook/start?redirectUrl=${encodeURIComponent(redirectUrl)}`;
+    window.location.href = url;
+    return;
+  }
+  // 其他供應商可後續接上實際端點
 }
 
 async function onSubmit() {
@@ -92,32 +106,101 @@ async function onSubmit() {
   }
 
   try {
+    if (cooldown.value > 0) return;
     submitting.value = true;
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
       credentials: 'include',
-      body: JSON.stringify({ email: username.value, password: password.value, rememberme: rememberMe.value ? 'yes' : 'no', redirectUrl: '/member' })
+      body: JSON.stringify({ email: username.value, password: password.value, rememberme: rememberMe.value ? 'yes' : 'no', redirectUrl: (typeof route.query.redirect === 'string' && route.query.redirect) ? route.query.redirect : '/member' })
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      errorMessage.value = err?.message || '登入失敗，請稍後再試';
+      if (res.status === 429) {
+        errorMessage.value = err?.message || '嘗試過於頻繁，請稍後再試';
+        // 啟動前端冷卻，避免持續觸發後端限流
+        startCooldown(30);
+      } else {
+        errorMessage.value = err?.message || '登入失敗，請稍後再試';
+      }
       return;
     }
     // 200 { redirectUrl? } 或 204
     if (res.status === 204) {
-      router.push('/');
+      const qRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : undefined;
+      router.push(qRedirect || '/member');
       return;
     }
     const data = await res.json().catch(() => ({}));
+    const qRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : undefined;
     if (data?.redirectUrl) window.location.href = data.redirectUrl;
-    else router.push('/');
+    else router.push(qRedirect || '/member');
   } catch (e) {
     errorMessage.value = '網路或伺服器錯誤';
   } finally {
     submitting.value = false;
   }
 }
+
+function startCooldown(sec: number) {
+  cooldown.value = sec;
+  if (cooldownTimer) clearInterval(cooldownTimer);
+  cooldownTimer = setInterval(() => {
+    if (cooldown.value > 0) cooldown.value--; else clearInterval(cooldownTimer);
+  }, 1000);
+}
+
+// 若已登入且帶有 redirect 參數，直接導向
+onMounted(async () => {
+  try {
+    const res = await fetch('/api/auth/session', { credentials: 'include' });
+    const s = await res.json().catch(() => ({}));
+    if (s?.loggedIn) {
+      const qRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : undefined;
+      if (qRedirect) router.replace(qRedirect);
+      else router.replace('/member');
+    }
+  } catch {}
+  // 顯示來自 OAuth 的錯誤碼（若有）
+  const err = typeof route.query.error === 'string' ? route.query.error : '';
+  if (err) {
+    switch (err) {
+      case 'OAUTH_PROVIDER_DENIED':
+        errorMessage.value = '您已取消 Google 登入';
+        break;
+      case 'OAUTH_INVALID_STATE':
+        errorMessage.value = '登入請求無效，請重試';
+        break;
+      case 'OAUTH_EXCHANGE_FAILED':
+        errorMessage.value = 'Google 登入失敗，請稍後再試';
+        break;
+      default:
+        errorMessage.value = '登入過程中發生錯誤';
+    }
+  }
+
+  // 動態載入 Facebook SDK（若需要在前端頁面用 FB JS）
+  try {
+    const appId = (import.meta as any).env?.VITE_FB_APP_ID || '';
+    const apiVersion = (import.meta as any).env?.VITE_FB_API_VERSION || 'v19.0';
+    if (appId && !(window as any).FB) {
+      (window as any).fbAsyncInit = function () {
+        try {
+          (window as any).FB.init({ appId, cookie: true, xfbml: true, version: apiVersion });
+          if ((window as any).FB?.AppEvents?.logPageView) (window as any).FB.AppEvents.logPageView();
+        } catch {}
+      };
+      const id = 'facebook-jssdk';
+      if (!document.getElementById(id)) {
+        const js = document.createElement('script');
+        js.id = id;
+        js.src = 'https://connect.facebook.net/en_US/sdk.js';
+        const fjs = document.getElementsByTagName('script')[0];
+        fjs?.parentNode?.insertBefore(js, fjs);
+      }
+    }
+  } catch {}
+});
 </script>
 
 <style scoped>

@@ -13,6 +13,8 @@ interface SessionState {
   lastFetched: number | null;
   inFlight: Promise<void> | null;
   ttlMs: number;
+  emailVerified?: boolean;
+  verificationCheckedAt?: number | null;
 }
 
 export const useSessionStore = defineStore('session', {
@@ -23,6 +25,8 @@ export const useSessionStore = defineStore('session', {
     lastFetched: null,
     inFlight: null,
     ttlMs: 60_000,
+    emailVerified: undefined,
+    verificationCheckedAt: null,
   }),
   actions: {
     _set(loggedIn: boolean, user: SessionUser | null, userId?: string) {
@@ -48,6 +52,27 @@ export const useSessionStore = defineStore('session', {
         }
       })();
       await this.inFlight;
+    },
+    async checkVerificationStatus(force = false): Promise<boolean | undefined> {
+      if (!this.loggedIn) return undefined;
+      const now = Date.now();
+      const ttl = 30_000; // 30s TTL，避免過度打後端
+      if (!force && this.verificationCheckedAt && now - this.verificationCheckedAt < ttl && typeof this.emailVerified !== 'undefined') {
+        return this.emailVerified;
+      }
+      try {
+        const res = await fetch('/api/auth/verification-status', { credentials: 'include', headers: { Accept: 'application/json' } });
+        const data = await res.json().catch(() => ({} as any));
+        if (data && typeof data.isVerified === 'boolean') {
+          this.emailVerified = !!data.isVerified;
+          this.verificationCheckedAt = now;
+          return this.emailVerified;
+        }
+      } catch {
+        // ignore errors, leave as undefined
+      }
+      this.verificationCheckedAt = now;
+      return this.emailVerified;
     },
     async login(payload: { email: string; password: string; rememberme?: string }) {
       const res = await fetch('/api/auth/login', {

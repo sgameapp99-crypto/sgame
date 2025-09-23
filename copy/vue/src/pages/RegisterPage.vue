@@ -26,7 +26,15 @@
         <label class="field">
           <div>密碼</div>
           <input v-model="password" class="inputtext" name="password" type="password" autocomplete="new-password" />
-          <p v-show="showPwdLenErr" class="message-error">請輸入密碼至少 8 位數</p>
+          <div class="pwd-rules">
+            <div class="rule" :class="{ ok: vLen, bad: password.length>0 && !vLen }">8–12 碼</div>
+            <div class="rule" :class="{ ok: vUpper, bad: password.length>0 && !vUpper }">至少 1 個大寫字母</div>
+            <div class="rule" :class="{ ok: vLower, bad: password.length>0 && !vLower }">至少 1 個小寫字母</div>
+            <div class="rule" :class="{ ok: vNumber, bad: password.length>0 && !vNumber }">至少 1 個數字</div>
+            <div class="rule" :class="{ ok: vSpecial, bad: password.length>0 && !vSpecial }">至少 1 個特殊符號（!@#$%^&* 等）</div>
+            <div class="rule" :class="{ ok: vNoWs, bad: password.length>0 && !vNoWs }">不可含空白</div>
+            <div class="rule" :class="{ ok: vNotEmailLike, bad: password.length>0 && !vNotEmailLike }">不可與 Email 相同或包含 Email 主要片段</div>
+          </div>
         </label>
 
         <label class="field">
@@ -46,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
@@ -61,6 +69,26 @@ const submitting = ref(false);
 
 const showPwdLenErr = ref(false);
 const showPwdNotMatchErr = ref(false);
+
+// ===== 強密碼規則檢查 =====
+const vLen = computed(() => password.value.length >= 8 && password.value.length <= 12);
+const vUpper = computed(() => /[A-Z]/.test(password.value));
+const vLower = computed(() => /[a-z]/.test(password.value));
+const vNumber = computed(() => /\d/.test(password.value));
+const vSpecial = computed(() => /[!@#$%^&*()\-_=+\[\]{};:'",.<>/?`~|\\]/.test(password.value));
+const vNoWs = computed(() => !/\s/.test(password.value));
+const vNotEmailLike = computed(() => {
+  const pwd = (password.value || '').toLowerCase();
+  const em = (email.value || '').toLowerCase();
+  if (!em) return true;
+  if (pwd === em) return false;
+  const [local, domainAll] = em.split('@');
+  const domain = (domainAll || '').split('.')[0] || '';
+  const localOk = !local || local.length < 3 || !pwd.includes(local);
+  const domainOk = !domain || domain.length < 3 || !pwd.includes(domain);
+  return localOk && domainOk && !pwd.includes(em);
+});
+const strongOk = computed(() => vLen.value && vUpper.value && vLower.value && vNumber.value && vSpecial.value && vNoWs.value && vNotEmailLike.value);
 
 function goBack() {
   if (window.history.length > 1) router.back();
@@ -84,8 +112,9 @@ async function onSubmit() {
     errorMessage.value = '請輸入密碼';
     return;
   }
-  if (password.value.length < 8) {
-    showPwdLenErr.value = true;
+  // 強密碼提交攔截
+  if (!strongOk.value) {
+    errorMessage.value = '密碼未符合強度要求：8–12 碼，含大小寫、數字、特殊符號，不可含空白，且不可與 Email 相關。';
     return;
   }
   if (password.value !== passwordConfirm.value) {
@@ -104,10 +133,27 @@ async function onSubmit() {
 
     if (res.status === 201 || res.status === 200) {
       let redirectUrl: string | undefined;
+      let needsVerification = false;
       try {
         const data = await res.json();
         redirectUrl = data?.redirectUrl;
+        needsVerification = !!data?.needsVerification;
       } catch {}
+      if (needsVerification) {
+        // 確認是否已建立登入會話，若尚未登入則導至登入頁再回到驗證頁，避免驗證頁 401 造成重導循環
+        try {
+          const sres = await fetch('/api/auth/session', { credentials: 'include' });
+          const sdata = await sres.json().catch(() => ({}));
+          if (sdata?.loggedIn) {
+            router.push('/verify-email');
+          } else {
+            router.push({ name: 'login', query: { redirect: '/verify-email' } });
+          }
+        } catch {
+          router.push({ name: 'login', query: { redirect: '/verify-email' } });
+        }
+        return;
+      }
       const qRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : undefined;
       if (redirectUrl) window.location.href = redirectUrl;
       else if (qRedirect) router.push(qRedirect);

@@ -671,7 +671,11 @@ function setActiveTab(tab: string) {
 function getViewingMemberId(): string {
   // 優先使用 history.state（不顯示於網址列的內部導航）
   const fromState = (history.state && (history.state as any).memberId) as string | undefined;
-  return fromState || (route.params.id as string) || session.userId || (session.user?.id as string) || '';
+  const paramId = (route.params.id as string) || '';
+  // 避免誤把 "profile" 等保留字當成會員ID
+  const reserved = new Set(['profile']);
+  const safeParamId = reserved.has(paramId?.toLowerCase?.()) ? '' : paramId;
+  return fromState || safeParamId || session.userId || (session.user?.id as string) || '';
 }
 
 async function loadMemberData() {
@@ -735,6 +739,11 @@ onMounted(async () => {
   if (!session.loggedIn) {
     const redirect = encodeURIComponent(route.fullPath);
     router.replace({ name: 'login', query: { redirect } });
+    return;
+  }
+  // 若網址為 /member/profile（誤用），導向自己的會員頁
+  if ((route.params.id as string) === 'profile') {
+    router.replace('/member');
     return;
   }
 

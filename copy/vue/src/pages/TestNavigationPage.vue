@@ -320,12 +320,21 @@
           <div class="field">
             <label>Password</label>
             <input v-model="form.password" type="password" placeholder="password123" />
+            <div class="pwd-rules">
+              <div class="rule" :class="{ ok: vLen, bad: form.password && !vLen }">8–12 碼</div>
+              <div class="rule" :class="{ ok: vUpper, bad: form.password && !vUpper }">至少 1 個大寫字母</div>
+              <div class="rule" :class="{ ok: vLower, bad: form.password && !vLower }">至少 1 個小寫字母</div>
+              <div class="rule" :class="{ ok: vNumber, bad: form.password && !vNumber }">至少 1 個數字</div>
+              <div class="rule" :class="{ ok: vSpecial, bad: form.password && !vSpecial }">至少 1 個特殊符號（!@#$%^&* 等）</div>
+              <div class="rule" :class="{ ok: vNoWs, bad: form.password && !vNoWs }">不可含空白</div>
+              <div class="rule" :class="{ ok: vNotEmailLike, bad: form.password && !vNotEmailLike }">不可與 Email 相同或包含 Email 主要片段</div>
+            </div>
           </div>
           <div class="field">
             <label>Name</label>
             <input v-model="form.name" type="text" placeholder="Demo" />
           </div>
-          <button class="action-btn" @click="callRegister" :disabled="loading.register">
+          <button class="action-btn" @click="callRegister" :disabled="loading.register || !strongOk">
             <span class="icon">🆕</span>
             註冊（並設定 Cookie）
           </button>
@@ -418,6 +427,76 @@
         </div>
       </div>
 
+      <!-- Google OAuth 測試 -->
+      <h2 style="margin-top:24px;">🔐 Google OAuth 測試</h2>
+      <div class="api-grid">
+        <div class="api-card">
+          <h3>GET /auth/oauth/google/start</h3>
+          <div class="field">
+            <label>重定向 URL</label>
+            <input v-model="oauth.redirectUrl" type="text" placeholder="/member" />
+          </div>
+          <button class="action-btn" @click="callOAuthStart" :disabled="loading.oauthStart">
+            <span class="icon">🚀</span>
+            啟動 Google OAuth（重定向）
+          </button>
+          <pre class="result" v-text="results.oauthStart"></pre>
+        </div>
+
+        <div class="api-card">
+          <h3>GET /auth/oauth/google/callback</h3>
+          <div class="field">
+            <label>模擬錯誤參數</label>
+            <select v-model="oauth.errorType">
+              <option value="">正常流程</option>
+              <option value="access_denied">access_denied</option>
+              <option value="invalid_request">invalid_request</option>
+            </select>
+          </div>
+          <button class="action-btn" @click="callOAuthCallback" :disabled="loading.oauthCallback">
+            <span class="icon">🔄</span>
+            測試回調端點
+          </button>
+          <pre class="result" v-text="results.oauthCallback"></pre>
+        </div>
+
+        <div class="api-card">
+          <h3>錯誤處理檢查</h3>
+          <button class="action-btn" @click="checkOAuthErrors">
+            <span class="icon">🔍</span>
+            檢查 URL 錯誤參數
+          </button>
+          <pre class="result" v-text="results.oauthErrors"></pre>
+        </div>
+
+        <div class="api-card">
+          <h3>完整 OAuth 流程</h3>
+          <div class="oauth-flow">
+            <div class="flow-step">
+              <span class="step-number">1</span>
+              <span class="step-text">點擊「啟動 Google OAuth」</span>
+            </div>
+            <div class="flow-step">
+              <span class="step-number">2</span>
+              <span class="step-text">在 Google 頁面完成授權</span>
+            </div>
+            <div class="flow-step">
+              <span class="step-number">3</span>
+              <span class="step-text">自動重定向回應用程式</span>
+            </div>
+            <div class="flow-step">
+              <span class="step-number">4</span>
+              <span class="step-text">檢查 Session 與 Cookie</span>
+            </div>
+          </div>
+          <button class="action-btn" @click="validateOAuthFlow">
+            <span class="icon">✅</span>
+            驗證 OAuth 流程狀態
+          </button>
+          <pre class="result" v-text="results.oauthValidation"></pre>
+        </div>
+      </div>
+
       <!-- 大頭貼上傳測試 -->
       <h2 style="margin-top:24px;">📸 大頭貼上傳測試</h2>
       <div class="api-grid">
@@ -463,6 +542,48 @@
         </div>
       </div>
 
+      <!-- 大頭貼讀取檢測 -->
+      <h2 style="margin-top:24px;">🕵️ 大頭貼讀取檢測</h2>
+      <div class="api-grid">
+        <div class="api-card">
+          <h3>檢測使用者大頭貼 URL</h3>
+          <div class="field">
+            <label>使用者 ID</label>
+            <input v-model="avatarCheck.userId" placeholder="例如：test123" />
+          </div>
+          <div class="field">
+            <label>圖片完整 URL（選填，預設使用 /static/avatars/{id}.webp）</label>
+            <input v-model="avatarCheck.customUrl" placeholder="http://host:port/static/avatars/test123.webp" />
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap: wrap;">
+            <button class="action-btn" @click="checkAvatar('HEAD')" :disabled="loading.avatarCheck">
+              <span class="icon">🧪</span>
+              HEAD 檢測
+            </button>
+            <button class="action-btn" @click="checkAvatar('GET')" :disabled="loading.avatarCheck">
+              <span class="icon">🔍</span>
+              GET 讀取（含快取破壞）
+            </button>
+            <button class="action-btn" @click="refreshAvatarPreview" :disabled="!avatarCheck.lastUrl">
+              <span class="icon">🖼️</span>
+              更新預覽
+            </button>
+          </div>
+          <pre class="result" v-text="results.avatarCheck"></pre>
+        </div>
+
+        <div class="api-card" v-if="avatarCheck.previewUrl">
+          <h3>讀取預覽</h3>
+          <div style="text-align:center;">
+            <img :src="avatarCheck.previewUrl" alt="讀取預覽" style="max-width: 150px; max-height: 150px; border-radius: 50%; border: 3px solid #28a745;" />
+            <div style="margin-top: 10px; font-size: 0.85rem; color: #666;">{{ avatarCheck.lastUrl }}</div>
+            <div style="margin-top: 6px;">
+              <a :href="avatarCheck.lastUrl" target="_blank" rel="noreferrer noopener" style="font-size:12px;">在新分頁開啟原始圖片 URL</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="cookie-panel">
         <div class="cookie-header">
           <h3>🍪 瀏覽器 Cookie</h3>
@@ -480,7 +601,7 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { reactive, ref, onMounted } from 'vue';
+import { reactive, ref, onMounted, computed } from 'vue';
 import { useSessionStore } from '../stores/session';
 
 const router = useRouter();
@@ -507,16 +628,39 @@ const form = reactive({
   name: 'Demo'
 });
 
-const loading = reactive({ health: false, register: false, login: false, session: false, logout: false, profile: false, relationships: false, follow: false, unfollow: false, avatar: false });
-const results = reactive<{ [k: string]: string }>({ health: '', register: '', login: '', session: '', logout: '', profile: '', relationships: '', follow: '', unfollow: '', avatar: '' });
+// 強密碼規則（與 RegisterPage 一致）
+const vLen = computed(() => form.password.length >= 8 && form.password.length <= 12);
+const vUpper = computed(() => /[A-Z]/.test(form.password));
+const vLower = computed(() => /[a-z]/.test(form.password));
+const vNumber = computed(() => /\d/.test(form.password));
+const vSpecial = computed(() => /[!@#$%^&*()\-_=+\[\]{};:'",.<>/?`~|\\]/.test(form.password));
+const vNoWs = computed(() => !/\s/.test(form.password));
+const vNotEmailLike = computed(() => {
+  const pwd = (form.password || '').toLowerCase();
+  const em = (form.email || '').toLowerCase();
+  if (!em) return true;
+  if (pwd === em) return false;
+  const [local, domainAll] = em.split('@');
+  const domain = (domainAll || '').split('.')[0] || '';
+  const localOk = !local || local.length < 3 || !pwd.includes(local);
+  const domainOk = !domain || domain.length < 3 || !pwd.includes(domain);
+  return localOk && domainOk && !pwd.includes(em);
+});
+const strongOk = computed(() => vLen.value && vUpper.value && vLower.value && vNumber.value && vSpecial.value && vNoWs.value && vNotEmailLike.value);
+
+const loading = reactive({ health: false, register: false, login: false, session: false, logout: false, profile: false, relationships: false, follow: false, unfollow: false, avatar: false, oauthStart: false, oauthCallback: false, avatarCheck: false });
+const results = reactive<{ [k: string]: string }>({ health: '', register: '', login: '', session: '', logout: '', profile: '', relationships: '', follow: '', unfollow: '', avatar: '', oauthStart: '', oauthCallback: '', oauthErrors: '', oauthValidation: '', avatarCheck: '' });
 const cookies = ref('');
 const member = reactive({ memberId: 'test123' });
+const oauth = reactive({ redirectUrl: '/member', errorType: '' });
 
 // 大頭貼上傳相關
 const avatarFileInput = ref<HTMLInputElement>();
 const selectedFile = ref<File | null>(null);
 const avatarPreview = ref<string>('');
 const avatarUrl = ref<string>('');
+// 新增：大頭貼讀取檢測狀態
+const avatarCheck = reactive<{ userId: string; customUrl: string; lastUrl: string; previewUrl: string }>({ userId: 'test123', customUrl: '', lastUrl: '', previewUrl: '' });
 
 function refreshCookies() {
   try {
@@ -527,6 +671,127 @@ function refreshCookies() {
 }
 
 function buildUrl(path: string) { return path; }
+
+function buildAvatarUrl(): string {
+  const base = avatarCheck.customUrl?.trim();
+  if (base) return base;
+  const id = (avatarCheck.userId || '').trim();
+  if (!id) return '';
+  return `/static/avatars/${encodeURIComponent(id)}.webp`;
+}
+
+async function headRequest(url: string) {
+  try {
+    const res = await fetch(url, { method: 'HEAD', credentials: 'include' });
+    return { ok: res.ok, status: res.status, headers: res.headers };
+  } catch (e: any) {
+    return { ok: false, status: 0, headers: new Headers(), error: String(e) };
+  }
+}
+
+async function getRequest(url: string) {
+  try {
+    const res = await fetch(url, { method: 'GET', credentials: 'include' });
+    const buf = await res.arrayBuffer();
+    return { ok: res.ok, status: res.status, headers: res.headers, size: buf.byteLength };
+  } catch (e: any) {
+    return { ok: false, status: 0, headers: new Headers(), size: 0, error: String(e) };
+  }
+}
+
+function headerPick(h: Headers, k: string) {
+  return h.get(k) || '';
+}
+
+function sameOrigin(url: string): boolean {
+  try {
+    const u = new URL(url, window.location.origin);
+    return u.origin === window.location.origin;
+  } catch {
+    return true;
+  }
+}
+
+function buildPreviewSrc(rawUrl: string): string {
+  try {
+    const u = new URL(rawUrl, window.location.origin);
+    if (u.origin === window.location.origin) return `${u.pathname}${u.search}${u.search ? '&' : '?'}v=${Date.now()}`;
+    // 若為跨來源，但路徑在 /static 下，使用同來源代理路徑避免 CORP 阻擋
+    if (u.pathname.startsWith('/static/')) {
+      return `${u.pathname}?v=${Date.now()}`;
+    }
+    return `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
+  } catch {
+    return `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
+  }
+}
+
+async function checkAvatar(method: 'HEAD'|'GET') {
+  const rawUrl = buildAvatarUrl();
+  if (!rawUrl) {
+    results.avatarCheck = '請輸入使用者 ID 或完整圖片 URL';
+    return;
+  }
+
+  loading.avatarCheck = true;
+  try {
+    const url = method === 'GET' ? `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}v=${Date.now()}` : rawUrl;
+    avatarCheck.lastUrl = rawUrl;
+
+    if (method === 'HEAD') {
+      const r = await headRequest(url);
+      const ct = headerPick(r.headers, 'content-type');
+      const cl = headerPick(r.headers, 'content-length');
+      const etag = headerPick(r.headers, 'etag');
+      const lm = headerPick(r.headers, 'last-modified');
+      const corp = headerPick(r.headers, 'cross-origin-resource-policy');
+      let note = '';
+      if (!sameOrigin(rawUrl) && /same-origin/i.test(corp)) {
+        note = '\n(提示) 伺服器 CORP=same-origin，跨來源 <img> 可能被阻擋，將改用同來源預覽路徑';
+      }
+      results.avatarCheck = `HEAD ${rawUrl} → status: ${r.status}, ok: ${r.ok}\ncontent-type: ${ct}\ncontent-length: ${cl}\netag: ${etag}\nlast-modified: ${lm}${note}`;
+      if (r.ok && /image\//i.test(ct)) {
+        await refreshAvatarPreview();
+      }
+    } else {
+      const r = await getRequest(url);
+      const ct = headerPick(r.headers, 'content-type');
+      const cl = headerPick(r.headers, 'content-length');
+      const corp = headerPick(r.headers, 'cross-origin-resource-policy');
+      let note = '';
+      if (!sameOrigin(rawUrl) && /same-origin/i.test(corp)) {
+        note = '\n(提示) 伺服器 CORP=same-origin，跨來源 <img> 可能被阻擋，將改用同來源預覽路徑';
+      }
+      results.avatarCheck = `GET ${rawUrl} → status: ${r.status}, ok: ${r.ok}\ncontent-type: ${ct}\ncontent-length: ${cl}\narrayBuffer.size: ${r.size}${note}`;
+      if (r.ok && /image\//i.test(ct)) {
+        await refreshAvatarPreview();
+      }
+    }
+  } catch (e: any) {
+    results.avatarCheck = `檢測失敗: ${String(e)}`;
+  } finally {
+    loading.avatarCheck = false;
+  }
+}
+
+async function refreshAvatarPreview() {
+  if (!avatarCheck.lastUrl) return;
+  const previewCandidate = buildPreviewSrc(avatarCheck.lastUrl);
+  // 驗證同來源 URL 是否回傳 image，避免被前端 dev server 回 index.html
+  try {
+    const h = await fetch(previewCandidate, { method: 'HEAD', credentials: 'include' });
+    const ct = h.headers.get('content-type') || '';
+    if (!/^image\//i.test(ct)) {
+      results.avatarCheck += `\n(提示) 同來源預覽路徑回傳非圖片 content-type: ${ct}，請確認開發代理是否包含 '/static' 並已重啟。`;
+      // 退回使用原始完整 URL 嘗試直接顯示（若伺服器 CORP=same-origin，可能仍不顯示，但提供下方新分頁開啟連結）
+      avatarCheck.previewUrl = `${avatarCheck.lastUrl}${avatarCheck.lastUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
+      return;
+    }
+    avatarCheck.previewUrl = previewCandidate;
+  } catch {
+    avatarCheck.previewUrl = previewCandidate; // 退而求其次仍嘗試顯示
+  }
+}
 
 async function request(path: string, init?: RequestInit) {
   try {
@@ -576,6 +841,10 @@ async function callLogin() {
 }
 
 async function callRegister() {
+  if (!strongOk.value) {
+    results.register = '密碼未符合強度要求：8–12 碼，含大小寫、數字、特殊符號，不可含空白，且不可與 Email 相關。';
+    return;
+  }
   loading.register = true; results.register = '請求中...';
   try {
     const r = await request('/api/auth/register', {
@@ -584,6 +853,14 @@ async function callRegister() {
       body: JSON.stringify({ email: form.email, password: form.password, name: form.name })
     });
     results.register = pretty('POST /auth/register', r);
+    try {
+      if (r.ok && typeof r.data === 'object' && r.data) {
+        const nv = (r.data as any).needsVerification;
+        if (typeof nv === 'boolean') {
+          results.register += `\nneedsVerification: ${nv}`;
+        }
+      }
+    } catch {}
     try {
       const session = useSessionStore();
       await session.fetchSession(true);
@@ -761,11 +1038,127 @@ async function callUploadAvatar() {
   }
 }
 
+// ===== Google OAuth 測試 =====
+async function callOAuthStart() {
+  const redirectUrl = oauth.redirectUrl || '/member';
+  const url = `/api/auth/oauth/google/start?redirectUrl=${encodeURIComponent(redirectUrl)}`;
+  // 直接導頁至後端 OAuth 起始端點
+  window.location.href = url;
+}
+
+async function callOAuthCallback() {
+  loading.oauthCallback = true;
+  results.oauthCallback = '測試 OAuth 回調端點...';
+  
+  try {
+    let url = '/api/auth/oauth/google/callback';
+    if (oauth.errorType) {
+      url += `?error=${oauth.errorType}`;
+    } else {
+      url += '?code=test_code&state=test_state';
+    }
+    
+    const res = await request(url, { method: 'HEAD' });
+    results.oauthCallback = pretty('HEAD /auth/oauth/google/callback', res);
+    
+    if (res.status === 302) {
+      results.oauthCallback += '\n\n✅ 回調端點正常，會進行重定向';
+      if (oauth.errorType) {
+        results.oauthCallback += `\n📱 錯誤處理測試：${oauth.errorType}`;
+      }
+    }
+  } catch (e: any) {
+    results.oauthCallback = `OAuth 回調測試失敗: ${String(e)}`;
+  }
+  
+  loading.oauthCallback = false;
+}
+
+function checkOAuthErrors() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const error = urlParams.get('error');
+  
+  let errorInfo = 'URL 參數檢查結果：\n';
+  errorInfo += `當前 URL: ${window.location.href}\n`;
+  errorInfo += `查詢參數: ${window.location.search}\n\n`;
+  
+  if (error) {
+    errorInfo += `🚨 發現錯誤參數: ${error}\n\n`;
+    
+    switch (error) {
+      case 'OAUTH_PROVIDER_DENIED':
+        errorInfo += '📝 錯誤說明: 用戶在 Google 頁面拒絕授權\n';
+        errorInfo += '💡 建議: 檢查用戶是否點擊了「取消」或「拒絕」';
+        break;
+      case 'OAUTH_INVALID_STATE':
+        errorInfo += '📝 錯誤說明: 狀態參數驗證失敗\n';
+        errorInfo += '💡 建議: 可能是 CSRF 攻擊或會話過期';
+        break;
+      case 'OAUTH_EXCHANGE_FAILED':
+        errorInfo += '📝 錯誤說明: 授權碼交換失敗\n';
+        errorInfo += '💡 建議: 檢查 Google OAuth 憑證設定';
+        break;
+      case 'OAUTH_REDIRECT_INVALID':
+        errorInfo += '📝 錯誤說明: 重定向 URL 不在白名單中\n';
+        errorInfo += '💡 建議: 使用允許的重定向 URL';
+        break;
+      default:
+        errorInfo += `📝 錯誤說明: 未知錯誤碼\n`;
+        errorInfo += '💡 建議: 檢查後端日誌或聯繫開發團隊';
+    }
+  } else {
+    errorInfo += '✅ 沒有發現錯誤參數\n';
+    errorInfo += '📝 當前頁面沒有 OAuth 相關錯誤';
+  }
+  
+  results.oauthErrors = errorInfo;
+}
+
+async function validateOAuthFlow() {
+  results.oauthValidation = '驗證 OAuth 流程狀態...\n';
+  
+  try {
+    // 檢查當前登入狀態
+    const sessionRes = await request('/api/auth/session');
+    results.oauthValidation += '🔍 檢查登入狀態:\n';
+    results.oauthValidation += pretty('GET /auth/session', sessionRes);
+    
+    if (sessionRes.ok && sessionRes.data.loggedIn) {
+      results.oauthValidation += '\n✅ OAuth 流程成功完成！\n';
+      results.oauthValidation += `👤 用戶 ID: ${sessionRes.data.userId || 'N/A'}\n`;
+      
+      // 刷新 session store
+      try {
+        const session = useSessionStore();
+        await session.fetchSession(true);
+        results.oauthValidation += `📱 Session Store 狀態: ${JSON.stringify({ loggedIn: session.loggedIn, user: session.user }, null, 2)}`;
+      } catch (e) {
+        results.oauthValidation += `\n⚠️ Session Store 更新失敗: ${e}`;
+      }
+    } else {
+      results.oauthValidation += '\n❌ 用戶未登入，OAuth 流程可能未完成或失敗\n';
+      results.oauthValidation += '💡 建議: 重新執行 OAuth 流程測試';
+    }
+    
+    // 檢查 Cookie
+    refreshCookies();
+    results.oauthValidation += `\n\n🍪 Cookie 狀態:\n${cookies.value}`;
+    
+  } catch (e: any) {
+    results.oauthValidation += `\n❌ 驗證過程發生錯誤: ${String(e)}`;
+  }
+}
+
 // ===== 導覽：隱藏 ID 版本 =====
 function navigateToMemberHidden() {
   const id = (member.memberId || '').trim();
   if (!id) return;
   router.push({ path: '/member', state: { memberId: id } });
+}
+
+// 頁面載入時若有完整 URL，先做一次 HEAD 檢測
+if (avatarCheck.customUrl) {
+  checkAvatar('HEAD');
 }
 </script>
 
@@ -1115,6 +1508,11 @@ function navigateToMemberHidden() {
 .api-card h3 {
   margin: 0 0 10px 0;
 }
+/* 強密碼提示樣式 */
+.pwd-rules { display: grid; grid-template-columns: 1fr; gap: 4px; margin-top: 6px; }
+.pwd-rules .rule { font-size: 12px; color: #666; }
+.pwd-rules .rule.ok { color: #28a745; }
+.pwd-rules .rule.bad { color: #dc3545; }
 
 .field {
   display: flex;
@@ -1165,6 +1563,43 @@ function navigateToMemberHidden() {
   font-size: 0.85rem;
 }
 
+/* OAuth 流程樣式 */
+.oauth-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.flow-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #667eea;
+}
+
+.step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #667eea;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.step-text {
+  font-size: 0.9rem;
+  color: #333;
+}
+
 /* 響應式設計 */
 @media (max-width: 768px) {
   .test-navigation {
@@ -1196,6 +1631,24 @@ function navigateToMemberHidden() {
   
   .status-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .oauth-flow {
+    gap: 6px;
+  }
+  
+  .flow-step {
+    padding: 6px 10px;
+  }
+  
+  .step-number {
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+  
+  .step-text {
+    font-size: 0.85rem;
   }
 }
 </style>

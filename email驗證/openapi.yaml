@@ -37,12 +37,11 @@ paths:
             schema:
               type: object
               properties:
-                email:
+                username:
                   type: string
-                  format: email
                 password:
                   type: string
-              required: [email, password]
+              required: [username, password]
       responses:
         '200':
           description: 登入成功（同時以 Set-Cookie 下發 HttpOnly 會話）
@@ -58,12 +57,6 @@ paths:
           description: 登入成功（無回應內容；以 Set-Cookie 下發 HttpOnly 會話）
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '422':
-          description: 參數驗證錯誤
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
   /auth/register:
     post:
@@ -114,9 +107,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: '#/components/schemas/ErrorResponse'
-                  - $ref: '#/components/schemas/PasswordWeakError'
+                $ref: '#/components/schemas/ErrorResponse'
 
   /auth/send-verification:
     post:
@@ -175,12 +166,6 @@ paths:
                 $ref: '#/components/schemas/EmailVerificationError'
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '422':
-          description: 參數驗證錯誤
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
   /auth/resend-verification:
     post:
@@ -222,37 +207,32 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /auth/oauth/google/start:
+  /auth/oauth/{provider}/start:
     get:
       tags: [auth]
-      summary: Google OAuth 登入起始（導向供應商授權頁）
+      summary: 第三方登入起始（導向供應商授權頁）
+      description: |
+        產生 state（與可選 PKCE）並 302 導向供應商授權頁；成功授權後將回到 `/auth/oauth/{provider}/callback`。
+        注意：此端點會回傳 302，並不回應 JSON 內容。
       parameters:
+        - $ref: '#/components/parameters/OAuthProvider'
         - $ref: '#/components/parameters/RedirectUrl'
       responses:
-        '302': { description: 重新導向至 Google 授權頁 }
+        '302':
+          description: 重新導向至供應商授權頁
 
-  /auth/oauth/google/callback:
+  /auth/oauth/{provider}/callback:
     get:
       tags: [auth]
-      summary: Google OAuth 回調（交換授權碼、建立會話）
-      responses:
-        '302': { description: 建立會話並導回 redirectUrl 或導回 /login 顯示錯誤 }
-
-  /auth/oauth/facebook/start:
-    get:
-      tags: [auth]
-      summary: Facebook OAuth 登入起始（導向供應商授權頁）
+      summary: 第三方登入回調（交換授權碼、建立會話）
+      description: |
+        使用授權碼交換 access/id token，建立或綁定使用者後以 Set-Cookie（HttpOnly）下發會話並 302 導回 redirectUrl。
+        若錯誤則可 302 回 `/login?error=...`。
       parameters:
-        - $ref: '#/components/parameters/RedirectUrl'
+        - $ref: '#/components/parameters/OAuthProvider'
       responses:
-        '302': { description: 重新導向至 Facebook 授權頁 }
-
-  /auth/oauth/facebook/callback:
-    get:
-      tags: [auth]
-      summary: Facebook OAuth 回調（交換授權碼、建立會話）
-      responses:
-        '302': { description: 建立會話並導回 redirectUrl 或導回 /login 顯示錯誤 }
+        '302':
+          description: 建立會話並導回 redirectUrl 或導回 /login 顯示錯誤
 
   /auth/logout:
     post:
@@ -269,100 +249,6 @@ paths:
       responses:
         '200':
           description: Session 資訊
-
-  /users/profile:
-    get:
-      tags: [users]
-      summary: 取得使用者個人資料（未完成/暫不提供）
-      description: 未完成/暫不提供
-      security:
-        - bearerAuth: []
-        - cookieAuth: []
-      responses:
-        '200': { description: 用戶資料 }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-    put:
-      tags: [users]
-      summary: 更新使用者個人資料（未完成/暫不提供）
-      description: 未完成/暫不提供
-      security:
-        - bearerAuth: []
-        - cookieAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                phone:
-                  type: string
-                avatar:
-                  type: string
-      responses:
-        '200': { description: 更新成功 }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-
-  /predictions:
-    get:
-      tags: [predictions]
-      summary: 取得預測列表（未完成/暫不提供）
-      description: 未完成/暫不提供
-      parameters:
-        - in: query
-          name: page
-          schema: { type: integer, default: 1 }
-        - in: query
-          name: limit
-          schema: { type: integer, default: 10 }
-        - in: query
-          name: sport
-          schema:
-            type: string
-            enum: [BASKETBALL, FOOTBALL, BASEBALL, TENNIS, SOCCER]
-      responses:
-        '200': { description: 預測列表 }
-    post:
-      tags: [predictions]
-      summary: 建立預測（未完成/暫不提供）
-      description: 未完成/暫不提供
-      security:
-        - bearerAuth: []
-        - cookieAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [title, description, sport, predictionType, odds, price]
-              properties:
-                title: { type: string }
-                description: { type: string }
-                sport: { type: string, enum: [BASKETBALL, FOOTBALL, BASEBALL, TENNIS, SOCCER] }
-                predictionType: { type: string, enum: [WIN_LOSE, HANDICAP, OVER_UNDER, CORRECT_SCORE] }
-                odds: { type: number }
-                price: { type: number }
-                matchInfo: { type: object }
-      responses:
-        '201': { description: 預測創建成功 }
-        '401': { description: 未授權 }
-
-  /predictions/{id}:
-    get:
-      tags: [predictions]
-      summary: 取得特定預測詳情（未完成/暫不提供）
-      description: 未完成/暫不提供
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: string }
-      responses:
-        '200': { description: 預測詳情 }
-        '404': { description: 預測不存在 }
   /me/avatar:
     post:
       tags: [me]
@@ -506,8 +392,7 @@ paths:
   /members/{id}/predictions:
     get:
       tags: [members]
-      summary: 會員預測列表（未完成/暫不提供）
-      description: 未完成/暫不提供
+      summary: 會員預測列表
       parameters:
         - $ref: '#/components/parameters/MemberId'
         - $ref: '#/components/parameters/League'
@@ -525,8 +410,7 @@ paths:
   /members/{id}/posts:
     get:
       tags: [posts]
-      summary: 會員發文列表（未完成/暫不提供）
-      description: 未完成/暫不提供
+      summary: 會員發文列表
       parameters:
         - $ref: '#/components/parameters/MemberId'
         - $ref: '#/components/parameters/Page'
@@ -542,8 +426,7 @@ paths:
   /filters/leagues:
     get:
       tags: [filters]
-      summary: 聯盟字典（未完成/暫不提供）
-      description: 未完成/暫不提供
+      summary: 聯盟字典
       responses:
         '200':
           description: leagues
@@ -557,8 +440,7 @@ paths:
   /filters/dates:
     get:
       tags: [filters]
-      summary: 日期字典（近 N 天）（未完成/暫不提供）
-      description: 未完成/暫不提供
+      summary: 日期字典（近 N 天）
       parameters:
         - in: query
           name: range
@@ -583,10 +465,6 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: sgame_session
 
   parameters:
     MemberId:
@@ -877,63 +755,7 @@ components:
             - VERIFICATION_SEND_FAILED
           description: 錯誤代碼
 
-    PasswordWeakError:
-      type: object
-      properties:
-        code:
-          type: string
-          enum: [PASSWORD_WEAK]
-          description: 密碼強度錯誤代碼
-        message:
-          type: string
-          description: 人類可讀的錯誤訊息
-          example: "密碼需為 8–12 碼，含大小寫、數字與特殊符號，不可含空白，且不可與 Email 相關"
-        details:
-          type: object
-          description: 機器可讀的驗證詳情
-          properties:
-            length:
-              type: boolean
-              description: 長度是否符合要求 (8-12)
-            hasUpper:
-              type: boolean
-              description: 是否包含大寫字母
-            hasLower:
-              type: boolean
-              description: 是否包含小寫字母
-            hasNumber:
-              type: boolean
-              description: 是否包含數字
-            hasSpecial:
-              type: boolean
-              description: 是否包含特殊字元
-            noWhitespace:
-              type: boolean
-              description: 是否不包含空白字元
-            notEmailLike:
-              type: boolean
-              description: 是否與 Email 無關
-        errors:
-          type: array
-          description: 具體錯誤訊息列表
-          items:
-            type: string
-          example: ["密碼長度必須為 8-12 字元", "密碼必須包含至少一個大寫字母"]
-
-    TooManyAttemptsError:
-      type: object
-      properties:
-        code:
-          type: string
-          enum: [TOO_MANY_ATTEMPTS]
-          description: 請求過於頻繁錯誤代碼
-        message:
-          type: string
-          description: 錯誤訊息
-          example: "註冊嘗試過於頻繁，請稍後再試"
-
 security:
   - bearerAuth: []
-  - cookieAuth: []
 
 

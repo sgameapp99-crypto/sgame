@@ -11,6 +11,7 @@ const router = createRouter({
     { path: '/forum', name: 'forum', component: () => import('../pages/ForumPage.vue') },
     { path: '/login', name: 'login', component: () => import('../pages/LoginPage.vue') },
     { path: '/register', name: 'register', component: () => import('../pages/RegisterPage.vue') },
+    { path: '/verify-email', name: 'verify-email', component: () => import('../pages/VerifyEmailPage.vue'), meta: { requiresAuth: true } },
     { path: '/post/:id', name: 'post', component: () => import('../pages/PostPage.vue') },
     // 會員頁：自己的頁面與他人頁面
     { path: '/member', name: 'member', component: () => import('../pages/MemberPage.vue'), meta: { requiresAuth: true } },
@@ -45,11 +46,27 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const session = useSessionStore();
   if (to.meta && (to.meta as any).requiresAuth) {
-    await session.fetchSession();
+    // 強制刷新，避免 TTL 快取導致登入後短時間內仍判定未登入而重導
+    await session.fetchSession(true);
     if (!session.loggedIn) {
-      const redirect = encodeURIComponent(to.fullPath);
-      return { name: 'login', query: { redirect } };
+      // 直接使用原始 fullPath，交由路由本身處理編碼，避免二次編碼（%252Fmember）
+      return { name: 'login', query: { redirect: to.fullPath } };
     }
+  }
+
+  // 全域：若已登入但尚未通過 Email 驗證，限制進入受保護頁（除了 /verify-email 與 /logout）
+  const protectedNames = new Set(['member', 'member-view', 'predict', 'predict-buy', 'games', 'games-list', 'game-detail']);
+  const bypassNames = new Set(['verify-email', 'logout', 'login', 'register', 'home', 'forum', 'forum-test', 'test-nav', 'legal', 'post', 'not-found']);
+  if (!bypassNames.has((to.name as string) || '')) {
+    try {
+      await session.fetchSession();
+      if (session.loggedIn) {
+        const v = await session.checkVerificationStatus();
+        if (v === false && (protectedNames.has((to.name as string) || '') || (to.meta as any)?.requiresAuth)) {
+          return { name: 'verify-email' };
+        }
+      }
+    } catch {}
   }
   return true;
 });

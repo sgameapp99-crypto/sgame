@@ -1,12 +1,15 @@
 重啟時 IP會變動 
 需要修改 前端IP 後端IP 
 虛擬雲 前往後 front2back須設定
+
+*google oauth 重定向URL 
 ----
 seo friendly
 ---
 電話/法律/條款頁面 完成後需請業主審查
 ----
-
+!最後需要將google信箱 2步驟 電話移除
+-----
 建議實施順序（由影響面最廣、回收最多重複成本者優先）：
 1) 先建 Pinia session store
 統一維護 loggedIn/user/cookies/lastFetched 與 actions（fetchSession、login、logout、refresh）。
