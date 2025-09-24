@@ -48,6 +48,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import api from '../api/client';
+import { useSessionStore } from '../stores/session';
 import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
@@ -108,15 +110,21 @@ async function onSubmit() {
   try {
     if (cooldown.value > 0) return;
     submitting.value = true;
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-      credentials: 'include',
-      body: JSON.stringify({ email: username.value, password: password.value, rememberme: rememberMe.value ? 'yes' : 'no', redirectUrl: (typeof route.query.redirect === 'string' && route.query.redirect) ? route.query.redirect : '/member' })
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      if (res.status === 429) {
+    const session = useSessionStore();
+    const res = await session.login({ email: username.value, password: password.value, rememberme: rememberMe.value ? 'yes' : 'no' });
+    // 確保使用者資料就緒
+    await session.ensureProfile();
+    // 登入後立即檢查 Email 驗證狀態，未驗證則直接導向驗證頁
+    try {
+      const vs = await api.get('/auth/verification-status').then(r => r.data).catch(() => undefined as any);
+      if (vs && vs.isVerified === false) {
+        router.replace('/verify-email');
+        return;
+      }
+    } catch {}
+    if ((res as any).status !== 200 && (res as any).status !== 204) {
+      const err = (res as any).data || {};
+      if ((res as any).status === 429) {
         errorMessage.value = err?.message || '嘗試過於頻繁，請稍後再試';
         // 啟動前端冷卻，避免持續觸發後端限流
         startCooldown(30);
@@ -126,17 +134,51 @@ async function onSubmit() {
       return;
     }
     // 200 { redirectUrl? } 或 204
-    if (res.status === 204) {
+    if ((res as any).status === 204) {
       const qRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : undefined;
-      router.push(qRedirect || '/member');
+      await session.fetchSession(true);
+      try {
+        const vs = await api.get('/auth/verification-status').then(r => r.data).catch(() => undefined as any);
+        if (vs && vs.isVerified === false) {
+          router.replace('/verify-email');
+          return;
+        }
+      } catch {}
+      router.replace(qRedirect || '/member');
+      // 瀏覽器導航保險
+      setTimeout(() => { if (window.location.pathname === '/login') window.location.assign(qRedirect || '/member'); }, 150);
       return;
     }
-    const data = await res.json().catch(() => ({}));
+    const data = (res as any).data || {};
     const qRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : undefined;
-    if (data?.redirectUrl) window.location.href = data.redirectUrl;
-    else router.push(qRedirect || '/member');
-  } catch (e) {
-    errorMessage.value = '網路或伺服器錯誤';
+    // 若後端提供 redirectUrl，優先導向；否則使用 query.redirect 或 /member
+    // 若後端提供 redirectUrl，僅當其非 '/' 時才優先導向；
+    // 否則依 query.redirect 或預設 /member（避免被導到首頁）
+    if (data?.redirectUrl && data.redirectUrl !== '/') {
+      window.location.href = data.redirectUrl;
+    } else {
+      await session.fetchSession(true);
+      try {
+        const vs2 = await api.get('/auth/verification-status').then(r => r.data).catch(() => undefined as any);
+        if (vs2 && vs2.isVerified === false) {
+          router.replace('/verify-email');
+          return;
+        }
+      } catch {}
+      router.replace(qRedirect || '/member');
+      setTimeout(() => { if (window.location.pathname === '/login') window.location.assign(qRedirect || '/member'); }, 150);
+    }
+  } catch (e: any) {
+    const status = e?.response?.status;
+    const msg = e?.response?.data?.message;
+    if (status === 429) {
+      errorMessage.value = msg || '嘗試過於頻繁，請稍後再試';
+      startCooldown(30);
+    } else if (status === 401 || status === 422) {
+      errorMessage.value = msg || '帳號或密碼錯誤';
+    } else {
+      errorMessage.value = msg || '網路或伺服器錯誤';
+    }
   } finally {
     submitting.value = false;
   }
@@ -153,9 +195,16 @@ function startCooldown(sec: number) {
 // 若已登入且帶有 redirect 參數，直接導向
 onMounted(async () => {
   try {
-    const res = await fetch('/api/auth/session', { credentials: 'include' });
-    const s = await res.json().catch(() => ({}));
+    const s = await api.get('/auth/session').then(r => r.data).catch(() => ({}));
     if (s?.loggedIn) {
+      // 已登入時先檢查驗證狀態
+      try {
+        const vs = await api.get('/auth/verification-status').then(r => r.data).catch(() => undefined as any);
+        if (vs && vs.isVerified === false) {
+          router.replace('/verify-email');
+          return;
+        }
+      } catch {}
       const qRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : undefined;
       if (qRedirect) router.replace(qRedirect);
       else router.replace('/member');

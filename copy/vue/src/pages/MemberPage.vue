@@ -392,9 +392,16 @@
         <!-- 會員側邊欄 -->
         <div id="member-sidebar" class="member-sidebar">
           <div class="photoframe">
-            <img :src="memberInfo.avatarUrl || '/images/default-avatar.jpg'" :alt="memberInfo.name" />
+            <img :src="memberInfo.avatarUrl || defaultBlackAvatar" :alt="memberInfo.name" />
           </div>
           <p class="memberidname">{{ memberInfo.name }}</p>
+          <div class="member-level-badge" :style="{ borderColor: levelColor }" aria-live="polite">
+            <span class="level-icon" aria-hidden="true">{{ memberInfo.levelInfo?.icon || '⭐' }}</span>
+            <span class="level-name" :style="{ color: levelColor }">{{ memberInfo.levelInfo?.name || memberInfo.level }}</span>
+          </div>
+          <div class="member-level-progress" role="progressbar" :aria-valuenow="progressPercent" aria-valuemin="0" aria-valuemax="100" :aria-label="`等級進度 ${progressPercent}%`">
+            <div class="bar" :style="{ width: progressPercent + '%', background: levelColor }"></div>
+          </div>
           <ul class="member-showroom-nav">
             <li :class="{ 'chosen': activeTab === 'predict' }" @click="activeTab = 'predict'">
               <a href="#" class="sidebarEventBtn">
@@ -474,10 +481,14 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
+import api from '../api/client';
 
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+
+// 預設全黑頭像（避免違和感）
+const defaultBlackAvatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="%23000"/></svg>';
 
 // 響應式數據
 const activeTab = ref('predict');
@@ -502,11 +513,29 @@ const unfollowLoading = ref(false);
 const memberInfo = ref({
   id: 'ydasam',
   name: '阿達工友',
-  avatar: '/images/default-avatar.jpg',
-  avatarUrl: '/images/default-avatar.jpg', // 用於顯示，包含時間戳
+  avatar: defaultBlackAvatar,
+  avatarUrl: defaultBlackAvatar, // 用於顯示，包含時間戳
   followers: 264,
   joinDate: '2020-01-15',
-  level: 'VIP',
+  level: 'NEWBIE',
+  levelInfo: {
+    code: 'NEWBIE',
+    name: '新手',
+    nameEn: 'NEWBIE',
+    color: '#667eea',
+    icon: '⭐',
+    minScore: 0,
+    maxScore: 100,
+    description: '' ,
+    benefits: [] as string[],
+  },
+  levelProgress: {
+    percentage: 0,
+    currentScore: 0,
+    levelMinScore: 0,
+    levelMaxScore: 100,
+    pointsToNext: 100,
+  },
   bio: '運動彩券分析師，專精MLB和NBA預測'
 });
 
@@ -648,6 +677,14 @@ const filteredPredictions = computed(() => {
   return filtered;
 });
 
+// 等級主題色與進度百分比
+const levelColor = computed(() => memberInfo.value.levelInfo?.color || '#667eea');
+const progressPercent = computed(() => {
+  const p = Number(memberInfo.value.levelProgress?.percentage ?? 0);
+  if (Number.isNaN(p)) return 0;
+  return Math.max(0, Math.min(100, p));
+});
+
 // 方法
 function setActiveTab(tab: string) {
   activeTab.value = tab;
@@ -684,20 +721,19 @@ async function loadMemberData() {
 
   // 載入會員基本資料
   try {
-    const res = await fetch(`/api/members/${encodeURIComponent(targetId)}/profile`, {
-      credentials: 'include',
-      headers: { Accept: 'application/json' },
-    });
-    if (res.ok) {
-      const p = await res.json();
+    const res = await api.get(`/members/${encodeURIComponent(targetId)}/profile`);
+    if (res.status === 200) {
+      const p = res.data;
       memberInfo.value = {
         id: p.id || targetId,
         name: p.name || memberInfo.value.name,
-        avatar: p.avatar || memberInfo.value.avatar,
-        avatarUrl: p.avatar ? `${p.avatar}?v=${Date.now()}` : memberInfo.value.avatarUrl,
+        avatar: p.avatar || defaultBlackAvatar,
+        avatarUrl: p.avatar ? `${p.avatar}?v=${Date.now()}` : defaultBlackAvatar,
         followers: p.followersCount ?? memberInfo.value.followers,
         joinDate: p.joinedAt || memberInfo.value.joinDate,
         level: p.level || memberInfo.value.level,
+        levelInfo: p.levelInfo || memberInfo.value.levelInfo,
+        levelProgress: p.levelProgress || memberInfo.value.levelProgress,
         bio: p.bio || memberInfo.value.bio,
       };
     }
@@ -705,12 +741,9 @@ async function loadMemberData() {
 
   // 載入與目前使用者的關係（決定追蹤按鈕）
   try {
-    const r = await fetch(`/api/members/${encodeURIComponent(targetId)}/relationships`, {
-      credentials: 'include',
-      headers: { Accept: 'application/json' },
-    });
-    if (r.ok) {
-      const rel = await r.json();
+    const r = await api.get(`/members/${encodeURIComponent(targetId)}/relationships`);
+    if (r.status === 200) {
+      const rel = r.data;
       isFollowing.value = !!rel?.isFollowing;
     }
   } catch {}
@@ -735,7 +768,7 @@ function handleAvatarUpdate(event: Event) {
 // 生命週期
 onMounted(async () => {
   // 路由層已有 requiresAuth 保護；此處加保險檢查與導轉
-  await session.fetchSession();
+  await session.fetchSession(true);
   if (!session.loggedIn) {
     const redirect = encodeURIComponent(route.fullPath);
     router.replace({ name: 'login', query: { redirect } });
@@ -747,6 +780,8 @@ onMounted(async () => {
     return;
   }
 
+  // 確保先拿到自己的 userId，再載入資料
+  await session.ensureProfile();
   await loadMemberData();
   
   // 監聽大頭貼更新事件
@@ -764,11 +799,8 @@ async function followUser() {
   followLoading.value = true;
   try {
     const id = memberInfo.value.id;
-    const res = await fetch(`/api/members/${encodeURIComponent(String(id))}/follow`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-    if (res.ok) {
+    const res = await api.post(`/members/${encodeURIComponent(String(id))}/follow`);
+    if (res.status === 204) {
       if (!isFollowing.value) {
         isFollowing.value = true;
         memberInfo.value.followers++;
@@ -783,11 +815,8 @@ async function unfollowUser() {
   unfollowLoading.value = true;
   try {
     const id = memberInfo.value.id;
-    const res = await fetch(`/api/members/${encodeURIComponent(String(id))}/follow`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-    if (res.ok) {
+    const res = await api.delete(`/members/${encodeURIComponent(String(id))}/follow`);
+    if (res.status === 204) {
       if (isFollowing.value) {
         isFollowing.value = false;
         if (memberInfo.value.followers > 0) memberInfo.value.followers--;
@@ -854,6 +883,8 @@ async function unfollowUser() {
   height: 80px;
   border-radius: 50%;
   border: 3px solid #667eea;
+  display: block;
+  margin: 0 auto;
 }
 
 .memberidname {
@@ -863,6 +894,22 @@ async function unfollowUser() {
   color: #333;
   margin-bottom: 20px;
 }
+
+.member-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 2px solid #667eea;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: #f8f9fa;
+  margin: 0 auto 8px auto;
+}
+.member-level-badge .level-icon { font-size: 16px; line-height: 1; }
+.member-level-badge .level-name { font-size: 13px; font-weight: bold; }
+
+.member-level-progress { width: 100%; height: 8px; background: #eceff3; border-radius: 999px; overflow: hidden; margin: 6px 0 16px 0; }
+.member-level-progress .bar { height: 100%; width: 0; transition: width .4s ease; }
 
 .member-showroom-nav {
   list-style: none;

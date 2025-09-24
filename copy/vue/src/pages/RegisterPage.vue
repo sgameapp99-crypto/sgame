@@ -56,6 +56,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import api from '../api/client';
 
 const router = useRouter();
 const route = useRoute();
@@ -124,18 +125,13 @@ async function onSubmit() {
 
   try {
     submitting.value = true;
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-      credentials: 'include',
-      body: JSON.stringify({ email: email.value, password: password.value, name: name.value })
-    });
+    const res = await api.post('/auth/register', { email: email.value, password: password.value, name: name.value });
 
     if (res.status === 201 || res.status === 200) {
       let redirectUrl: string | undefined;
       let needsVerification = false;
       try {
-        const data = await res.json();
+        const data = res.data || {} as any;
         redirectUrl = data?.redirectUrl;
         needsVerification = !!data?.needsVerification;
       } catch {}
@@ -161,7 +157,7 @@ async function onSubmit() {
       return;
     }
 
-    const err = await res.json().catch(() => ({}));
+    const err = res.data || {};
     if (res.status === 409 && err?.code === 'EMAIL_TAKEN') {
       errorMessage.value = 'Email 已被使用，請改用其他 Email 或前往登入';
       return;

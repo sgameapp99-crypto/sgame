@@ -24,8 +24,67 @@ tags:
     description: 篩選/字典資料
   - name: posts
     description: 會員發文
+  - name: levels
+    description: 會員等級系統
 
 paths:
+  /levels:
+    get:
+      tags: [levels]
+      summary: 獲取所有等級資訊
+      responses:
+        '200':
+          description: 等級資訊列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  levels:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        name:
+                          type: string
+                        nameEn:
+                          type: string
+                        color:
+                          type: string
+                        icon:
+                          type: string
+                        minScore:
+                          type: number
+                        maxScore:
+                          type: number
+                        description:
+                          type: string
+                        benefits:
+                          type: array
+                          items:
+                            type: string
+
+  /levels/stats:
+    get:
+      tags: [levels]
+      summary: 獲取等級統計資訊
+      responses:
+        '200':
+          description: 等級統計
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  stats:
+                    type: object
+
   /auth/login:
     post:
       tags: [auth]
@@ -49,11 +108,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  redirectUrl:
-                    type: string
-                    description: 登入後導回路徑，若缺省則由前端決定（如首頁）
+                $ref: '#/components/schemas/LoginResponse'
         '204':
           description: 登入成功（無回應內容；以 Set-Cookie 下發 HttpOnly 會話）
         '401':
@@ -219,6 +274,184 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VerificationStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/forgot-password:
+    post:
+      tags: [auth]
+      summary: 忘記密碼 - 發送重設郵件
+      description: 向用戶郵箱發送密碼重設郵件
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: 用戶郵箱
+              required: [email]
+      responses:
+        '200':
+          description: 重設郵件發送成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetResponse'
+        '400':
+          description: 發送失敗或帳號問題
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetResponse'
+        '422':
+          description: 參數驗證錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/verify-reset-token:
+    post:
+      tags: [auth]
+      summary: 驗證密碼重設令牌
+      description: 驗證從郵件中獲得的重設令牌是否有效
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: 重設令牌
+              required: [token]
+      responses:
+        '200':
+          description: 令牌驗證結果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenVerificationResponse'
+        '400':
+          description: 令牌無效或已過期
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenVerificationResponse'
+        '422':
+          description: 參數驗證錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/reset-password:
+    post:
+      tags: [auth]
+      summary: 重設密碼
+      description: 使用重設令牌設定新密碼
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: 重設令牌
+                newPassword:
+                  type: string
+                  minLength: 8
+                  description: 新密碼
+              required: [token, newPassword]
+      responses:
+        '200':
+          description: 密碼重設成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetResponse'
+        '400':
+          description: 令牌無效或密碼不符合要求
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/PasswordResetResponse'
+                  - $ref: '#/components/schemas/PasswordWeakError'
+        '422':
+          description: 參數驗證錯誤
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - $ref: '#/components/schemas/PasswordWeakError'
+
+  /auth/change-password:
+    post:
+      tags: [auth]
+      summary: 更新密碼
+      description: 已登入用戶更新密碼
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                  description: 當前密碼
+                newPassword:
+                  type: string
+                  minLength: 8
+                  description: 新密碼
+              required: [currentPassword, newPassword]
+      responses:
+        '200':
+          description: 密碼更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordChangeResponse'
+        '400':
+          description: 密碼驗證失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetResponse'
+        '422':
+          description: 新密碼不符合要求
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordWeakError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/password-expiry-status:
+    get:
+      tags: [auth]
+      summary: 檢查密碼過期狀態
+      description: 獲取用戶密碼過期狀態資訊
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 密碼過期狀態
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordExpiryStatusResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
@@ -716,6 +949,9 @@ components:
           type: string
         level:
           type: string
+        score:
+          type: integer
+          description: 用戶分數，用於等級計算
         bio:
           type: string
         joinedAt:
@@ -725,6 +961,65 @@ components:
           type: integer
         followingCount:
           type: integer
+        levelInfo:
+          type: object
+          properties:
+            code:
+              type: string
+            name:
+              type: string
+            nameEn:
+              type: string
+            color:
+              type: string
+            icon:
+              type: string
+            minScore:
+              type: number
+            maxScore:
+              type: number
+            description:
+              type: string
+            benefits:
+              type: array
+              items:
+                type: string
+        levelProgress:
+          type: object
+          properties:
+            percentage:
+              type: number
+            currentScore:
+              type: number
+            levelMinScore:
+              type: number
+            levelMaxScore:
+              type: number
+            pointsToNext:
+              type: number
+        nextLevel:
+          type: object
+          properties:
+            code:
+              type: string
+            name:
+              type: string
+            nameEn:
+              type: string
+            color:
+              type: string
+            icon:
+              type: string
+            minScore:
+              type: number
+            maxScore:
+              type: number
+            description:
+              type: string
+            benefits:
+              type: array
+              items:
+                type: string
 
     MemberStats:
       type: object
@@ -931,6 +1226,107 @@ components:
           type: string
           description: 錯誤訊息
           example: "註冊嘗試過於頻繁，請稍後再試"
+
+    LoginResponse:
+      type: object
+      properties:
+        redirectUrl:
+          type: string
+          description: 登入後導回路徑，若缺省則由前端決定（如首頁）
+        message:
+          type: string
+          description: 登入訊息
+          example: "登入成功"
+        token:
+          type: string
+          description: JWT Bearer Token，用於後續 API 認證
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        passwordExpiry:
+          $ref: '#/components/schemas/PasswordExpiryInfo'
+
+    PasswordExpiryInfo:
+      type: object
+      properties:
+        isExpired:
+          type: boolean
+          description: 密碼是否已過期
+        isWarning:
+          type: boolean
+          description: 是否在警告期內（7天內過期）
+        daysUntilExpiry:
+          type: integer
+          description: 距離過期天數
+        message:
+          type: string
+          description: 人類可讀的狀態訊息
+          example: "您的密碼狀態正常，距離過期還有 180 天。"
+
+    PasswordResetResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 操作是否成功
+        message:
+          type: string
+          description: 回應訊息
+          example: "密碼重設郵件已發送至您的郵箱，請在 24 小時內完成重設"
+
+    TokenVerificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 操作是否成功
+        valid:
+          type: boolean
+          description: 令牌是否有效
+        email:
+          type: string
+          format: email
+          description: 用戶郵箱地址（僅在令牌有效時提供）
+        message:
+          type: string
+          description: 回應訊息
+
+    PasswordChangeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 操作是否成功
+        message:
+          type: string
+          description: 回應訊息
+          example: "密碼更新成功"
+        passwordExpiry:
+          $ref: '#/components/schemas/PasswordExpiryInfo'
+
+    PasswordExpiryStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 操作是否成功
+        isExpired:
+          type: boolean
+          description: 密碼是否已過期
+        isWarning:
+          type: boolean
+          description: 是否在警告期內
+        daysUntilExpiry:
+          type: integer
+          description: 距離過期天數
+        daysSinceChange:
+          type: integer
+          description: 密碼變更後經過天數
+        lastChanged:
+          type: string
+          format: date-time
+          description: 密碼最後變更時間
+        message:
+          type: string
+          description: 人類可讀的狀態訊息
 
 security:
   - bearerAuth: []

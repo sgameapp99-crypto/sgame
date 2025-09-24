@@ -203,7 +203,7 @@
 ## API 一覽表
 
 ### 認證（auth）
-- `POST /auth/login` 登入（正式以 Set-Cookie HttpOnly 下發會話；開發期可回 token）
+- `POST /auth/login` 登入（正式以 Set-Cookie HttpOnly 下發會話；開發期可回 token；包含密碼過期資訊）
 - `POST /auth/register` 註冊（email/password/name；201 或同時 Set-Cookie，支援郵箱驗證）
 - `POST /auth/logout` 登出（204）
 - `GET /auth/session` 取得目前 session 狀態（userId、expiresAt）
@@ -211,6 +211,11 @@
 - `POST /auth/verify-email` 驗證郵箱驗證碼（需登入）
 - `POST /auth/resend-verification` 重新發送驗證碼（需登入，有冷卻限制）
 - `GET /auth/verification-status` 檢查郵箱驗證狀態（需登入）
+- `POST /auth/forgot-password` 忘記密碼 - 發送重設郵件
+- `POST /auth/verify-reset-token` 驗證密碼重設令牌
+- `POST /auth/reset-password` 重設密碼
+- `POST /auth/change-password` 更新密碼（需登入）
+- `GET /auth/password-expiry-status` 檢查密碼過期狀態（需登入）
 - `GET /auth/oauth/{provider}/start?redirectUrl=/member` 起始第三方登入（302 轉向至供應商；provider=google|facebook|line）
 - `GET /auth/oauth/{provider}/callback` 第三方登入回調（交換授權碼、Set-Cookie、302 導回 redirectUrl 或 /login?error=...）
 
@@ -231,6 +236,93 @@
       ```
     - 409 `{ code: "EMAIL_TAKEN" }`
     - 422 `{ code: "VALIDATION_FAILED" }`
+
+### 密碼重設功能詳述
+- `POST /auth/forgot-password`
+  - 發送密碼重設郵件到用戶郵箱
+  - Request：`{ "email": "user@example.com" }`
+  - Response（200）：
+    ```json
+    {
+      "success": true,
+      "message": "密碼重設郵件已發送至您的郵箱，請在 24 小時內完成重設"
+    }
+    ```
+  - 錯誤碼：
+    - `RATE_LIMIT_EXCEEDED` 發送過於頻繁（5分鐘冷卻）
+    - `OAUTH_USER` 此帳號使用第三方登入，無需密碼重設
+
+- `POST /auth/verify-reset-token`
+  - 驗證從郵件中獲得的重設令牌
+  - Request：`{ "token": "reset_token_from_email" }`
+  - Response（200）：
+    ```json
+    {
+      "success": true,
+      "valid": true,
+      "email": "user@example.com",
+      "message": "令牌有效"
+    }
+    ```
+  - 錯誤碼：
+    - `TOKEN_INVALID` 令牌無效或已過期
+
+- `POST /auth/reset-password`
+  - 使用重設令牌設定新密碼
+  - Request：`{ "token": "reset_token", "newPassword": "NewPass123!" }`
+  - Response（200）：
+    ```json
+    {
+      "success": true,
+      "message": "密碼重設成功，請使用新密碼登入"
+    }
+    ```
+  - 錯誤碼：
+    - `TOKEN_INVALID` 令牌無效或已過期
+    - `PASSWORD_WEAK` 新密碼不符合強度要求
+
+### 密碼更新功能詳述
+- `POST /auth/change-password`
+  - 已登入用戶更新密碼
+  - Request：`{ "currentPassword": "old_pass", "newPassword": "NewPass123!" }`
+  - Response（200）：
+    ```json
+    {
+      "success": true,
+      "message": "密碼更新成功",
+      "passwordExpiry": {
+        "isExpired": false,
+        "isWarning": false,
+        "daysUntilExpiry": 180,
+        "message": "密碼已更新，下次過期時間為 180 天後"
+      }
+    }
+    ```
+  - 錯誤碼：
+    - `INVALID_CURRENT_PASSWORD` 當前密碼不正確
+    - `SAME_PASSWORD` 新密碼不能與當前密碼相同
+    - `PASSWORD_WEAK` 新密碼不符合強度要求
+
+- `GET /auth/password-expiry-status`
+  - 檢查用戶密碼過期狀態
+  - Response（200）：
+    ```json
+    {
+      "success": true,
+      "isExpired": false,
+      "isWarning": false,
+      "daysUntilExpiry": 175,
+      "daysSinceChange": 5,
+      "lastChanged": "2025-09-18T10:30:00.000Z",
+      "message": "您的密碼狀態正常，距離過期還有 175 天。"
+    }
+    ```
+
+### 密碼過期機制
+- 密碼過期天數：180 天（可透過 `PASSWORD_EXPIRY_DAYS` 環境變數設定）
+- 警告期：過期前 7 天開始提醒（可透過 `PASSWORD_WARNING_DAYS` 環境變數設定）
+- 登入時自動檢查密碼過期狀態，返回 `passwordExpiry` 資訊
+- OAuth 用戶（Google/Facebook）自動排除密碼過期檢查
 
 ### Email 驗證功能詳述
 - `POST /auth/send-verification`
@@ -309,6 +401,13 @@
 ### 字典/篩選（filters）
 - `GET /filters/leagues` 聯盟字典列表（`id/code/name`）
 - `GET /filters/dates?range=7` 近 N 天日期鍵與標籤（用於 UI 日期條）
+
+### 會員等級（levels）
+- `GET /levels` 獲取所有等級資訊（等級名稱、顏色、圖標、權益）
+- `GET /levels/stats` 獲取等級統計資訊（等級分佈統計）
+
+### 會員資料整合
+- `GET /members/{id}/profile` 會員基本資料（已整合等級資訊、進度、下一等級）
 
 ---
 

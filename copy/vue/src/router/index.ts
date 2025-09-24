@@ -12,6 +12,9 @@ const router = createRouter({
     { path: '/login', name: 'login', component: () => import('../pages/LoginPage.vue') },
     { path: '/register', name: 'register', component: () => import('../pages/RegisterPage.vue') },
     { path: '/verify-email', name: 'verify-email', component: () => import('../pages/VerifyEmailPage.vue'), meta: { requiresAuth: true } },
+    { path: '/password/change', name: 'password-change', component: () => import('../pages/ChangePasswordPage.vue'), meta: { requiresAuth: true } },
+    { path: '/recover', name: 'forgot-password', component: () => import('../pages/ForgotPasswordPage.vue') },
+    { path: '/reset-password', name: 'reset-password', component: () => import('../pages/ResetPasswordPage.vue') },
     { path: '/post/:id', name: 'post', component: () => import('../pages/PostPage.vue') },
     // 會員頁：自己的頁面與他人頁面
     { path: '/member', name: 'member', component: () => import('../pages/MemberPage.vue'), meta: { requiresAuth: true } },
@@ -33,6 +36,7 @@ const router = createRouter({
       name: 'game-detail',
       component: () => import('../pages/GameDetailPage.vue'),
     },
+    { path: '/member/settings', name: 'member-settings', component: () => import('../pages/MemberSettingsPage.vue'), meta: { requiresAuth: true } },
     // 法律條款頁面
     { path: '/legal', name: 'legal', component: () => import('../pages/LegalPage.vue') },
     {

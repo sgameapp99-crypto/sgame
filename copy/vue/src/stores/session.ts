@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import api from '../api/client';
 
 interface SessionUser {
   id?: string | number;
@@ -15,6 +16,7 @@ interface SessionState {
   ttlMs: number;
   emailVerified?: boolean;
   verificationCheckedAt?: number | null;
+  token?: string | null;
 }
 
 export const useSessionStore = defineStore('session', {
@@ -27,6 +29,7 @@ export const useSessionStore = defineStore('session', {
     ttlMs: 60_000,
     emailVerified: undefined,
     verificationCheckedAt: null,
+    token: null,
   }),
   actions: {
     _set(loggedIn: boolean, user: SessionUser | null, userId?: string) {
@@ -35,14 +38,26 @@ export const useSessionStore = defineStore('session', {
       if (userId) this.userId = userId;
       this.lastFetched = Date.now();
     },
+    setToken(t?: string | null) {
+      this.token = t || null;
+      try {
+        if (this.token) localStorage.setItem('sg_token', this.token);
+        else localStorage.removeItem('sg_token');
+      } catch {}
+    },
+    loadTokenFromStorage() {
+      try {
+        const t = localStorage.getItem('sg_token');
+        if (t) this.token = t;
+      } catch {}
+    },
     async fetchSession(force = false) {
       if (!force && this.lastFetched && Date.now() - this.lastFetched < this.ttlMs) return;
       if (this.inFlight) return this.inFlight;
       this.inFlight = (async () => {
         try {
-          const res = await fetch('/api/auth/session', { credentials: 'include', headers: { Accept: 'application/json' } });
-          if (!res.ok) throw new Error('session failed');
-          const data = await res.json().catch(() => ({}));
+          const res = await api.get('/auth/session');
+          const data = res.data || {};
           const uid: string | undefined = data?.userId || data?.user?.id;
           this._set(!!data?.loggedIn, data?.user || null, uid);
         } catch {
@@ -61,8 +76,8 @@ export const useSessionStore = defineStore('session', {
         return this.emailVerified;
       }
       try {
-        const res = await fetch('/api/auth/verification-status', { credentials: 'include', headers: { Accept: 'application/json' } });
-        const data = await res.json().catch(() => ({} as any));
+        const res = await api.get('/auth/verification-status');
+        const data = (res.data || {}) as any;
         if (data && typeof data.isVerified === 'boolean') {
           this.emailVerified = !!data.isVerified;
           this.verificationCheckedAt = now;
@@ -75,22 +90,22 @@ export const useSessionStore = defineStore('session', {
       return this.emailVerified;
     },
     async login(payload: { email: string; password: string; rememberme?: string }) {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: payload.email,
-          password: payload.password,
-          rememberme: payload.rememberme,
-        }),
+      const res = await api.post('/auth/login', {
+        email: payload.email,
+        password: payload.password,
+        rememberme: payload.rememberme,
       });
-      if (!res.ok) throw new Error('login failed');
+      if (res.status !== 200 && res.status !== 204) throw new Error('login failed');
+      if (res.status === 200) {
+        const data = (res.data || {}) as any;
+        if (data?.token) this.setToken(String(data.token));
+      }
       await this.fetchSession(true);
       return res;
     },
     async logout() {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      await api.post('/auth/logout');
+      this.setToken(null);
       await this.fetchSession(true);
     },
     async ensureProfile() {

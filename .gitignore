@@ -192,3 +192,26 @@ $RECYCLE.BIN/
 *.csr
 *.p12
 *.pfx
+
+# ------------------------------------------------------------
+# Dotfiles: ignore all by default but keep essential configs
+# Note: We intentionally do NOT change the existing .vscode rule above
+#       (only commit .vscode/extensions.json), to preserve your setup.
+.*
+!.gitignore
+!.gitattributes
+!.github/
+!.editorconfig
+!.eslintrc
+!.eslintrc.*
+!.prettierrc
+!.prettierrc.*
+!.npmrc
+!.nvmrc
+!.node-version
+!.stylelintrc
+!.stylelintrc.*
+!.commitlintrc
+!.commitlintrc.*
+!.husky/**
+!.vscode/extensions.json

@@ -127,7 +127,7 @@
                   {{ displayName || '會員' }}
                 </a>
                 <ul class="functionbar-ullv2" v-show="showUserMenu">
-                  <li><a href="/member/profile">個人資料</a></li>
+                  <li><a href="#" @click.prevent="goToProfile">個人資料</a></li>
                   <li><a href="/member/settings">帳戶設定</a></li>
                   <li><a href="#" @click.prevent="logout">登出</a></li>
                 </ul>
@@ -285,6 +285,13 @@ onUnmounted(() => {
 async function logout() {
   try { await session.logout(); }
   finally { router.push('/'); }
+}
+
+// 個人資料：若已在個人頁則不動作；否則導向 /member
+function goToProfile() {
+  const atMember = router.currentRoute.value.name === 'member';
+  if (atMember) return;
+  router.push({ name: 'member' });
 }
 </script>
 

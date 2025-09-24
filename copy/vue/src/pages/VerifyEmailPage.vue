@@ -53,6 +53,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useSessionStore } from '../stores/session';
+import api from '../api/client';
 
 const router = useRouter();
 const route = useRoute();
@@ -67,6 +68,17 @@ const expiresIn = ref(0);
 const cooldown = ref(0);
 let expiresTimer: any = null;
 let cooldownTimer: any = null;
+
+function getLastSentTs(): number {
+  try { return Number(localStorage.getItem('sg_last_verif_sent') || '0'); } catch { return 0; }
+}
+function setLastSentTs(ts: number) {
+  try { localStorage.setItem('sg_last_verif_sent', String(ts)); } catch {}
+}
+function sentRecently(windowMs = 60_000): boolean {
+  const last = getLastSentTs();
+  return last > 0 && Date.now() - last < windowMs;
+}
 
 function goBack() {
   if (window.history.length > 1) router.back();
@@ -90,8 +102,8 @@ const resendLabel = computed(() => (cooldown.value > 0 ? `重新發送 (${cooldo
 
 async function fetchStatus() {
   try {
-    const res = await fetch('/api/auth/verification-status', { credentials: 'include' });
-    const data = await res.json().catch(() => ({}));
+    const res = await api.get('/auth/verification-status');
+    const data = res.data || {};
     if (typeof data?.isVerified === 'boolean') {
       userEmail.value = data.email || '';
       if (data.isVerified) {
@@ -106,25 +118,32 @@ async function sendCode() {
   try {
     errorMessage.value = '';
     successMessage.value = '';
-    const res = await fetch('/api/auth/send-verification', { method: 'POST', credentials: 'include' });
-    const data = await res.json().catch(() => ({}));
-    if (res.status === 401) {
-      errorMessage.value = '未登入或權杖無效，請先登入後再發送驗證碼';
-      const redirect = route.fullPath;
-      setTimeout(() => router.replace({ name: 'login', query: { redirect } }), 800);
-      return;
-    }
+    const res = await api.post('/auth/send-verification');
+    const data = res.data || {};
     if (data?.success) {
       successMessage.value = '驗證碼已發送至您的郵箱';
       expiresIn.value = Number(data.expiresIn) || 300;
       startExpiresTimer();
       cooldown.value = 60;
       startCooldownTimer();
+      setLastSentTs(Date.now());
     } else {
       errorMessage.value = data?.message || '發送失敗，請稍後再試';
     }
-  } catch {
-    errorMessage.value = '網路錯誤，請稍後再試';
+  } catch (e: any) {
+    const status = e?.response?.status;
+    const msg = e?.response?.data?.message;
+    if (status === 401) {
+      errorMessage.value = msg || '未登入或權杖無效，請先登入後再發送驗證碼';
+      const redirect = route.fullPath;
+      setTimeout(() => router.replace({ name: 'login', query: { redirect } }), 800);
+    } else if (status === 429) {
+      errorMessage.value = msg || '發送過於頻繁，請稍後再試';
+      cooldown.value = Math.max(cooldown.value, 60);
+      startCooldownTimer();
+    } else {
+      errorMessage.value = msg || '發送失敗，請稍後再試';
+    }
   }
 }
 
@@ -137,22 +156,16 @@ async function submitCode() {
   errorMessage.value = '';
   successMessage.value = '';
   try {
-    const res = await fetch('/api/auth/verify-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ code: code.value })
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.status === 401) {
-      errorMessage.value = '未登入或權杖無效，請先登入後再驗證';
-      const redirect = route.fullPath;
-      setTimeout(() => router.replace({ name: 'login', query: { redirect } }), 800);
-      return;
-    }
-    if (res.ok && data?.success) {
+    const res = await api.post('/auth/verify-email', { code: code.value });
+    const data = res.data || {};
+    if (res.status === 200 && data?.success) {
       successMessage.value = data?.message || '郵箱驗證成功！';
-      setTimeout(() => router.push('/member'), 800);
+      try {
+        // 立即更新本地驗證狀態，避免路由守衛因 TTL 使用舊值而阻擋
+        session.emailVerified = true as any;
+        (session as any).verificationCheckedAt = Date.now();
+      } catch {}
+      router.replace('/member');
     } else {
       const c = data?.code;
       if (c === 'VERIFICATION_CODE_EXPIRED') errorMessage.value = '驗證碼已過期，請重新發送';
@@ -162,8 +175,16 @@ async function submitCode() {
         setTimeout(() => router.push('/member'), 800);
       } else errorMessage.value = data?.message || '驗證失敗，請稍後再試';
     }
-  } catch {
-    errorMessage.value = '網路或伺服器錯誤';
+  } catch (e: any) {
+    const status = e?.response?.status;
+    const msg = e?.response?.data?.message;
+    if (status === 401) {
+      errorMessage.value = msg || '未登入或權杖無效，請先登入後再驗證';
+      const redirect = route.fullPath;
+      setTimeout(() => router.replace({ name: 'login', query: { redirect } }), 800);
+    } else {
+      errorMessage.value = msg || '驗證失敗，請稍後再試';
+    }
   } finally {
     submitting.value = false;
   }
@@ -204,8 +225,12 @@ onMounted(async () => {
     return;
   }
   await fetchStatus();
-  // 僅在已登入且未驗證時自動發一次，若已驗證則 router.replace 在 fetchStatus 中處理
-  await sendCode();
+  // 僅在已登入且未驗證時自動發一次
+  const v = await session.checkVerificationStatus(true).catch(() => undefined);
+  const auto = typeof route.query.auto === 'string' ? route.query.auto : undefined;
+  if (v === false && auto !== '0' && !sentRecently(60_000)) {
+    await sendCode();
+  }
 });
 
 onUnmounted(() => {

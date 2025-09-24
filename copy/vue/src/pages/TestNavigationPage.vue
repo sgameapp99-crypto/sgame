@@ -271,6 +271,10 @@
           <span class="icon">⬅️</span>
           返回上一頁
         </button>
+        <button @click="runOneClickVerify" class="action-btn">
+          <span class="icon">✅</span>
+          一鍵驗證（Auth/Verify/Member）
+        </button>
       </div>
     </div>
 
@@ -365,6 +369,8 @@
             取得 Session
           </button>
           <pre class="result" v-text="results.session"></pre>
+          <h4 style="margin-top:8px;">一鍵驗證日誌</h4>
+          <pre class="result oneclick" v-text="verifyLog"></pre>
         </div>
 
         <div class="api-card">
@@ -602,6 +608,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { reactive, ref, onMounted, computed } from 'vue';
+import api from '../api/client';
 import { useSessionStore } from '../stores/session';
 
 const router = useRouter();
@@ -1160,6 +1167,43 @@ function navigateToMemberHidden() {
 if (avatarCheck.customUrl) {
   checkAvatar('HEAD');
 }
+
+// ===== 一鍵驗證流程 =====
+const verifyLog = ref<string>('');
+async function runOneClickVerify() {
+  verifyLog.value = '開始一鍵驗證...\n';
+  const log = (m: string) => { verifyLog.value += m + '\n'; };
+  try {
+    // 1) 檢查 session
+    log('1) 檢查 Session');
+    const s = await api.get('/auth/session').then(r => r.data).catch(() => ({}));
+    log(`   session.loggedIn=${!!s?.loggedIn}, userId=${s?.userId || s?.user?.id || 'N/A'}`);
+
+    // 2) 若未驗證，嘗試發送驗證碼與查驗證狀態
+    log('2) 檢查驗證狀態');
+    const vs = await api.get('/auth/verification-status').then(r => r.data).catch(() => ({}));
+    log(`   isVerified=${String(vs?.isVerified)} email=${vs?.email || 'N/A'}`);
+    if (vs && vs.isVerified === false) {
+      log('   嘗試發送驗證碼...');
+      await api.post('/auth/send-verification').catch(e => log(`   發送驗證碼失敗: ${e?.response?.status || e}`));
+    }
+
+    // 3) 讀取會員頁（以輸入框 memberId 為準）
+    const id = encodeURIComponent(member.memberId || 'test123');
+    log(`3) 讀取會員資料 /members/${id}/profile`);
+    const mp = await api.get(`/members/${id}/profile`).then(r => r.data).catch(() => ({}));
+    log(`   會員名稱=${mp?.name || 'N/A'}`);
+
+    // 4) 嘗試追蹤/取消追蹤（不影響結果）
+    log('4) 嘗試追蹤/取消追蹤（可能需要登入）');
+    try { await api.post(`/members/${id}/follow`); log('   追蹤：OK'); } catch (e: any) { log(`   追蹤失敗: ${e?.response?.status || e}`); }
+    try { await api.delete(`/members/${id}/follow`); log('   取消追蹤：OK'); } catch (e: any) { log(`   取消追蹤失敗: ${e?.response?.status || e}`); }
+
+    log('✅ 一鍵驗證完成');
+  } catch (e: any) {
+    log(`❌ 一鍵驗證失敗: ${e?.message || e}`);
+  }
+}
 </script>
 
 <style scoped>
@@ -1543,6 +1587,8 @@ if (avatarCheck.customUrl) {
   overflow: auto;
   white-space: pre-wrap;
 }
+
+.api-test .result.oneclick { max-height: 360px; }
 
 .cookie-panel {
   margin-top: 20px;

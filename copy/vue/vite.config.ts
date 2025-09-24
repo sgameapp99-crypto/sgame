@@ -23,6 +23,9 @@ export default defineConfig(({ mode }) => {
 		server: {
 			host,
 			port,
+			allowedHosts: [
+				'34.81.135.104.nip.io'
+			],
 		proxy: proxyEnable
 			? { 
 				[proxyPrefix]: { target: proxyTarget, changeOrigin: proxyChangeOrigin, secure: proxySecure },
@@ -34,6 +37,9 @@ export default defineConfig(({ mode }) => {
 		preview: {
 			host,
 			port: previewPort,
+			allowedHosts: [
+				'34.81.135.104.nip.io'
+			],
 			proxy: proxyEnable
 				? {
 					[proxyPrefix]: { target: proxyTarget, changeOrigin: proxyChangeOrigin, secure: proxySecure },
