@@ -10,6 +10,18 @@
         <hr />
       </div>
 
+      <!-- 第三方登入 -->
+      <div class="oauth-row">
+        <button class="oauth-btn google" @click="oauth('google')"><i class="icon">G</i> 使用 Google 登入</button>
+        <button class="oauth-btn facebook" disabled title="Facebook 登入尚未完成"><i class="icon">f</i> Facebook 登入（開發中）</button>
+        <button class="oauth-btn line" disabled title="Line 登入尚未完成"><i class="icon">L</i> Line 登入（開發中）</button>
+      </div>
+
+      <div class="sep">
+        <span>或</span>
+        <hr />
+      </div>
+
       <form class="login-form" @submit.prevent="onSubmit">
         <p v-if="errorMessage" class="message-error">{{ errorMessage }}</p>
 
@@ -96,6 +108,21 @@ function goBack() {
   else router.push('/');
 }
 
+function oauth(provider: 'google' | 'facebook' | 'line') {
+  if (provider === 'google') {
+    const redirectUrl = typeof route.query.redirect === 'string' && route.query.redirect
+      ? String(route.query.redirect)
+      : '/member';
+    const url = `/api/auth/oauth/google/start?redirectUrl=${encodeURIComponent(redirectUrl)}`;
+    window.location.href = url;
+    return;
+  }
+  // Facebook 與 Line 尚未完成，避免觸發
+  errorMessage.value = provider === 'facebook'
+    ? 'Facebook 登入尚未完成'
+    : (provider === 'line' ? 'Line 登入尚未完成' : '不支援的登入方式');
+}
+
 async function onSubmit() {
   errorMessage.value = '';
   showPwdLenErr.value = false;
@@ -141,12 +168,12 @@ async function onSubmit() {
           const sres = await fetch('/api/auth/session', { credentials: 'include' });
           const sdata = await sres.json().catch(() => ({}));
           if (sdata?.loggedIn) {
-            router.push('/verify-email');
+            router.push({ name: 'verify-email', query: { auto: '0' } });
           } else {
-            router.push({ name: 'login', query: { redirect: '/verify-email' } });
+            router.push({ name: 'login', query: { redirect: '/verify-email?auto=0' } });
           }
         } catch {
-          router.push({ name: 'login', query: { redirect: '/verify-email' } });
+          router.push({ name: 'login', query: { redirect: '/verify-email?auto=0' } });
         }
         return;
       }
@@ -201,6 +228,12 @@ async function onSubmit() {
 .login-form { display: flex; flex-direction: column; gap: 12px; }
 .field { display: block; }
 .inputtext { width: 100%; height: 36px; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; }
+.oauth-row { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.oauth-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 12px; border-radius: 6px; border: 1px solid #e0e0e0; cursor: pointer; background: #fafafa; }
+.oauth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.oauth-btn.google .icon { font-weight: 700; color: #4285F4; }
+.oauth-btn.facebook .icon { font-weight: 700; color: #1877F2; }
+.oauth-btn.line .icon { font-weight: 700; color: #06c755; }
 .recover { margin-left: 6px; font-size: 12px; color: #0277bd; }
 .remember-row { display: inline-flex; gap: 6px; align-items: center; margin-top: 6px; }
 .action-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; }

@@ -225,10 +225,10 @@ onMounted(async () => {
     return;
   }
   await fetchStatus();
-  // 僅在已登入且未驗證時自動發一次
+  // 僅在顯式要求 auto===1 時自動發一次
   const v = await session.checkVerificationStatus(true).catch(() => undefined);
   const auto = typeof route.query.auto === 'string' ? route.query.auto : undefined;
-  if (v === false && auto !== '0' && !sentRecently(60_000)) {
+  if (v === false && auto === '1' && !sentRecently(60_000)) {
     await sendCode();
   }
 });

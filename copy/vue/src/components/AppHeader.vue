@@ -164,17 +164,6 @@
       </div>
     </div>
 
-    <!-- 調試按鈕 - 可拖拽浮動式 -->
-    <div 
-      class="debug-toggle-container" 
-      ref="debugContainer"
-      @mousedown="startDrag"
-      :style="{ left: debugPosition.x + 'px', top: debugPosition.y + 'px' }"
-    >
-      <button class="debug-button" @click="toggleLoginStatus">
-        {{ isLoggedIn ? '切換為未登入' : '切換為已登入' }}
-      </button>
-    </div>
   </div>
 </template>
 
@@ -194,20 +183,6 @@ const showUserMenu = ref(false);
 const showCardMenu = ref(false);
 const showMessageMenu = ref(false);
 
-// 調試按鈕拖拽功能
-const debugContainer = ref<HTMLElement | null>(null);
-const debugPosition = ref({ x: 10, y: 10 });
-const isDragging = ref(false);
-const dragOffset = ref({ x: 0, y: 0 });
-
-// 切換登入狀態（調試用）
-const toggleLoginStatus = () => {
-  session.loggedIn = !session.loggedIn;
-  // 關閉所有下拉選單
-  showUserMenu.value = false;
-  showCardMenu.value = false;
-  showMessageMenu.value = false;
-};
 
 // 切換用戶選單
 const toggleUserMenu = (event: Event) => {
@@ -236,50 +211,21 @@ const toggleMessageMenu = (event: Event) => {
 // 點擊外部關閉下拉選單
 const handleClickOutside = (event: Event) => {
   const target = event.target as HTMLElement;
-  if (!target.closest('.iditem') && !target.closest('.carditem') && !target.closest('.messageitem') && !target.closest('.debug-toggle-container')) {
+  if (!target.closest('.iditem') && !target.closest('.carditem') && !target.closest('.messageitem')) {
     showUserMenu.value = false;
     showCardMenu.value = false;
     showMessageMenu.value = false;
   }
 };
 
-// 拖拽功能
-const startDrag = (event: MouseEvent) => {
-  if (event.target instanceof HTMLButtonElement) return; // 如果點擊的是按鈕，不開始拖拽
-  
-  isDragging.value = true;
-  dragOffset.value = {
-    x: event.clientX - debugPosition.value.x,
-    y: event.clientY - debugPosition.value.y
-  };
-  
-  event.preventDefault();
-};
-
-const handleMouseMove = (event: MouseEvent) => {
-  if (!isDragging.value) return;
-  
-  debugPosition.value = {
-    x: event.clientX - dragOffset.value.x,
-    y: event.clientY - dragOffset.value.y
-  };
-};
-
-const handleMouseUp = () => {
-  isDragging.value = false;
-};
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
-  document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', handleMouseUp);
   session.fetchSession().then(() => session.ensureProfile());
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
-  document.removeEventListener('mousemove', handleMouseMove);
-  document.removeEventListener('mouseup', handleMouseUp);
 });
 
 async function logout() {
@@ -595,41 +541,6 @@ function goToProfile() {
   display: block;
 }
 
-/* 調試按鈕 - 可拖拽浮動式 */
-.debug-toggle-container {
-  position: fixed;
-  z-index: 10000;
-  cursor: move;
-  user-select: none;
-  background: rgba(255, 107, 107, 0.9);
-  border-radius: 8px;
-  padding: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-}
-
-.debug-toggle-container:hover {
-  background: rgba(255, 82, 82, 0.95);
-  transform: scale(1.05);
-}
-
-.debug-button {
-  padding: 6px 12px;
-  background: transparent;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: bold;
-  transition: all 0.3s ease;
-  pointer-events: auto;
-}
-
-.debug-button:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
 
 /* 響應式設計 */
 @media (max-width: 1024px) {
@@ -681,7 +592,6 @@ function goToProfile() {
     order: 3;
   }
   
-  /* 調試按鈕現在是可拖拽的，不需要固定位置 */
 }
 
 @media (max-width: 480px) {
@@ -700,9 +610,5 @@ function goToProfile() {
     font-size: 12px;
   }
   
-  .debug-button {
-    padding: 4px 8px;
-    font-size: 11px;
-  }
 }
 </style>

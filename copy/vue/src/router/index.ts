@@ -67,7 +67,7 @@ router.beforeEach(async (to) => {
       if (session.loggedIn) {
         const v = await session.checkVerificationStatus();
         if (v === false && (protectedNames.has((to.name as string) || '') || (to.meta as any)?.requiresAuth)) {
-          return { name: 'verify-email' };
+          return { name: 'verify-email', query: { auto: '0' } };
         }
       }
     } catch {}

@@ -7,8 +7,8 @@
 
       <div class="oauth-row">
         <button class="oauth-btn google" @click="oauth('google')"><i class="icon">G</i> Google 登入</button>
-        <button class="oauth-btn facebook" @click="oauth('facebook')"><i class="icon">f</i> Facebook 登入</button>
-        <button class="oauth-btn line" @click="oauth('line')"><i class="icon">L</i> Line 登入</button>
+        <button class="oauth-btn facebook" disabled title="Facebook 登入尚未完成"><i class="icon">f</i> Facebook 登入（開發中）</button>
+        <button class="oauth-btn line" disabled title="Line 登入尚未完成"><i class="icon">L</i> Line 登入（開發中）</button>
       </div>
 
       <div class="sep">
@@ -118,7 +118,7 @@ async function onSubmit() {
     try {
       const vs = await api.get('/auth/verification-status').then(r => r.data).catch(() => undefined as any);
       if (vs && vs.isVerified === false) {
-        router.replace('/verify-email');
+        router.replace({ name: 'verify-email', query: { auto: '0' } });
         return;
       }
     } catch {}
@@ -140,7 +140,7 @@ async function onSubmit() {
       try {
         const vs = await api.get('/auth/verification-status').then(r => r.data).catch(() => undefined as any);
         if (vs && vs.isVerified === false) {
-          router.replace('/verify-email');
+          router.replace({ name: 'verify-email', query: { auto: '0' } });
           return;
         }
       } catch {}
@@ -161,7 +161,7 @@ async function onSubmit() {
       try {
         const vs2 = await api.get('/auth/verification-status').then(r => r.data).catch(() => undefined as any);
         if (vs2 && vs2.isVerified === false) {
-          router.replace('/verify-email');
+          router.replace({ name: 'verify-email', query: { auto: '0' } });
           return;
         }
       } catch {}
@@ -201,7 +201,7 @@ onMounted(async () => {
       try {
         const vs = await api.get('/auth/verification-status').then(r => r.data).catch(() => undefined as any);
         if (vs && vs.isVerified === false) {
-          router.replace('/verify-email');
+          router.replace({ name: 'verify-email', query: { auto: '0' } });
           return;
         }
       } catch {}
@@ -284,6 +284,12 @@ onMounted(async () => {
 .login-form { display: flex; flex-direction: column; gap: 12px; }
 .field { display: block; }
 .inputtext { width: 100%; height: 36px; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; }
+.oauth-row { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.oauth-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 12px; border-radius: 6px; border: 1px solid #e0e0e0; cursor: pointer; background: #fafafa; }
+.oauth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.oauth-btn.google .icon { font-weight: 700; color: #4285F4; }
+.oauth-btn.facebook .icon { font-weight: 700; color: #1877F2; }
+.oauth-btn.line .icon { font-weight: 700; color: #06c755; }
 .recover { margin-left: 6px; font-size: 12px; color: #0277bd; }
 .remember-row { display: inline-flex; gap: 6px; align-items: center; margin-top: 6px; }
 .action-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
