@@ -73,10 +73,10 @@ import api from '../api/client';
 const router = useRouter();
 const route = useRoute();
 
-const name = ref('Demo');
-const email = ref('user+demo@example.com');
-const password = ref('password123');
-const passwordConfirm = ref('password123');
+const name = ref('Test');
+const email = ref('anuuyu1999@gmail.com');
+const password = ref('Qq!00000');
+const passwordConfirm = ref('Qq!00000');
 const errorMessage = ref('');
 const submitting = ref(false);
 

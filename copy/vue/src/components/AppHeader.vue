@@ -98,10 +98,6 @@
         <br style="clear: left" />
       </div>
 
-      <style>
-        #menu-limited img, #menu-prizeDraw img { width: 70px; margin-top: 4px; }
-      </style>
-
       <!-- header menu end -->
       <div id="navi" class="default">
         <div class="fixedpos" id="fixedposid">
@@ -243,6 +239,12 @@ function goToProfile() {
 
 <style scoped>
 /* 完全按照原始CSS樣式 */
+
+/* Menu limited and prize draw images */
+#menu-limited img, #menu-prizeDraw img {
+  width: 70px;
+  margin-top: 4px;
+}
 .headerbox {
   color: #666;
   font-family: "微軟正黑體","Microsoft JhengHei","新細明體",PMingLiU,Arial,Helvetica,sans-serif;
