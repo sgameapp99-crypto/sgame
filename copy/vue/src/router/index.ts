@@ -25,7 +25,50 @@ const router = createRouter({
       name: 'predict-buy',
       component: () => import('../pages/PredictPurchasePage.vue'),
     },
-    { path: '/games', name: 'games', component: () => import('../pages/GamesPage.vue') },
+    { path: '/guess', name: 'guess', component: () => import('../pages/GuessPage.vue') },
+    { path: '/livescore', name: 'livescore', component: () => import('../pages/LivescorePage.vue') },
+    {
+      path: '/buy-predict',
+      name: 'buy-predict',
+      component: () => import('../pages/BuyPredictPage.vue'),
+    },
+    {
+      path: '/billboard',
+      name: 'billboard',
+      component: () => import('../pages/BillboardPage.vue'),
+    },
+    {
+      path: '/member/search',
+      name: 'member-search',
+      component: () => import('../pages/MemberSearchPage.vue'),
+    },
+    // 看數據功能頁面
+    {
+      path: '/games',
+      name: 'games',
+      component: () => import('../pages/GamesPage.vue'),
+    },
+    {
+      path: '/games/battle/:gameId?',
+      name: 'games-battle',
+      component: () => import('../pages/GamesBattlePage.vue'),
+    },
+    {
+      path: '/games/teams',
+      name: 'games-teams',
+      component: () => import('../pages/GamesTeamsPage.vue'),
+    },
+    {
+      path: '/games/standings',
+      name: 'games-standings',
+      component: () => import('../pages/GamesStandingsPage.vue'),
+    },
+    {
+      path: '/games/results',
+      name: 'games-results',
+      component: () => import('../pages/GamesResultsPage.vue'),
+    },
+    // 保留舊路由以向後相容
     {
       path: '/games/list',
       name: 'games-list',

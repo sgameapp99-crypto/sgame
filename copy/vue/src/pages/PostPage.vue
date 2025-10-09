@@ -1,6 +1,5 @@
 <template>
-	<div class="min-h-screen flex flex-col">
-		<AppHeader />
+	<div>
 		<div class="p-4 space-y-lg">
 			<div class="card">
 				<PostContent :title="title" :content-html="contentHtml" />
@@ -8,15 +7,12 @@
 			<div class="card">
 				<ReplyList :replies="replies" :pages="replyPages" @page="onReplyPage" />
 			</div>
-		</div>
-		<AppFooter />
+			</div>
 	</div>
 </template>
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import AppHeader from '../components/AppHeader.vue'
-import AppFooter from '../components/AppFooter.vue'
 import PostContent from '../components/PostContent.vue'
 import ReplyList from '../components/ReplyList.vue'
 import { parsePost, parsePostReplies } from '../utils/legacyParser'

@@ -1,6 +1,5 @@
 <template>
-  <div style="min-height: 100vh; display: flex; flex-direction: column">
-    <AppHeader />
+  <div style="padding: 24px">
     <div style="padding: 24px">
       <h2>頁面不存在（404）</h2>
       <p>
@@ -9,12 +8,10 @@
         <a href="/legacy/www.playsport.cc/forume4cf.html">前往舊站首頁</a>
       </p>
     </div>
-    <AppFooter />
   </div>
 </template>
 <script setup lang="ts">
-import AppHeader from '../components/AppHeader.vue';
-import AppFooter from '../components/AppFooter.vue';
+// 404 頁面 - 頁面不存在
 </script>
 
 

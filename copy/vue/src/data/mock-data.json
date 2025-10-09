@@ -1,0 +1,362 @@
+{
+  "games": [
+    {
+      "id": 1,
+      "league": "MLB",
+      "allianceId": 1,
+      "time": "2025-10-08 19:00",
+      "homeTeam": "洋基",
+      "awayTeam": "紅襪",
+      "homeScore": 7,
+      "awayScore": 5,
+      "status": "finished",
+      "inning": "比賽結束",
+      "outs": 3,
+      "officialId": "MLB_20251008_BOS@NYY_1900",
+      "homeTeamId": 19,
+      "awayTeamId": 18,
+      "date": "2025-10-08",
+      "winner": "洋基",
+      "scoreboard": {
+        "innings": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        "awayScores": [
+          { "inning": 1, "runs": 0 },
+          { "inning": 2, "runs": 2 },
+          { "inning": 3, "runs": 0 },
+          { "inning": 4, "runs": 1 },
+          { "inning": 5, "runs": 1 },
+          { "inning": 6, "runs": 0 },
+          { "inning": 7, "runs": 1 },
+          { "inning": 8, "runs": 0 },
+          { "inning": 9, "runs": 0 }
+        ],
+        "homeScores": [
+          { "inning": 1, "runs": 1 },
+          { "inning": 2, "runs": 0 },
+          { "inning": 3, "runs": 2 },
+          { "inning": 4, "runs": 1 },
+          { "inning": 5, "runs": 0 },
+          { "inning": 6, "runs": 2 },
+          { "inning": 7, "runs": 0 },
+          { "inning": 8, "runs": 1 },
+          { "inning": 9, "runs": 0 }
+        ],
+        "awayTotal": { "runs": 5, "hits": 11, "errors": 1 },
+        "homeTotal": { "runs": 7, "hits": 13, "errors": 0 }
+      }
+    },
+    {
+      "id": 5,
+      "league": "MLB",
+      "allianceId": 1,
+      "time": "2025-10-08 20:10",
+      "homeTeam": "太空人",
+      "awayTeam": "遊騎兵",
+      "homeScore": 4,
+      "awayScore": 6,
+      "status": "finished",
+      "inning": "比賽結束",
+      "outs": 3,
+      "officialId": "MLB_20251008_TEX@HOU_2010",
+      "homeTeamId": 9,
+      "awayTeamId": 13,
+      "date": "2025-10-08",
+      "winner": "遊騎兵",
+      "scoreboard": {
+        "innings": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        "awayScores": [
+          { "inning": 1, "runs": 1 },
+          { "inning": 2, "runs": 0 },
+          { "inning": 3, "runs": 2 },
+          { "inning": 4, "runs": 1 },
+          { "inning": 5, "runs": 0 },
+          { "inning": 6, "runs": 1 },
+          { "inning": 7, "runs": 0 },
+          { "inning": 8, "runs": 1 },
+          { "inning": 9, "runs": 0 }
+        ],
+        "homeScores": [
+          { "inning": 1, "runs": 0 },
+          { "inning": 2, "runs": 1 },
+          { "inning": 3, "runs": 0 },
+          { "inning": 4, "runs": 1 },
+          { "inning": 5, "runs": 1 },
+          { "inning": 6, "runs": 0 },
+          { "inning": 7, "runs": 1 },
+          { "inning": 8, "runs": 0 },
+          { "inning": 9, "runs": 0 }
+        ],
+        "awayTotal": { "runs": 6, "hits": 12, "errors": 0 },
+        "homeTotal": { "runs": 4, "hits": 9, "errors": 2 }
+      }
+    },
+    {
+      "id": 2,
+      "league": "MLB",
+      "allianceId": 1,
+      "time": "2025-10-09 19:00",
+      "homeTeam": "道奇",
+      "awayTeam": "巨人",
+      "homeScore": 0,
+      "awayScore": 4,
+      "status": "finished",
+      "inning": "比賽結束",
+      "outs": 3,
+      "officialId": "MLB_20251009_SF@LAD_1900",
+      "homeTeamId": 14,
+      "awayTeamId": 16,
+      "date": "2025-10-09",
+      "winner": "巨人",
+      "scoreboard": {
+        "innings": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        "awayScores": [
+          { "inning": 1, "runs": 0 },
+          { "inning": 2, "runs": 0 },
+          { "inning": 3, "runs": 2 },
+          { "inning": 4, "runs": 1 },
+          { "inning": 5, "runs": 0 },
+          { "inning": 6, "runs": 1 },
+          { "inning": 7, "runs": 0 },
+          { "inning": 8, "runs": 0 },
+          { "inning": 9, "runs": 0 }
+        ],
+        "homeScores": [
+          { "inning": 1, "runs": 0 },
+          { "inning": 2, "runs": 0 },
+          { "inning": 3, "runs": 0 },
+          { "inning": 4, "runs": 0 },
+          { "inning": 5, "runs": 0 },
+          { "inning": 6, "runs": 0 },
+          { "inning": 7, "runs": 0 },
+          { "inning": 8, "runs": 0 },
+          { "inning": 9, "runs": 0 }
+        ],
+        "awayTotal": { "runs": 4, "hits": 9, "errors": 0 },
+        "homeTotal": { "runs": 0, "hits": 5, "errors": 1 }
+      }
+    },
+    {
+      "id": 3,
+      "league": "MLB",
+      "allianceId": 1,
+      "time": "2025-10-09 20:05",
+      "homeTeam": "天使",
+      "awayTeam": "水手",
+      "homeScore": 2,
+      "awayScore": 1,
+      "status": "live",
+      "inning": "6局上",
+      "outs": 1,
+      "officialId": "MLB_20251009_SEA@LAA_2005",
+      "homeTeamId": 5,
+      "awayTeamId": 11,
+      "date": "2025-10-09",
+      "liveStats": {
+        "strikes": 2,
+        "balls": 1,
+        "outs": 1,
+        "inning": "6局上",
+        "currentPitcher": "Luis Castillo",
+        "currentBatter": "Shohei Ohtani",
+        "batterStats": {
+          "name": "Shohei Ohtani",
+          "position": "指定打擊",
+          "battingOrder": 3,
+          "season": {
+            "avg": ".310",
+            "hr": 44,
+            "rbi": 95
+          },
+          "vsPitcher": {
+            "last3Years": ".285"
+          },
+          "today": "1-2"
+        },
+        "onDeckStats": {
+          "name": "Mike Trout",
+          "battingOrder": 4,
+          "season": {
+            "avg": ".295"
+          }
+        },
+        "inHoleStats": {
+          "name": "Anthony Rendon",
+          "battingOrder": 5,
+          "season": {
+            "avg": ".275"
+          }
+        },
+        "pitcherStats": {
+          "name": "Luis Castillo",
+          "ip": "5.1",
+          "er": 2,
+          "pitches": 89,
+          "strikes": 58,
+          "balls": 31,
+          "hits": 6,
+          "bb": 2,
+          "so": 7
+        }
+      },
+      "scoreboard": {
+        "innings": [1, 2, 3, 4, 5, 6],
+        "awayScores": [
+          { "inning": 1, "runs": 0 },
+          { "inning": 2, "runs": 0 },
+          { "inning": 3, "runs": 0 },
+          { "inning": 4, "runs": 1 },
+          { "inning": 5, "runs": 0 },
+          { "inning": 6, "runs": 0 }
+        ],
+        "homeScores": [
+          { "inning": 1, "runs": 0 },
+          { "inning": 2, "runs": 1 },
+          { "inning": 3, "runs": 0 },
+          { "inning": 4, "runs": 0 },
+          { "inning": 5, "runs": 0 },
+          { "inning": 6, "runs": 1 }
+        ],
+        "awayTotal": { "runs": 1, "hits": 6, "errors": 0 },
+        "homeTotal": { "runs": 2, "hits": 7, "errors": 1 }
+      }
+    },
+    {
+      "id": 6,
+      "league": "MLB",
+      "allianceId": 1,
+      "time": "2025-10-09 21:15",
+      "homeTeam": "金鶯",
+      "awayTeam": "藍鳥",
+      "homeScore": 8,
+      "awayScore": 3,
+      "status": "finished",
+      "inning": "比賽結束",
+      "outs": 3,
+      "officialId": "MLB_20251009_TOR@BAL_2115",
+      "homeTeamId": 2,
+      "awayTeamId": 15,
+      "date": "2025-10-09",
+      "winner": "金鶯",
+      "scoreboard": {
+        "innings": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        "awayScores": [
+          { "inning": 1, "runs": 1 },
+          { "inning": 2, "runs": 0 },
+          { "inning": 3, "runs": 1 },
+          { "inning": 4, "runs": 0 },
+          { "inning": 5, "runs": 0 },
+          { "inning": 6, "runs": 1 },
+          { "inning": 7, "runs": 0 },
+          { "inning": 8, "runs": 0 },
+          { "inning": 9, "runs": 0 }
+        ],
+        "homeScores": [
+          { "inning": 1, "runs": 2 },
+          { "inning": 2, "runs": 1 },
+          { "inning": 3, "runs": 0 },
+          { "inning": 4, "runs": 3 },
+          { "inning": 5, "runs": 1 },
+          { "inning": 6, "runs": 0 },
+          { "inning": 7, "runs": 1 },
+          { "inning": 8, "runs": 0 },
+          { "inning": 9, "runs": 0 }
+        ],
+        "awayTotal": { "runs": 3, "hits": 8, "errors": 1 },
+        "homeTotal": { "runs": 8, "hits": 15, "errors": 0 }
+      }
+    },
+    {
+      "id": 4,
+      "league": "MLB",
+      "allianceId": 1,
+      "time": "2025-10-10 19:10",
+      "homeTeam": "道奇",
+      "awayTeam": "費城人",
+      "homeScore": 0,
+      "awayScore": 0,
+      "status": "scheduled",
+      "inning": "",
+      "outs": 0,
+      "officialId": "MLB_20251010_PHI@LAD_1910",
+      "homeTeamId": 14,
+      "awayTeamId": 4,
+      "date": "2025-10-10",
+      "awayPitcher": {
+        "name": "Zack Wheeler",
+        "hand": "右",
+        "record": "14-7",
+        "era": "2.85",
+        "whip": ".195",
+        "seasonRecord": "14-7",
+        "seasonEra": "2.85",
+        "seasonWhip": ".195",
+        "homeRecord": "8-3",
+        "homeEra": "2.65",
+        "homeWhip": ".185"
+      },
+      "homePitcher": {
+        "name": "Clayton Kershaw",
+        "record": "12-5",
+        "era": "2.45",
+        "whip": ".210",
+        "seasonRecord": "12-5",
+        "seasonEra": "2.45",
+        "seasonWhip": ".210",
+        "homeRecord": "7-2",
+        "homeEra": "2.15",
+        "homeWhip": ".195"
+      }
+    },
+    {
+      "id": 7,
+      "league": "MLB",
+      "allianceId": 1,
+      "time": "2025-10-10 20:20",
+      "homeTeam": "勇士",
+      "awayTeam": "海盜",
+      "homeScore": 0,
+      "awayScore": 0,
+      "status": "scheduled",
+      "inning": "",
+      "outs": 0,
+      "officialId": "MLB_20251010_PIT@ATL_2020",
+      "homeTeamId": 1,
+      "awayTeamId": 12,
+      "date": "2025-10-10",
+      "awayPitcher": {
+        "name": "Mitch Keller",
+        "hand": "右",
+        "record": "11-9",
+        "era": "3.42",
+        "whip": ".215",
+        "seasonRecord": "11-9",
+        "seasonEra": "3.42",
+        "seasonWhip": ".215",
+        "homeRecord": "6-4",
+        "homeEra": "3.15",
+        "homeWhip": ".205"
+      },
+      "homePitcher": {
+        "name": "Max Fried",
+        "record": "15-6",
+        "era": "2.68",
+        "whip": ".189",
+        "seasonRecord": "15-6",
+        "seasonEra": "2.68",
+        "seasonWhip": ".189",
+        "homeRecord": "8-3",
+        "homeEra": "2.45",
+        "homeWhip": ".178"
+      }
+    }
+  ],
+  "alliances": [
+    {
+      "id": 1,
+      "name": "MLB",
+      "sport": "baseball",
+      "displayName": "美國職棒",
+      "hasGames": true
+    }
+  ]
+}

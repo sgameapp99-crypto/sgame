@@ -1,57 +1,192 @@
 <template>
   <div class="container mx-auto px-lg py-xl">
-    <div class="heading-2">賽事/資料</div>
-    <div v-if="loading" class="mt-md">載入中…</div>
-    <div v-else-if="errorMessage" class="mt-md text-red-600">{{ errorMessage }}</div>
-    <div v-else class="card mt-md">
-      <div v-if="title" class="heading-3">{{ title }}</div>
-      <div v-if="rewrittenHtml" class="prose max-w-none" v-html="rewrittenHtml"></div>
-      <div v-else class="text-neutral-600">無內容可顯示</div>
+    <div class="heading-2">看數據</div>
+
+    <!-- 功能導航區域 -->
+    <div class="games-overview mt-lg">
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-lg">
+        <!-- 對戰資訊 -->
+        <div class="feature-card">
+          <div class="card-icon">⚾</div>
+          <h3 class="card-title">對戰資訊</h3>
+          <p class="card-description">查看球隊對戰數據、先發投手資訊、近期戰績等詳細對戰資訊</p>
+          <RouterLink class="btn btn-primary btn-sm" :to="{ name: 'games-battle' }">
+            查看對戰
+          </RouterLink>
+        </div>
+
+        <!-- 球隊資訊 -->
+        <div class="feature-card">
+          <div class="card-icon">🏆</div>
+          <h3 class="card-title">球隊資訊</h3>
+          <p class="card-description">了解各球隊的基本資訊、賽季統計數據和表現情況</p>
+          <RouterLink class="btn btn-primary btn-sm" :to="{ name: 'games-teams' }">
+            查看球隊
+          </RouterLink>
+        </div>
+
+        <!-- 戰績排名 -->
+        <div class="feature-card">
+          <div class="card-icon">📊</div>
+          <h3 class="card-title">戰績排名</h3>
+          <p class="card-description">查看聯盟各分區的即時排名、勝率統計和連勝情況</p>
+          <RouterLink class="btn btn-primary btn-sm" :to="{ name: 'games-standings' }">
+            查看排名
+          </RouterLink>
+        </div>
+
+        <!-- 賽事結果查詢 -->
+        <div class="feature-card">
+          <div class="card-icon">🔍</div>
+          <h3 class="card-title">賽事結果查詢</h3>
+          <p class="card-description">查詢歷史賽事結果，支持按聯盟、球隊、日期等多條件篩選</p>
+          <RouterLink class="btn btn-primary btn-sm" :to="{ name: 'games-results' }">
+            查詢結果
+          </RouterLink>
+        </div>
+      </div>
+    </div>
+
+    <!-- 快速統計區域 -->
+    <div class="stats-overview mt-xl">
+      <h3 class="heading-3 mb-lg">數據概覽</h3>
+      <div class="grid md:grid-cols-3 gap-lg">
+        <div class="stat-card">
+          <div class="stat-number">{{ totalGames }}</div>
+          <div class="stat-label">今日賽事</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ totalTeams }}</div>
+          <div class="stat-label">參賽球隊</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ activeLeagues }}</div>
+          <div class="stat-label">活躍聯盟</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue';
-import { loadLegacyHtml, parseBasicContent } from '../utils/simpleLegacyParser';
-import { rewriteLegacyUrls } from '../utils/rewriteLegacy';
-import { useRoute } from 'vue-router';
+import { ref } from 'vue';
 
-const route = useRoute();
-const loading = ref(true);
-const errorMessage = ref('');
-const title = ref('');
-const rawHtml = ref('');
-
-const rewrittenHtml = computed(() => rewriteLegacyUrls(rawHtml.value));
-
-onMounted(async () => {
-  try {
-    const path = (route.query.path as string) || '/legacy/www.playsport.cc/gamesData/';
-    const CACHE_KEY = `games_cache_${path}`;
-    const TTL_MS = 5 * 60 * 1000;
-    const cached = sessionStorage.getItem(CACHE_KEY);
-    if (cached) {
-      const data = JSON.parse(cached) as { ts: number; title: string; html: string };
-      if (data && Date.now() - data.ts < TTL_MS) {
-        title.value = data.title;
-        rawHtml.value = data.html;
-        loading.value = false;
-        return;
-      }
-    }
-    const html = await loadLegacyHtml(path);
-    const { title: t, contentHtml } = parseBasicContent(html);
-    title.value = t;
-    rawHtml.value = contentHtml;
-    sessionStorage.setItem(
-      CACHE_KEY,
-      JSON.stringify({ ts: Date.now(), title: t, html: contentHtml }),
-    );
-  } catch (e) {
-    errorMessage.value = '載入賽事資料相關內容失敗';
-    console.error(e);
-  } finally {
-    loading.value = false;
-  }
-});
+// 統計數據
+const totalGames = ref(12);
+const totalTeams = ref(30);
+const activeLeagues = ref(4);
 </script>
+
+<style scoped>
+.games-overview {
+  margin-top: 2rem;
+}
+
+.feature-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  text-align: center;
+  transition: all 0.2s ease;
+  border: 1px solid #e0e0e0;
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.card-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 0.75rem;
+}
+
+.card-description {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  font-size: 0.875rem;
+}
+
+.btn-primary {
+  background: #3498db;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2980b9;
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.stats-overview {
+  margin-top: 3rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #3498db;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .games-overview .grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .stats-overview .grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card-icon {
+    font-size: 2.5rem;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
+  }
+}
+</style>

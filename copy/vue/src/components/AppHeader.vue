@@ -3,7 +3,7 @@
     <div class="headerboxin">
       <!-- logo start -->
       <div class="logobox">
-        <RouterLink to="/forum?redirect_from=headerLogo">
+        <RouterLink to="/">
           <img src="/images/logo.png" alt="玩運彩" border="0" width="140" height="57">
         </RouterLink>
       </div>
@@ -13,86 +13,86 @@
       <div id="smoothmenu1" class="ddsmoothmenu">
         <ul class="drop-down-menu">
           <li class="ddsmoothmenu-outer">
-            <a class="ddsmoothmenu-item js-header-menu--guess" href="/guess?from=header">
+            <RouterLink class="ddsmoothmenu-item js-header-menu--guess" :to="{ name: 'guess' }">
               <span></span>玩競猜
-            </a>
+            </RouterLink>
             <ul>
               <li>
-                <a class="ddsmoothmenu-link js-header-menu--guess" href="/guess?from=header">遊戲區</a>
+                <RouterLink class="ddsmoothmenu-link js-header-menu--guess" :to="{ name: 'guess' }">遊戲區</RouterLink>
               </li>
             </ul>
           </li>
           <li class="ddsmoothmenu-outer">
-            <a class="ddsmoothmenu-item" href="/predict/games?allianceid=1&type=p&from=header">
+            <RouterLink class="ddsmoothmenu-item" :to="{ name: 'predict' }">
               <span></span>預測賽事
-            </a>
+            </RouterLink>
             <ul>
               <li>
-                <a class="ddsmoothmenu-link" href="/predict/games?allianceid=1&from=header">預測賽事</a>
+                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'predict' }">預測賽事</RouterLink>
               </li>
               <li>
-                <a class="ddsmoothmenu-link" href="/predict/scale?allianceid=1&from=header">觀看預測比例</a>
+                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'predict', query: { type: 'scale' } }">觀看預測比例</RouterLink>
               </li>
             </ul>
           </li>
           <li class="ddsmoothmenu-outer">
-            <a class="ddsmoothmenu-item" href="/forum?from=header">
+            <RouterLink class="ddsmoothmenu-item" :to="{ name: 'forum' }">
               <span></span>討論區
-            </a>
+            </RouterLink>
             <ul>
               <li>
-                <a class="ddsmoothmenu-link" href="/forum?from=header">運彩版</a>
+                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'forum' }">運彩版</RouterLink>
               </li>
             </ul>
           </li>
           <li class="ddsmoothmenu-outer">
-            <a class="ddsmoothmenu-item" href="/buyPredict/medalFire/1?from=header">
+            <RouterLink class="ddsmoothmenu-item" :to="{ name: 'buy-predict' }">
               <span></span>找高手
-            </a>
+            </RouterLink>
             <ul>
               <li>
-                <a class="ddsmoothmenu-link" href="/buyPredict/medalFire/1?ck=1&from=header">莊家殺手</a>
+                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'buy-predict', query: { type: 'medalFire' } }">莊家殺手</RouterLink>
               </li>
               <li>
-                <a class="ddsmoothmenu-link" href="/buyPredict/singleKiller/1?ck=2&from=header">單場殺手</a>
+                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'buy-predict', query: { type: 'singleKiller' } }">單場殺手</RouterLink>
               </li>
               <li>
-                <a class="ddsmoothmenu-link" href="/billboard/winRate?allianceid=1&from=header">勝率榜</a>
+                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'billboard', query: { type: 'winRate' } }">勝率榜</RouterLink>
               </li>
               <li>
-                <a class="ddsmoothmenu-link" href="/billboard/mainPrediction?allianceid=1&from=header">主推榜</a>
+                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'billboard', query: { type: 'mainPrediction' } }">主推榜</RouterLink>
               </li>
             </ul>
           </li>
           <li class="ddsmoothmenu-outer">
-            <a class="ddsmoothmenu-item" href="/livescore/1?from=header">
+            <RouterLink class="ddsmoothmenu-item" :to="{ name: 'livescore' }">
               <span></span>即時比分
-            </a>
+            </RouterLink>
             <ul></ul>
           </li>
           <li class="ddsmoothmenu-outer">
-            <a class="ddsmoothmenu-item" href="/gamesData/battle?allianceid=1&from=header">
+            <RouterLink class="ddsmoothmenu-item" :to="{ name: 'games' }">
               <span></span>看數據
-            </a>
+            </RouterLink>
             <ul>
               <li>
-                <a class="ddsmoothmenu-link" href="/gamesData/battle?allianceid=1&from=header">對戰資訊</a>
+                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'games-battle' }">對戰資訊</RouterLink>
               </li>
               <li>
-                <a class="ddsmoothmenu-link" href="/gamesData/teams?allianceid=1&from=header">球隊資訊</a>
+                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'games-teams' }">球隊資訊</RouterLink>
               </li>
               <li>
-                <a class="ddsmoothmenu-link" href="/gamesData/standings/3?from=header">戰績排名</a>
+                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'games-standings' }">戰績排名</RouterLink>
               </li>
               <li>
-                <a class="ddsmoothmenu-link" href="/gamesData/result?allianceid=1">賽事結果查詢</a>
+                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'games-results' }">賽事結果查詢</RouterLink>
               </li>
             </ul>
           </li>
           <li class="ddsmoothmenu-outer">
-            <a class="ddsmoothmenu-item" href="/member/search">
+            <RouterLink class="ddsmoothmenu-item" :to="{ name: 'member-search' }">
               <span></span>玩家搜尋
-            </a>
+            </RouterLink>
           </li>
         </ul>
         <br style="clear: left" />
