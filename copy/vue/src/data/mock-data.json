@@ -348,6 +348,350 @@
         "homeEra": "2.45",
         "homeWhip": ".178"
       }
+    },
+    {
+      "id": 8,
+      "league": "日棒",
+      "allianceId": 3,
+      "time": "2025-10-09 18:00",
+      "homeTeam": "讀賣巨人",
+      "awayTeam": "阪神虎",
+      "homeScore": 5,
+      "awayScore": 3,
+      "status": "finished",
+      "inning": "比賽結束",
+      "outs": 3,
+      "officialId": "NPB_20251009_Tigers@Giants_1800",
+      "homeTeamId": 21,
+      "awayTeamId": 22,
+      "date": "2025-10-09",
+      "winner": "讀賣巨人",
+      "scoreboard": {
+        "innings": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        "awayScores": [
+          { "inning": 1, "runs": 0 },
+          { "inning": 2, "runs": 1 },
+          { "inning": 3, "runs": 0 },
+          { "inning": 4, "runs": 1 },
+          { "inning": 5, "runs": 1 },
+          { "inning": 6, "runs": 0 },
+          { "inning": 7, "runs": 0 },
+          { "inning": 8, "runs": 0 },
+          { "inning": 9, "runs": 0 }
+        ],
+        "homeScores": [
+          { "inning": 1, "runs": 2 },
+          { "inning": 2, "runs": 0 },
+          { "inning": 3, "runs": 1 },
+          { "inning": 4, "runs": 0 },
+          { "inning": 5, "runs": 1 },
+          { "inning": 6, "runs": 0 },
+          { "inning": 7, "runs": 1 },
+          { "inning": 8, "runs": 0 },
+          { "inning": 9, "runs": 0 }
+        ],
+        "awayTotal": { "runs": 3, "hits": 8, "errors": 1 },
+        "homeTotal": { "runs": 5, "hits": 11, "errors": 0 }
+      }
+    },
+    {
+      "id": 9,
+      "league": "日棒",
+      "allianceId": 3,
+      "time": "2025-10-09 18:00",
+      "homeTeam": "福岡軟銀鷹",
+      "awayTeam": "東北樂天金鷲",
+      "homeScore": 2,
+      "awayScore": 4,
+      "status": "live",
+      "inning": "7局上",
+      "outs": 2,
+      "officialId": "NPB_20251009_GoldenEagles@Hawks_1800",
+      "homeTeamId": 23,
+      "awayTeamId": 24,
+      "date": "2025-10-09",
+      "liveStats": {
+        "strikes": 1,
+        "balls": 2,
+        "outs": 2,
+        "inning": "7局上",
+        "currentPitcher": "石川柊太",
+        "currentBatter": "松井裕樹",
+        "batterStats": {
+          "name": "松井裕樹",
+          "position": "投手",
+          "battingOrder": 9,
+          "season": {
+            "avg": ".185",
+            "hr": 0,
+            "rbi": 3
+          },
+          "vsPitcher": {
+            "last3Years": ".167"
+          },
+          "today": "0-1"
+        },
+        "onDeckStats": {
+          "name": "柳田悠岐",
+          "battingOrder": 1,
+          "season": {
+            "avg": ".312"
+          }
+        },
+        "inHoleStats": {
+          "name": "近藤健介",
+          "battingOrder": 2,
+          "season": {
+            "avg": ".298"
+          }
+        },
+        "pitcherStats": {
+          "name": "石川柊太",
+          "ip": "6.2",
+          "er": 2,
+          "pitches": 95,
+          "strikes": 62,
+          "balls": 33,
+          "hits": 8,
+          "bb": 2,
+          "so": 5
+        }
+      },
+      "scoreboard": {
+        "innings": [1, 2, 3, 4, 5, 6, 7],
+        "awayScores": [
+          { "inning": 1, "runs": 1 },
+          { "inning": 2, "runs": 0 },
+          { "inning": 3, "runs": 2 },
+          { "inning": 4, "runs": 0 },
+          { "inning": 5, "runs": 1 },
+          { "inning": 6, "runs": 0 },
+          { "inning": 7, "runs": 0 }
+        ],
+        "homeScores": [
+          { "inning": 1, "runs": 0 },
+          { "inning": 2, "runs": 1 },
+          { "inning": 3, "runs": 0 },
+          { "inning": 4, "runs": 1 },
+          { "inning": 5, "runs": 0 },
+          { "inning": 6, "runs": 0 },
+          { "inning": 7, "runs": 0 }
+        ],
+        "awayTotal": { "runs": 4, "hits": 9, "errors": 0 },
+        "homeTotal": { "runs": 2, "hits": 7, "errors": 1 }
+      }
+    },
+    {
+      "id": 10,
+      "league": "日棒",
+      "allianceId": 3,
+      "time": "2025-10-10 14:00",
+      "homeTeam": "北海道日本火腿鬥士",
+      "awayTeam": "千葉羅德海洋",
+      "homeScore": 0,
+      "awayScore": 0,
+      "status": "scheduled",
+      "inning": "",
+      "outs": 0,
+      "officialId": "NPB_20251010_Marines@Fighters_1400",
+      "homeTeamId": 25,
+      "awayTeamId": 26,
+      "date": "2025-10-10",
+      "awayPitcher": {
+        "name": "美馬學",
+        "hand": "右",
+        "record": "8-5",
+        "era": "3.15",
+        "whip": ".198",
+        "seasonRecord": "8-5",
+        "seasonEra": "3.15",
+        "seasonWhip": ".198",
+        "homeRecord": "4-2",
+        "homeEra": "2.95",
+        "homeWhip": ".185"
+      },
+      "homePitcher": {
+        "name": "上沢直之",
+        "record": "12-4",
+        "era": "2.45",
+        "whip": ".176",
+        "seasonRecord": "12-4",
+        "seasonEra": "2.45",
+        "seasonWhip": ".176",
+        "homeRecord": "7-1",
+        "homeEra": "2.15",
+        "homeWhip": ".165"
+      }
+    },
+    {
+      "id": 11,
+      "league": "中職",
+      "allianceId": 4,
+      "time": "2025-10-09 17:05",
+      "homeTeam": "中信兄弟",
+      "awayTeam": "統一獅",
+      "homeScore": 6,
+      "awayScore": 4,
+      "status": "finished",
+      "inning": "比賽結束",
+      "outs": 3,
+      "officialId": "CPBL_20251009_Lions@Brothers_1705",
+      "homeTeamId": 31,
+      "awayTeamId": 32,
+      "date": "2025-10-09",
+      "winner": "中信兄弟",
+      "scoreboard": {
+        "innings": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        "awayScores": [
+          { "inning": 1, "runs": 1 },
+          { "inning": 2, "runs": 0 },
+          { "inning": 3, "runs": 1 },
+          { "inning": 4, "runs": 1 },
+          { "inning": 5, "runs": 0 },
+          { "inning": 6, "runs": 1 },
+          { "inning": 7, "runs": 0 },
+          { "inning": 8, "runs": 0 },
+          { "inning": 9, "runs": 0 }
+        ],
+        "homeScores": [
+          { "inning": 1, "runs": 0 },
+          { "inning": 2, "runs": 2 },
+          { "inning": 3, "runs": 1 },
+          { "inning": 4, "runs": 0 },
+          { "inning": 5, "runs": 2 },
+          { "inning": 6, "runs": 0 },
+          { "inning": 7, "runs": 1 },
+          { "inning": 8, "runs": 0 },
+          { "inning": 9, "runs": 0 }
+        ],
+        "awayTotal": { "runs": 4, "hits": 9, "errors": 1 },
+        "homeTotal": { "runs": 6, "hits": 12, "errors": 0 }
+      }
+    },
+    {
+      "id": 12,
+      "league": "中職",
+      "allianceId": 4,
+      "time": "2025-10-09 17:05",
+      "homeTeam": "樂天桃猿",
+      "awayTeam": "富邦悍將",
+      "homeScore": 3,
+      "awayScore": 1,
+      "status": "live",
+      "inning": "5局下",
+      "outs": 1,
+      "officialId": "CPBL_20251009_Guardians@Monkeys_1705",
+      "homeTeamId": 33,
+      "awayTeamId": 34,
+      "date": "2025-10-09",
+      "liveStats": {
+        "strikes": 2,
+        "balls": 1,
+        "outs": 1,
+        "inning": "5局下",
+        "currentPitcher": "陳冠宇",
+        "currentBatter": "林智勝",
+        "batterStats": {
+          "name": "林智勝",
+          "position": "一壘手",
+          "battingOrder": 4,
+          "season": {
+            "avg": ".285",
+            "hr": 12,
+            "rbi": 45
+          },
+          "vsPitcher": {
+            "last3Years": ".267"
+          },
+          "today": "1-2"
+        },
+        "onDeckStats": {
+          "name": "朱育賢",
+          "battingOrder": 5,
+          "season": {
+            "avg": ".298"
+          }
+        },
+        "inHoleStats": {
+          "name": "陳俊秀",
+          "battingOrder": 6,
+          "season": {
+            "avg": ".312"
+          }
+        },
+        "pitcherStats": {
+          "name": "陳冠宇",
+          "ip": "4.1",
+          "er": 1,
+          "pitches": 68,
+          "strikes": 45,
+          "balls": 23,
+          "hits": 5,
+          "bb": 1,
+          "so": 4
+        }
+      },
+      "scoreboard": {
+        "innings": [1, 2, 3, 4, 5],
+        "awayScores": [
+          { "inning": 1, "runs": 0 },
+          { "inning": 2, "runs": 1 },
+          { "inning": 3, "runs": 0 },
+          { "inning": 4, "runs": 0 },
+          { "inning": 5, "runs": 0 }
+        ],
+        "homeScores": [
+          { "inning": 1, "runs": 1 },
+          { "inning": 2, "runs": 0 },
+          { "inning": 3, "runs": 2 },
+          { "inning": 4, "runs": 0 },
+          { "inning": 5, "runs": 0 }
+        ],
+        "awayTotal": { "runs": 1, "hits": 4, "errors": 0 },
+        "homeTotal": { "runs": 3, "hits": 7, "errors": 1 }
+      }
+    },
+    {
+      "id": 13,
+      "league": "中職",
+      "allianceId": 4,
+      "time": "2025-10-10 17:05",
+      "homeTeam": "台鋼雄鷹",
+      "awayTeam": "統一獅",
+      "homeScore": 0,
+      "awayScore": 0,
+      "status": "scheduled",
+      "inning": "",
+      "outs": 0,
+      "officialId": "CPBL_20251010_Lions@T-Steam_1705",
+      "homeTeamId": 35,
+      "awayTeamId": 32,
+      "date": "2025-10-10",
+      "awayPitcher": {
+        "name": "胡智為",
+        "hand": "左",
+        "record": "9-6",
+        "era": "3.25",
+        "whip": ".205",
+        "seasonRecord": "9-6",
+        "seasonEra": "3.25",
+        "seasonWhip": ".205",
+        "homeRecord": "5-3",
+        "homeEra": "3.15",
+        "homeWhip": ".195"
+      },
+      "homePitcher": {
+        "name": "肯特",
+        "record": "11-4",
+        "era": "2.85",
+        "whip": ".189",
+        "seasonRecord": "11-4",
+        "seasonEra": "2.85",
+        "seasonWhip": ".189",
+        "homeRecord": "6-1",
+        "homeEra": "2.45",
+        "homeWhip": ".175"
+      }
     }
   ],
   "alliances": [
@@ -356,6 +700,20 @@
       "name": "MLB",
       "sport": "baseball",
       "displayName": "美國職棒",
+      "hasGames": true
+    },
+    {
+      "id": 3,
+      "name": "日棒",
+      "sport": "baseball",
+      "displayName": "日本職棒",
+      "hasGames": true
+    },
+    {
+      "id": 4,
+      "name": "中職",
+      "sport": "baseball",
+      "displayName": "中華職棒",
       "hasGames": true
     }
   ]

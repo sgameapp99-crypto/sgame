@@ -20,13 +20,13 @@
                 <li :class="{ 'tag-chosen': selectedAlliance === 1 }" @click="selectAlliance(1, $event)">
                   MLB
                 </li>
-                <li :class="{ 'tag-chosen': selectedAlliance === 2, 'nonepredict': !allianceHasGames(2) }" @click="selectAlliance(2, $event)">
+                <li :class="{ 'tag-chosen': selectedAlliance === 3, 'nonepredict': !allianceHasGames(3) }" @click="selectAlliance(3, $event)">
                   <a href="javascript:void(0)">日本職棒</a>
                 </li>
-                <li :class="{ 'tag-chosen': selectedAlliance === 6, 'nonepredict': !allianceHasGames(6) }" @click="selectAlliance(6, $event)">
+                <li :class="{ 'tag-chosen': selectedAlliance === 4, 'nonepredict': !allianceHasGames(4) }" @click="selectAlliance(4, $event)">
                   <a href="javascript:void(0)">中華職棒</a>
                 </li>
-                <li :class="{ 'tag-chosen': selectedAlliance === 9, 'nonepredict': !allianceHasGames(9) }" @click="selectAlliance(9, $event)">
+                <li :class="{ 'tag-chosen': selectedAlliance === 6, 'nonepredict': !allianceHasGames(6) }" @click="selectAlliance(6, $event)">
                   <a href="javascript:void(0)">韓國職棒</a>
                 </li>
 
@@ -73,7 +73,7 @@
 
                 <!-- 可展開/收起的分類 -->
                 <div :class="['games-close', { 'expanded': basketballExpanded }]">
-                  <li :class="{ 'tag-chosen': selectedAlliance === 3, 'nonepredict': !allianceHasGames(3) }" @click="selectAlliance(3, $event)">
+                  <li :class="{ 'tag-chosen': selectedAlliance === 2, 'nonepredict': !allianceHasGames(2) }" @click="selectAlliance(2, $event)">
                     <a href="javascript:void(0)">NBA</a>
                   </li>
                   <li :class="{ 'tag-chosen': selectedAlliance === 8, 'nonepredict': !allianceHasGames(8) }" @click="selectAlliance(8, $event)">
@@ -123,7 +123,7 @@
             <div class="tag-box-last">
               <ol class="tag-con">
                 <!-- 預設顯示的分類 -->
-                <li :class="{ 'tag-chosen': selectedAlliance === 4, 'nonepredict': !allianceHasGames(4) }" @click="selectAlliance(4, $event)">
+                <li :class="{ 'tag-chosen': selectedAlliance === 5, 'nonepredict': !allianceHasGames(5) }" @click="selectAlliance(5, $event)">
                   <a href="javascript:void(0)">足球</a>
                 </li>
                 <li :class="{ 'tag-chosen': selectedAlliance === 87, 'nonepredict': !allianceHasGames(87) }" @click="selectAlliance(87, $event)">
@@ -301,12 +301,16 @@ const filteredGames = computed(() => {
     let allianceMatch = true;
     if (selectedAlliance.value === 1) { // MLB
       allianceMatch = game.league === 'MLB';
-    } else if (selectedAlliance.value === 2) { // 日本職棒
-      allianceMatch = game.league === '日棒';
-    } else if (selectedAlliance.value === 3) { // NBA
+    } else if (selectedAlliance.value === 2) { // NBA
       allianceMatch = game.league === 'NBA';
-    } else if (selectedAlliance.value === 6) { // 中華職棒
+    } else if (selectedAlliance.value === 3) { // 日棒
+      allianceMatch = game.league === '日棒';
+    } else if (selectedAlliance.value === 4) { // 中職
       allianceMatch = game.league === '中職';
+    } else if (selectedAlliance.value === 5) { // 足球
+      allianceMatch = game.league === '足球';
+    } else if (selectedAlliance.value === 6) { // 韓棒
+      allianceMatch = game.league === '韓棒';
     } else if (selectedAlliance.value === 7) { // WNBA
       allianceMatch = game.league === 'WNBA';
     } else if (selectedAlliance.value === 9) { // 韓國職棒
@@ -386,10 +390,11 @@ function allianceHasGames(allianceId: number): boolean {
   // 定義哪些聯盟有比賽（固定映射，避免隨機變化）
   const activeAlliances = [
     1,   // MLB
-    2,   // 日本職棒
-    3,   // NBA
-    4,   // 足球
-    6,   // 中華職棒
+    2,   // NBA
+    3,   // 日棒
+    4,   // 中職
+    5,   // 足球
+    6,   // 韓棒
     7,   // WNBA
     9,   // 韓國職棒
     12,  // 澳洲職籃
@@ -408,16 +413,16 @@ function allianceHasGames(allianceId: number): boolean {
 // 根據聯盟ID決定使用哪個組件
 function getGameComponent(allianceId: number) {
   // 棒球聯盟 - 統一使用 BaseballGameCard 組件
-  const baseballAlliances = [1, 2, 6, 9, 83, 114]; // MLB, 日棒, 中職, 韓棒, 澳洲職棒, 國際棒賽
+  const baseballAlliances = [1, 3, 4, 6, 9, 83, 114]; // MLB, 日棒, 中職, 韓棒, 澳洲職棒, 國際棒賽
 
   // 籃球聯盟 - 統一使用 BasketballGameCard 組件
-  const basketballAlliances = [3, 7, 8, 12, 89, 92, 94, 97, 110, 121, 16, 18]; // NBA, WNBA, 澳洲職籃, 日本職籃等
+  const basketballAlliances = [2, 7, 8, 12, 89, 92, 94, 97, 110, 121, 16, 18]; // NBA, WNBA, 澳洲職籃, 日本職籃等
 
   // 足球聯盟 - 統一使用 SoccerGameCard 組件
-  const soccerAlliances = [4]; // 足球
+  const soccerAlliances = [5]; // 足球
 
   // 其他聯盟 - 使用通用 GameCard 組件
-  const otherAlliances = [5, 10, 11, 87, 91, 93, 21]; // 其他類型的比賽
+  const otherAlliances = [10, 11, 87, 91, 93, 21]; // 其他類型的比賽
 
   if (baseballAlliances.includes(allianceId)) {
     return componentMap.BaseballGameCard;
