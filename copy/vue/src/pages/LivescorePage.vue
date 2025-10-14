@@ -152,6 +152,29 @@
             </div>
           </div>
 
+          <!-- 足球聯賽選單 (僅在選擇足球時顯示) -->
+          <div v-if="selectedAlliance === 5 && soccerLeaguesExpanded" class="tag-league-box tag-box">
+            <div class="tag-box-first">
+              <ol class="tag-league">
+                <li class="fold-head"></li>
+                <li>聯賽</li>
+                <li class="fold-footer"></li>
+              </ol>
+            </div>
+            <div class="tag-box-last">
+              <ol class="tag-con">
+                <li
+                  v-for="league in soccerLeagues"
+                  :key="league.id"
+                  :class="{ 'tag-chosen': selectedSoccerLeague === league.id }"
+                  @click="selectSoccerLeague(league.id, $event)"
+                >
+                  <a href="javascript:void(0)">{{ league.displayName }}</a>
+                </li>
+              </ol>
+            </div>
+          </div>
+
           <!-- 時間選擇器 -->
           <div class="tag-league-box tag-box calendar-wrapper">
             <div class="tag-box-first">
@@ -222,7 +245,7 @@
         <div v-else class="games-list">
           <component
             v-for="game in filteredGames"
-            :key="game.id"
+            :key="`${selectedAlliance}-${game.id}`"
             :is="getGameComponent(selectedAlliance)"
             :game="game"
             @click="viewGameDetails(game.id)"
@@ -239,9 +262,12 @@ import { useRoute } from 'vue-router';
 import BaseballGameCard from '../components/games/BaseballGameCard.vue';
 import BasketballGameCard from '../components/games/BasketballGameCard.vue';
 import SoccerGameCard from '../components/games/SoccerGameCard.vue';
+import IceHockeyGameCard from '../components/games/IceHockeyGameCard.vue';
+import AmericanFootballGameCard from '../components/games/AmericanFootballGameCard.vue';
+import TennisGameCard from '../components/games/TennisGameCard.vue';
 import GameCard from '../components/games/GameCard.vue';
 import { getGames, getActiveAlliances } from '../data/mockApi';
-import type { UnifiedGame } from '../data/types';
+import type { UnifiedGame, BasketballGame, IceHockeyGame, AmericanFootballGame, TennisGame } from '../data/types';
 
 // 使用从types.ts导入的类型
 
@@ -250,6 +276,9 @@ const componentMap = {
   BaseballGameCard,
   BasketballGameCard,
   SoccerGameCard,
+  IceHockeyGameCard,
+  AmericanFootballGameCard,
+  TennisGameCard,
   GameCard
 };
 
@@ -261,12 +290,29 @@ const errorMessage = ref('');
 const basketballExpanded = ref(false);
 const otherExpanded = ref(false);
 const baseballExpanded = ref(false);
+const soccerLeaguesExpanded = ref(false); // 足球聯賽選單展開狀態
 const calendarVisible = ref(false);
 const currentMonth = ref('九月 2025');
 const selectedDate = ref(new Date()); // 保持與日曆功能兼容
 const selectedStatusType = ref<'finished' | 'live' | 'scheduled'>('live'); // 狀態類型篩選
+const selectedSoccerLeague = ref<number | null>(null); // 選中的足球聯賽
 const daysOfWeek = ['一', '二', '三', '四', '五', '六', '日'];
 const calendarDates = ref<{ date: Date; day: number; isToday: boolean; isSelected: boolean; isCurrentMonth: boolean }[]>([]);
+
+// 足球聯賽數據
+const soccerLeagues = ref([
+  { id: 0, name: 'all', displayName: '全部', allianceId: 5 },
+  { id: 1, name: 'premier-league', displayName: '英超', allianceId: 5 },
+  { id: 2, name: 'la-liga', displayName: '西甲', allianceId: 5 },
+  { id: 3, name: 'serie-a', displayName: '義甲', allianceId: 5 },
+  { id: 4, name: 'bundesliga', displayName: '德甲', allianceId: 5 },
+  { id: 5, name: 'ligue-1', displayName: '法甲', allianceId: 5 },
+  { id: 6, name: 'champions-league', displayName: '歐冠', allianceId: 5 },
+  { id: 7, name: 'europa-league', displayName: '歐霸', allianceId: 5 },
+  { id: 8, name: 'europa-conference', displayName: '歐洲盃', allianceId: 5 },
+  { id: 9, name: 'j1-league', displayName: '日本J1', allianceId: 5 },
+  { id: 10, name: 'a-league', displayName: '澳A', allianceId: 5 }
+]);
 
 // 計算屬性：生成狀態篩選選項
 const dateOptions = computed(() => {
@@ -294,64 +340,56 @@ function getDayOfWeek(date: Date): string {
   return days[date.getDay()];
 }
 
-// 計算屬性：根據選擇的聯盟和日期過濾比賽
+// 計算屬性：根據狀態類型過濾比賽（因為API已經根據聯盟過濾了）
 const filteredGames = computed(() => {
-  return liveGames.value.filter(game => {
-    // 根據聯盟ID過濾
-    let allianceMatch = true;
-    if (selectedAlliance.value === 1) { // MLB
-      allianceMatch = game.league === 'MLB';
-    } else if (selectedAlliance.value === 2) { // NBA
-      allianceMatch = game.league === 'NBA';
-    } else if (selectedAlliance.value === 3) { // 日棒
-      allianceMatch = game.league === '日棒';
-    } else if (selectedAlliance.value === 4) { // 中職
-      allianceMatch = game.league === '中職';
-    } else if (selectedAlliance.value === 5) { // 足球
-      allianceMatch = game.league === '足球';
-    } else if (selectedAlliance.value === 6) { // 韓棒
-      allianceMatch = game.league === '韓棒';
-    } else if (selectedAlliance.value === 7) { // WNBA
-      allianceMatch = game.league === 'WNBA';
-    } else if (selectedAlliance.value === 9) { // 韓國職棒
-      allianceMatch = game.league === '韓棒';
-    } else if (selectedAlliance.value === 12) { // 澳洲職籃
-      allianceMatch = game.league === '澳洲職籃';
-    } else if (selectedAlliance.value === 83) { // 澳洲職棒
-      allianceMatch = game.league === '澳洲職棒';
-    } else if (selectedAlliance.value === 97) { // 日本職籃
-      allianceMatch = game.league === '日本職籃';
-    } else if (selectedAlliance.value === 114) { // 國際棒賽
-      allianceMatch = game.league === '國際棒賽';
-    }
-    // 其他聯盟可以繼續添加...
+  // 確保數據存在且為數組
+  if (!liveGames.value || !Array.isArray(liveGames.value)) {
+    return [];
+  }
 
-    // 使用狀態類型進行篩選
+  return liveGames.value.filter(game => {
+    // 確保 game 對象存在且有必要屬性
+    if (!game || typeof game !== 'object' || !game.id) {
+      return false;
+    }
+
+    // 只根據狀態類型進行篩選（聯盟過濾已經在API中完成）
     const statusMatch = selectedStatusType.value === game.status;
 
-    return allianceMatch && statusMatch;
+    // 足球聯賽的額外過濾
+    let soccerMatch = true;
+    if (selectedAlliance.value === 5 && selectedSoccerLeague.value && selectedSoccerLeague.value !== 0) {
+      soccerMatch = (game as any).soccerLeagueId === selectedSoccerLeague.value;
+    }
+
+    return statusMatch && soccerMatch;
   });
 });
 
-const liveGames = ref<UnifiedGame[]>([]);
+const liveGames = ref<(UnifiedGame | BasketballGame | IceHockeyGame | AmericanFootballGame | TennisGame)[]>([]);
 
 // 加载游戏数据的函数
-async function loadGamesData(allianceId?: number, date?: string) {
+async function loadGamesData(allianceId?: number, date?: string, soccerLeagueId?: number) {
   try {
     loading.value = true;
+
+    // 統一調用 getGames 函數，根據參數決定數據源
     const response = await getGames({
       alliance: allianceId,
       date: date,
-      status: selectedStatusType.value // 使用選中的狀態類型進行篩選
+      status: selectedStatusType.value, // 使用選中的狀態類型進行篩選
+      soccerLeagueId: soccerLeagueId
     });
 
     if (response.success) {
-      liveGames.value = response.data;
+      liveGames.value = response.data || [];
     } else {
       errorMessage.value = '載入比賽數據失敗';
+      liveGames.value = [];
     }
   } catch (error) {
     errorMessage.value = '網路錯誤，請稍後再試';
+    liveGames.value = [];
     console.error('載入比賽數據時發生錯誤:', error);
   } finally {
     loading.value = false;
@@ -374,6 +412,16 @@ function selectAlliance(allianceId: number, event?: Event) {
     }
   }
   selectedAlliance.value = allianceId;
+
+  // 當選擇足球時，自動展開聯賽選單並選擇"全部"
+  if (allianceId === 5) {
+    soccerLeaguesExpanded.value = true;
+    selectedSoccerLeague.value = 0; // 默認選擇"全部"
+  } else {
+    soccerLeaguesExpanded.value = false;
+    selectedSoccerLeague.value = null;
+  }
+
   loadGamesData(allianceId);
 }
 
@@ -381,9 +429,7 @@ function selectAlliance(allianceId: number, event?: Event) {
 onMounted(async () => {
   const allianceId = parseInt(route.params.allianceId as string) || 1;
   selectAlliance(allianceId);
-
-  // 加载今天的比赛数据
-  await loadGamesData();
+  // selectAlliance 已經調用了 loadGamesData，所以不需要重複調用
 });
 
 function allianceHasGames(allianceId: number): boolean {
@@ -421,8 +467,17 @@ function getGameComponent(allianceId: number) {
   // 足球聯盟 - 統一使用 SoccerGameCard 組件
   const soccerAlliances = [5]; // 足球
 
+  // 冰球聯盟 - 統一使用 IceHockeyGameCard 組件
+  const iceHockeyAlliances = [87, 91]; // 俄羅斯冰球, NHL冰球
+
+  // 美式足球聯盟 - 統一使用 AmericanFootballGameCard 組件
+  const americanFootballAlliances = [93]; // 美式足球
+
+  // 網球聯盟 - 統一使用 TennisGameCard 組件
+  const tennisAlliances = [21]; // 網球
+
   // 其他聯盟 - 使用通用 GameCard 組件
-  const otherAlliances = [10, 11, 87, 91, 93, 21]; // 其他類型的比賽
+  const otherAlliances = [10, 11]; // 其他類型的比賽
 
   if (baseballAlliances.includes(allianceId)) {
     return componentMap.BaseballGameCard;
@@ -430,6 +485,12 @@ function getGameComponent(allianceId: number) {
     return componentMap.BasketballGameCard;
   } else if (soccerAlliances.includes(allianceId)) {
     return componentMap.SoccerGameCard;
+  } else if (iceHockeyAlliances.includes(allianceId)) {
+    return componentMap.IceHockeyGameCard;
+  } else if (americanFootballAlliances.includes(allianceId)) {
+    return componentMap.AmericanFootballGameCard;
+  } else if (tennisAlliances.includes(allianceId)) {
+    return componentMap.TennisGameCard;
   } else {
     return componentMap.GameCard; // 默認組件用於其他類型
   }
@@ -535,8 +596,8 @@ function selectDateOption(option: any, event?: Event) {
   }
   selectedStatusType.value = option.type;
   calendarVisible.value = false;
-  // 根據狀態類型篩選比賽
-  loadGamesData();
+  // 根據狀態類型篩選比賽，保持當前聯盟
+  loadGamesData(selectedAlliance.value);
 }
 
 function selectDate(date: Date) {
@@ -552,6 +613,28 @@ function updateMonthDisplay() {
   currentMonth.value = `${monthNames[month]} ${year}`;
 }
 
+// 足球聯賽選擇函數
+function selectSoccerLeague(leagueId: number, event?: Event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // 添加點擊反饋
+    const target = event.target as HTMLElement;
+    if (target) {
+      target.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        target.style.transform = '';
+      }, 150);
+    }
+  }
+
+  selectedSoccerLeague.value = leagueId;
+
+  // 重新加載數據，使用聯賽過濾
+  loadGamesData(selectedAlliance.value, undefined, leagueId);
+}
+
 // 原有的loadGames函数已被新的loadGamesData函数替代
 
 // 暴露给模板使用的函数和数据
@@ -563,12 +646,16 @@ defineExpose({
   basketballExpanded,
   otherExpanded,
   baseballExpanded,
+  soccerLeaguesExpanded,
   calendarVisible,
   currentMonth,
   selectedDate,
+  selectedSoccerLeague,
+  soccerLeagues,
   calendarDates,
   liveGames,
   selectAlliance,
+  selectSoccerLeague,
   allianceHasGames,
   toggleBasketballExpanded,
   toggleOtherExpanded,

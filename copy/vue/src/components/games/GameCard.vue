@@ -1,20 +1,20 @@
 <template>
-  <div class="game-card border border-neutral-200 rounded-lg p-lg hover:shadow-md transition-shadow cursor-pointer" @click="$emit('click')">
+  <div class="game-card border border-neutral-200 rounded-lg p-lg hover:shadow-md transition-shadow cursor-pointer" @click="$emit('click')" v-if="game">
     <div class="flex justify-between items-center mb-sm">
-      <span class="badge bg-blue-100 text-blue-800 px-sm py-xs rounded">{{ game.alliance_name }}</span>
-      <span class="game-time text-sm text-neutral-500">{{ formatFullTime(game.scheduled_time) }}</span>
+      <span class="badge bg-blue-100 text-blue-800 px-sm py-xs rounded">{{ game.league || '未知聯盟' }}</span>
+      <span class="game-time text-sm text-neutral-500">{{ formatFullTime(game.time) }}</span>
     </div>
     <div class="text-center">
       <div class="flex items-center justify-center mb-sm game-teams-line">
         <div class="team-container away-team-container">
-          <strong class="team-name away-team">{{ game.away_team.name }}</strong>
+          <strong class="team-name away-team">{{ game.awayTeam || '客隊' }}</strong>
         </div>
         <div class="time-vs-container">
-          <span class="game-time-display">{{ formatTime(game.scheduled_time) }}</span>
+          <span class="game-time-display">{{ formatTime(game.time) }}</span>
           <span class="vs-separator">{{ separator || 'VS' }}</span>
         </div>
         <div class="team-container home-team-container">
-          <strong class="team-name home-team">{{ game.home_team.name }}</strong>
+          <strong class="team-name home-team">{{ game.homeTeam || '主隊' }}</strong>
         </div>
       </div>
       <div v-if="showVenue && game.venue" class="text-sm text-neutral-600 venue-info">{{ game.venue }}</div>
@@ -25,10 +25,10 @@
 
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue';
-import type { Game } from '../services/gamesApi';
+import type { UnifiedGame, BasketballGame } from '../../data/types';
 
 interface Props {
-  game: Game;
+  game: UnifiedGame | BasketballGame;
   separator?: string;
   showVenue?: boolean;
 }

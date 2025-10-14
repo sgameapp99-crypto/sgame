@@ -1,21 +1,28 @@
 <template>
-  <div class="soccer-game-card" @click="$emit('click')">
-    <!-- 聯賽名稱 -->
-    <div class="league_matche">{{ game.soccerLeague || game.league }}</div>
+  <div class="ice-hockey-game-card" @click="$emit('click')">
+    <!-- 比賽結果區域 (僅在比賽結束時顯示) -->
+    <div v-if="game.status === 'finished'" class="game_result">
+      <span class="teamname_highlight t_win">{{ getWinnerTeam(game) }}</span><br>
+      <span v-if="game.bettingInfo" class="betting-info">{{ game.bettingInfo }}</span>
+    </div>
 
-    <!-- 比賽狀態和比分區域 -->
+    <!-- 比分區域 -->
     <div class="big-score-box">
       <!-- 客隊 (左側) -->
-      <div class="big_score big-score-soccer big-score-guest" :class="{ 'winner': game.status === 'finished' && game.awayScore && game.homeScore && game.awayScore > game.homeScore }">
+      <div class="big_score big-score-s02 big-score-guest" :class="{ 'winner': game.status === 'finished' && game.awayScore && game.homeScore && game.awayScore > game.homeScore }">
         <h6 class="team-name">{{ game.awayTeam }}</h6>
         <strong class="score" v-if="game.status !== 'scheduled'">{{ game.awayScore || 0 }}</strong>
         <div v-else class="vs-text">VS</div>
       </div>
 
       <!-- 比賽狀態信息 -->
-      <ul class="game_state game-state-soccer">
-        <li class="state-status" v-if="game.status === 'live'">
-          <span class="live-indicator">
+      <ul class="game_state game-state-s02">
+        <li class="state-live" v-if="game.status === 'live'">
+          <span class="live-indicator" v-if="game.isPaused">
+            <div class="live-dot"></div>
+            <span>暫停</span>
+          </span>
+          <span class="live-indicator" v-else>
             <div class="live-dot"></div>
             <span>LIVE</span>
           </span>
@@ -25,8 +32,8 @@
             {{ getMatchPeriodText(game) }}
           </span>
         </li>
-        <li class="state-time" v-if="game.status === 'live' && game.matchMinute">
-          <span class="match-time">{{ game.matchMinute }}'</span>
+        <li class="state-time" v-if="game.status === 'live' && game.timeRemaining">
+          <span class="time-remaining">{{ game.timeRemaining }}</span>
         </li>
         <li v-else-if="game.status === 'scheduled'" class="state-scheduled">
           <span class="game-time">{{ formatTime(game.time) }}</span>
@@ -34,7 +41,7 @@
       </ul>
 
       <!-- 主隊 (右側) -->
-      <div class="big_score big-score-soccer big-score-host" :class="{ 'winner': game.status === 'finished' && game.homeScore && game.awayScore && game.homeScore > game.awayScore }">
+      <div class="big_score big-score-s02 big-score-host" :class="{ 'winner': game.status === 'finished' && game.homeScore && game.awayScore && game.homeScore > game.awayScore }">
         <h6 class="team-name">{{ game.homeTeam }}</h6>
         <strong class="score" v-if="game.status !== 'scheduled'">{{ game.homeScore || 0 }}</strong>
         <div v-else class="vs-text">VS</div>
@@ -43,7 +50,7 @@
 
     <!-- 比賽前數據展示 -->
     <div v-if="game.status === 'scheduled'" class="pre-match-info">
-      <div class="match-stats">
+      <div class="match-stats-grid">
         <div class="stat-item">
           <span class="stat-label">主場勝率</span>
           <span class="stat-value">{{ game.homeStats?.winRate || '65%' }}</span>
@@ -56,100 +63,54 @@
           <span class="stat-label">近5場</span>
           <span class="stat-value">{{ game.recentForm || '3勝2負' }}</span>
         </div>
-      </div>
-
-      <!-- 明星球員 -->
-      <div class="star-players" v-if="game.starPlayers && game.starPlayers.length > 0">
-        <h4>明星球員</h4>
-        <div class="players-list">
-          <div v-for="player in game.starPlayers.slice(0, 3)" :key="player.name" class="player-item">
-            <span class="player-name">{{ player.name }}</span>
-            <span class="player-position">{{ player.position }}</span>
-          </div>
+        <div class="stat-item">
+          <span class="stat-label">對戰</span>
+          <span class="stat-value">{{ game.headToHead || '55%' }}</span>
         </div>
       </div>
     </div>
 
-    <!-- 比賽中/結束後的附加信息 -->
-    <div v-if="game.status !== 'scheduled'" class="match-additional-info">
-      <div class="match-situation" v-if="game.matchEvents && game.matchEvents.length > 0">
-        <div class="event-item" v-for="event in game.matchEvents.slice(-2)" :key="event.id">
-          <span class="event-time">{{ event.minute }}'</span>
-          <span class="event-type">{{ event.type }}</span>
-          <span class="event-player">{{ event.player }}</span>
-        </div>
-      </div>
+    <!-- 詳細得分表 -->
+    <div v-if="game.scoreBreakdown" class="st">
+      <table class="scorebox">
+        <tbody>
+          <tr>
+            <td class="h" style="text-align:left;font-weight:normal;"></td>
+            <td width="30" class="h">總分</td>
+            <td v-for="period in game.scoreBreakdown.periods" :key="period.period" width="30" class="h">{{ period.label }}</td>
+          </tr>
+          <tr>
+            <th class="team-name">{{ game.awayTeam }}</th>
+            <td class="s">{{ game.scoreBreakdown.awayTotal }}</td>
+            <td v-for="score in game.scoreBreakdown.awayScores" :key="score.period" width="30">
+              {{ score.awayScore }}
+            </td>
+          </tr>
+          <tr>
+            <th class="team-name">{{ game.homeTeam }}</th>
+            <td class="s">{{ game.scoreBreakdown.homeTotal }}</td>
+            <td v-for="score in game.scoreBreakdown.homeScores" :key="score.period" width="30">
+              {{ score.homeScore }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- 球場信息 -->
+    <!-- 比賽信息 -->
     <div v-if="game.venue" class="venue-info">
-      <span class="venue-icon">📍</span>
+      <span class="venue-icon">🏒</span>
       <span>{{ game.venue }}</span>
-    </div>
-
-    <!-- PBP區域 (留空以供將來擴展) -->
-    <div class="pbp pbp-soccer" v-if="game.status === 'live' && game.playByPlay && game.playByPlay.length > 0">
-      <div class="pbp-item" v-for="play in game.playByPlay.slice(-3)" :key="play.id">
-        <span class="pbp-time">{{ play.minute }}'</span>
-        <span class="pbp-description">{{ play.description }}</span>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue';
-
-// 足球比賽數據接口
-interface SoccerPlayer {
-  name: string;
-  position: string;
-}
-
-interface MatchEvent {
-  id: number;
-  minute: number;
-  type: string; // 'goal', 'yellow_card', 'red_card', 'substitution' 等
-  player: string;
-  team: 'home' | 'away';
-}
-
-interface PlayByPlay {
-  id: number;
-  minute: number;
-  description: string;
-  type: string;
-}
-
-interface TeamStats {
-  winRate: string;
-  recentForm?: string;
-}
-
-interface SoccerGame {
-  id: number;
-  league: string;
-  soccerLeague?: string;
-  status: 'scheduled' | 'live' | 'finished';
-  homeTeam: string;
-  awayTeam: string;
-  homeScore?: number;
-  awayScore?: number;
-  time: string;
-  matchMinute?: string;
-  matchPeriod?: 'first_half' | 'second_half' | 'extra_time' | 'penalty_shootout';
-  venue?: string;
-  homeStats?: TeamStats;
-  awayStats?: TeamStats;
-  recentForm?: string;
-  starPlayers?: SoccerPlayer[];
-  matchEvents?: MatchEvent[];
-  playByPlay?: PlayByPlay[];
-  winner?: string;
-}
+import type { IceHockeyGame } from '../../data/types';
 
 interface Props {
-  game: SoccerGame;
+  game: IceHockeyGame;
 }
 
 const props = defineProps<Props>();
@@ -166,28 +127,30 @@ function formatTime(timeString: string) {
   return `${hours}:${minutes}`;
 }
 
-function getStatusText(status: string) {
-  switch (status) {
-    case 'scheduled': return '未開始';
-    case 'live': return '進行中';
-    case 'finished': return '已結束';
-    default: return status;
+function getWinnerTeam(game: IceHockeyGame) {
+  if (game.status !== 'finished' || !game.awayScore || !game.homeScore) {
+    return '';
   }
+  return game.awayScore > game.homeScore ? game.awayTeam : game.homeTeam;
 }
 
-function getMatchPeriodText(game: SoccerGame) {
+function getMatchPeriodText(game: IceHockeyGame) {
   if (game.status === 'finished') {
     return '比賽結束';
   }
 
   if (game.status === 'live') {
-    switch (game.matchPeriod) {
-      case 'first_half': return '上半場';
-      case 'second_half': return '下半場';
-      case 'extra_time': return '延長賽';
-      case 'penalty_shootout': return '點球大戰';
-      default: return '進行中';
+    if (game.currentPeriod) {
+      const periodLabels = ['第1節', '第2節', '第3節'];
+      if (game.currentPeriod <= 3) {
+        return periodLabels[game.currentPeriod - 1];
+      } else if (game.currentPeriod === 4) {
+        return '延長賽';
+      } else {
+        return '點球大戰';
+      }
     }
+    return '進行中';
   }
 
   if (game.status === 'scheduled') {
@@ -199,7 +162,7 @@ function getMatchPeriodText(game: SoccerGame) {
 </script>
 
 <style scoped>
-.soccer-game-card {
+.ice-hockey-game-card {
   background: white;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -212,22 +175,36 @@ function getMatchPeriodText(game: SoccerGame) {
   margin: 0 auto 12px auto;
 }
 
-.soccer-game-card:hover {
+.ice-hockey-game-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-  border-color: #4CAF50;
+  border-color: #2196f3;
 }
 
-/* 聯賽名稱 */
-.league_matche {
-  background: #1e3c72;
-  color: white;
+/* 比賽結果區域 */
+.game_result {
   text-align: center;
-  padding: 6px 0;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.teamname_highlight {
   font-weight: bold;
+  color: #2c3e50;
   font-size: 14px;
-  border-radius: 4px 4px 0 0;
-  margin: -16px -16px 16px -16px;
+}
+
+.t_win {
+  color: #e74c3c !important;
+}
+
+.betting-info {
+  display: block;
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
 }
 
 /* 比賽狀態和比分區域 */
@@ -237,6 +214,7 @@ function getMatchPeriodText(game: SoccerGame) {
   justify-content: space-between;
   margin-bottom: 12px;
   position: relative;
+  gap: 12px;
 }
 
 .big_score {
@@ -330,7 +308,7 @@ function getMatchPeriodText(game: SoccerGame) {
   font-size: 14px;
 }
 
-.match-time {
+.time-remaining {
   background: #fff3e0;
   color: #f57c00;
   padding: 2px 8px;
@@ -362,14 +340,17 @@ function getMatchPeriodText(game: SoccerGame) {
   margin-top: 12px;
 }
 
-.match-stats {
-  display: flex;
-  justify-content: space-around;
-  margin-bottom: 12px;
+.match-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
 }
 
 .stat-item {
   text-align: center;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
 }
 
 .stat-label {
@@ -386,85 +367,41 @@ function getMatchPeriodText(game: SoccerGame) {
   color: #2c3e50;
 }
 
-/* 明星球員 */
-.star-players {
-  border-top: 1px solid #f0f0f0;
-  padding-top: 8px;
+/* 得分表 */
+.st {
+  margin-top: 12px;
 }
 
-.star-players h4 {
+.scorebox {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 12px;
-  color: #666;
-  margin-bottom: 6px;
+  margin: 0 auto;
+}
+
+.scorebox th,
+.scorebox td {
+  padding: 6px 4px;
   text-align: center;
+  border: 1px solid #ddd;
 }
 
-.players-list {
-  display: flex;
-  justify-content: space-around;
-  gap: 8px;
-}
-
-.player-item {
-  flex: 1;
-  text-align: center;
-  padding: 4px;
-  background: #f8f9fa;
-  border-radius: 4px;
-}
-
-.player-name {
-  display: block;
+.scorebox .h {
+  background: #f5f5f5;
+  font-weight: bold;
   font-size: 11px;
-  font-weight: 600;
+}
+
+.scorebox .s {
+  font-weight: bold;
+  font-size: 14px;
   color: #2c3e50;
-  margin-bottom: 2px;
 }
 
-.player-position {
-  display: block;
-  font-size: 10px;
-  color: #666;
-}
-
-/* 比賽事件 */
-.match-additional-info {
-  border-top: 1px solid #e0e0e0;
-  padding-top: 8px;
-  margin-top: 8px;
-}
-
-.match-situation {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.event-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: #666;
-}
-
-.event-time {
-  font-weight: 600;
-  color: #2c3e50;
-  min-width: 24px;
-}
-
-.event-type {
-  background: #e3f2fd;
-  color: #1976d2;
-  padding: 1px 4px;
-  border-radius: 3px;
-  font-size: 10px;
-}
-
-.event-player {
-  flex: 1;
-  font-weight: 500;
+.scorebox th.team-name {
+  text-align: left;
+  font-weight: normal;
+  padding-left: 8px;
 }
 
 /* 球場信息 */
@@ -477,43 +414,16 @@ function getMatchPeriodText(game: SoccerGame) {
   border-top: 1px solid #f0f0f0;
 }
 
-/* PBP區域 */
-.pbp {
-  border-top: 1px solid #e0e0e0;
-  padding-top: 8px;
-  margin-top: 8px;
+.venue-icon {
+  margin-right: 4px;
 }
 
-.pbp-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: #666;
-  margin-bottom: 4px;
-}
-
-.pbp-time {
-  font-weight: 600;
-  color: #2c3e50;
-  min-width: 24px;
-}
-
-.pbp-description {
-  flex: 1;
-}
-
-/* 響應式設計 */
+/* 响应式设计 */
 @media (max-width: 768px) {
-  .soccer-game-card {
+  .ice-hockey-game-card {
     width: 100%;
     max-width: 390px;
     padding: 12px;
-  }
-
-  .league_matche {
-    font-size: 12px;
-    padding: 4px 0;
   }
 
   .big-score-box {
@@ -530,22 +440,22 @@ function getMatchPeriodText(game: SoccerGame) {
     order: -1;
   }
 
-  .match-stats {
-    flex-direction: column;
-    gap: 8px;
+  .big-score-guest {
+    border-radius: 6px 6px 0 0 !important;
   }
 
-  .players-list {
-    flex-direction: column;
-    gap: 4px;
+  .big-score-host {
+    border-radius: 0 0 6px 6px !important;
   }
 
-  .score {
-    font-size: 28px;
+  .match-stats-grid {
+    grid-template-columns: 1fr;
   }
 
-  .team-name {
-    font-size: 14px;
+  .scorebox th,
+  .scorebox td {
+    padding: 4px 2px;
+    font-size: 11px;
   }
 }
 </style>

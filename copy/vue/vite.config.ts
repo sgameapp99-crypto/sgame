@@ -46,9 +46,10 @@ export default defineConfig(({ mode }) => {
 			port,
 			https: httpsConfig,
 			allowedHosts: [
-				'34.81.135.104.nip.io',
-				'34.80.28.226',
-				'localhost'
+
+				'localhost',
+				'10.1.0.2',    // 前端內網IP
+				'127.0.0.1'
 			],
 			hmr: {
 				host: hmrHost,
@@ -87,7 +88,9 @@ export default defineConfig(({ mode }) => {
 			allowedHosts: [
 				'34.81.135.104.nip.io',
 				'34.80.28.226',
-				'localhost'
+				'localhost',
+				'10.1.0.2',    // 前端內網IP
+				'127.0.0.1'
 			],
 			hmr: {
 				host: hmrHost,

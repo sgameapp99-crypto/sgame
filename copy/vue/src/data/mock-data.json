@@ -692,6 +692,815 @@
         "homeEra": "2.45",
         "homeWhip": ".175"
       }
+    },
+    {
+      "id": 1001,
+      "league": "足球",
+      "allianceId": 5,
+      "soccerLeagueId": 1,
+      "soccerLeague": "英超",
+      "time": "2025-10-09 20:00",
+      "homeTeam": "曼城",
+      "awayTeam": "利物浦",
+      "homeScore": 2,
+      "awayScore": 1,
+      "status": "finished",
+      "matchMinute": "90'",
+      "venue": "伊蒂哈德球場",
+      "winner": "曼城",
+      "starPlayers": [
+        { "name": "哈蘭德", "position": "前鋒" },
+        { "name": "薩拉赫", "position": "前鋒" },
+        { "name": "德布勞內", "position": "中場" }
+      ],
+      "matchEvents": [
+        { "id": 1, "minute": 23, "type": "進球", "player": "哈蘭德", "team": "home" },
+        { "id": 2, "minute": 67, "type": "進球", "player": "薩拉赫", "team": "away" },
+        { "id": 3, "minute": 89, "type": "進球", "player": "德布勞內", "team": "home" }
+      ]
+    },
+    {
+      "id": 1002,
+      "league": "足球",
+      "allianceId": 5,
+      "soccerLeagueId": 1,
+      "soccerLeague": "英超",
+      "time": "2025-10-09 22:00",
+      "homeTeam": "切爾西",
+      "awayTeam": "阿森納",
+      "homeScore": 1,
+      "awayScore": 1,
+      "status": "live",
+      "matchMinute": "67'",
+      "matchPeriod": "second_half",
+      "venue": "斯坦福橋球場",
+      "starPlayers": [
+        { "name": "斯特林", "position": "前鋒" },
+        { "name": "厄德高", "position": "中場" },
+        { "name": "馬丁內利", "position": "前鋒" }
+      ],
+      "matchEvents": [
+        { "id": 4, "minute": 34, "type": "進球", "player": "斯特林", "team": "home" },
+        { "id": 5, "minute": 56, "type": "進球", "player": "馬丁內利", "team": "away" }
+      ]
+    },
+    {
+      "id": 1003,
+      "league": "足球",
+      "allianceId": 5,
+      "soccerLeagueId": 2,
+      "soccerLeague": "西甲",
+      "time": "2025-10-09 21:00",
+      "homeTeam": "皇家馬德里",
+      "awayTeam": "巴塞隆納",
+      "status": "scheduled",
+      "venue": "聖地亞哥伯納烏球場",
+      "homeStats": { "winRate": "78%" },
+      "awayStats": { "winRate": "72%" },
+      "recentForm": "4勝1負",
+      "starPlayers": [
+        { "name": "本澤馬", "position": "前鋒" },
+        { "name": "梅西", "position": "前鋒" },
+        { "name": "莫德里奇", "position": "中場" }
+      ]
+    },
+    {
+      "id": 1004,
+      "league": "足球",
+      "allianceId": 5,
+      "soccerLeagueId": 3,
+      "soccerLeague": "義甲",
+      "time": "2025-10-09 19:45",
+      "homeTeam": "國際米蘭",
+      "awayTeam": "AC米蘭",
+      "homeScore": 0,
+      "awayScore": 2,
+      "status": "finished",
+      "matchMinute": "90'",
+      "venue": "聖西羅球場",
+      "winner": "AC米蘭"
+    },
+    {
+      "id": 1005,
+      "league": "足球",
+      "allianceId": 5,
+      "soccerLeagueId": 4,
+      "soccerLeague": "德甲",
+      "time": "2025-10-09 18:30",
+      "homeTeam": "拜仁慕尼黑",
+      "awayTeam": "多特蒙德",
+      "homeScore": 3,
+      "awayScore": 0,
+      "status": "finished",
+      "matchMinute": "90'",
+      "venue": "安聯球場",
+      "winner": "拜仁慕尼黑"
+    },
+    {
+      "id": 1006,
+      "league": "足球",
+      "allianceId": 5,
+      "soccerLeagueId": 5,
+      "soccerLeague": "法甲",
+      "time": "2025-10-09 20:00",
+      "homeTeam": "巴黎聖日耳曼",
+      "awayTeam": "里昂",
+      "status": "scheduled",
+      "venue": "王子公園球場"
+    },
+    {
+      "id": 1007,
+      "league": "足球",
+      "allianceId": 5,
+      "soccerLeagueId": 6,
+      "soccerLeague": "歐冠",
+      "time": "2025-10-09 21:00",
+      "homeTeam": "皇家馬德里",
+      "awayTeam": "曼城",
+      "homeScore": 1,
+      "awayScore": 1,
+      "status": "live",
+      "matchMinute": "45'",
+      "matchPeriod": "first_half",
+      "venue": "聖地亞哥伯納烏球場",
+      "starPlayers": [
+        { "name": "本澤馬", "position": "前鋒" },
+        { "name": "哈蘭德", "position": "前鋒" },
+        { "name": "德布勞內", "position": "中場" }
+      ],
+      "matchEvents": [
+        { "id": 6, "minute": 23, "type": "進球", "player": "本澤馬", "team": "home" },
+        { "id": 7, "minute": 38, "type": "進球", "player": "哈蘭德", "team": "away" }
+      ]
+    },
+    {
+      "id": 1008,
+      "league": "足球",
+      "allianceId": 5,
+      "soccerLeagueId": 9,
+      "soccerLeague": "日本J1",
+      "time": "2025-10-09 19:00",
+      "homeTeam": "川崎前鋒",
+      "awayTeam": "橫濱水手",
+      "homeScore": 1,
+      "awayScore": 0,
+      "status": "finished",
+      "matchMinute": "90'",
+      "venue": "等々力陸上競技場",
+      "winner": "川崎前鋒"
+    },
+    {
+      "id": 1009,
+      "league": "足球",
+      "allianceId": 5,
+      "soccerLeagueId": 10,
+      "soccerLeague": "澳A",
+      "time": "2025-10-09 20:00",
+      "homeTeam": "悉尼FC",
+      "awayTeam": "墨爾本勝利",
+      "status": "scheduled",
+      "venue": "悉尼足球場"
+    }
+  ],
+  "basketballGames": [
+    {
+      "id": 2001,
+      "league": "NBA",
+      "allianceId": 2,
+      "time": "2025-10-09 20:00",
+      "homeTeam": "洛杉磯湖人",
+      "awayTeam": "金州勇士",
+      "homeScore": 119,
+      "awayScore": 118,
+      "status": "finished",
+      "venue": "Crypto.com體育館",
+      "bettingInfo": "受讓 2分輸50%",
+      "winner": "洛杉磯湖人",
+      "scoreBreakdown": {
+        "quarters": [
+          { "label": "1", "quarter": 1 },
+          { "label": "2", "quarter": 2 },
+          { "label": "3", "quarter": 3 },
+          { "label": "4", "quarter": 4 }
+        ],
+        "awayScores": [
+          { "quarter": 1, "points": 35 },
+          { "quarter": 2, "points": 19 },
+          { "quarter": 3, "points": 22 },
+          { "quarter": 4, "points": 26 }
+        ],
+        "homeScores": [
+          { "quarter": 1, "points": 24 },
+          { "quarter": 2, "points": 30 },
+          { "quarter": 3, "points": 16 },
+          { "quarter": 4, "points": 32 }
+        ]
+      },
+      "teamStats": {
+        "away": {
+          "fieldGoalsMade": 39,
+          "fieldGoalsAttempted": 79,
+          "fieldGoalPct": 49.4,
+          "threePointsMade": 12,
+          "threePointsAttempted": 48,
+          "threePointPct": 25,
+          "freeThrowsMade": 29,
+          "freeThrowsAttempted": 41,
+          "freeThrowPct": 70.7,
+          "totalRebounds": 58,
+          "offensiveRebounds": 20,
+          "turnovers": 16
+        },
+        "home": {
+          "fieldGoalsMade": 45,
+          "fieldGoalsAttempted": 60,
+          "fieldGoalPct": 75,
+          "threePointsMade": 5,
+          "threePointsAttempted": 34,
+          "threePointPct": 14.7,
+          "freeThrowsMade": 25,
+          "freeThrowsAttempted": 30,
+          "freeThrowPct": 83.3,
+          "totalRebounds": 70,
+          "offensiveRebounds": 23,
+          "turnovers": 21
+        }
+      }
+    },
+    {
+      "id": 2002,
+      "league": "NBA",
+      "allianceId": 2,
+      "time": "2025-10-09 22:30",
+      "homeTeam": "波士頓塞爾蒂克",
+      "awayTeam": "費城76人",
+      "homeScore": 87,
+      "awayScore": 92,
+      "status": "live",
+      "currentQuarter": 3,
+      "timeRemaining": "8:45",
+      "venue": "TD花園",
+      "scoreBreakdown": {
+        "quarters": [
+          { "label": "1", "quarter": 1 },
+          { "label": "2", "quarter": 2 },
+          { "label": "3", "quarter": 3 }
+        ],
+        "awayScores": [
+          { "quarter": 1, "points": 28 },
+          { "quarter": 2, "points": 35 },
+          { "quarter": 3, "points": 29 }
+        ],
+        "homeScores": [
+          { "quarter": 1, "points": 25 },
+          { "quarter": 2, "points": 32 },
+          { "quarter": 3, "points": 30 }
+        ]
+      }
+    },
+    {
+      "id": 2003,
+      "league": "NBA",
+      "allianceId": 2,
+      "time": "2025-10-09 19:00",
+      "homeTeam": "密爾瓦基公鹿",
+      "awayTeam": "布魯克林籃網",
+      "status": "scheduled",
+      "venue": "Fiserv論壇",
+      "homeStats": { "winRate": "72%" },
+      "awayStats": { "winRate": "58%" },
+      "recentForm": "5勝1負",
+      "headToHead": "65%",
+      "avgPoints": "118.5",
+      "avgPointsAllowed": "112.2"
+    },
+    {
+      "id": 2004,
+      "league": "NBA",
+      "allianceId": 2,
+      "time": "2025-10-10 19:30",
+      "homeTeam": "波士頓塞爾蒂克",
+      "awayTeam": "費城76人",
+      "homeScore": 105,
+      "awayScore": 98,
+      "status": "finished",
+      "venue": "TD花園",
+      "bettingInfo": "讓分 3.5贏60%",
+      "winner": "波士頓塞爾蒂克",
+      "scoreBreakdown": {
+        "quarters": [
+          { "label": "1", "quarter": 1 },
+          { "label": "2", "quarter": 2 },
+          { "label": "3", "quarter": 3 },
+          { "label": "4", "quarter": 4 }
+        ],
+        "awayScores": [
+          { "quarter": 1, "points": 25 },
+          { "quarter": 2, "points": 28 },
+          { "quarter": 3, "points": 22 },
+          { "quarter": 4, "points": 23 }
+        ],
+        "homeScores": [
+          { "quarter": 1, "points": 30 },
+          { "quarter": 2, "points": 25 },
+          { "quarter": 3, "points": 27 },
+          { "quarter": 4, "points": 23 }
+        ]
+      },
+      "teamStats": {
+        "away": {
+          "fieldGoalsMade": 42,
+          "fieldGoalsAttempted": 85,
+          "fieldGoalPct": 49.4,
+          "threePointsMade": 8,
+          "threePointsAttempted": 25,
+          "threePointPct": 32,
+          "freeThrowsMade": 6,
+          "freeThrowsAttempted": 10,
+          "freeThrowPct": 60,
+          "totalRebounds": 45,
+          "offensiveRebounds": 12,
+          "turnovers": 14
+        },
+        "home": {
+          "fieldGoalsMade": 38,
+          "fieldGoalsAttempted": 82,
+          "fieldGoalPct": 46.3,
+          "threePointsMade": 15,
+          "threePointsAttempted": 35,
+          "threePointPct": 42.9,
+          "freeThrowsMade": 14,
+          "freeThrowsAttempted": 18,
+          "freeThrowPct": 77.8,
+          "totalRebounds": 52,
+          "offensiveRebounds": 15,
+          "turnovers": 11
+        }
+      }
+    },
+    {
+      "id": 2005,
+      "league": "NBA",
+      "allianceId": 2,
+      "time": "2025-10-10 22:00",
+      "homeTeam": "鳳凰城太陽",
+      "awayTeam": "丹佛金塊",
+      "homeScore": 85,
+      "awayScore": 87,
+      "status": "live",
+      "currentQuarter": 4,
+      "timeRemaining": "02:30",
+      "venue": "Footprint Center",
+      "scoreBreakdown": {
+        "quarters": [
+          { "label": "1", "quarter": 1 },
+          { "label": "2", "quarter": 2 },
+          { "label": "3", "quarter": 3 },
+          { "label": "4", "quarter": 4 }
+        ],
+        "awayScores": [
+          { "quarter": 1, "points": 22 },
+          { "quarter": 2, "points": 28 },
+          { "quarter": 3, "points": 25 }
+        ],
+        "homeScores": [
+          { "quarter": 1, "points": 25 },
+          { "quarter": 2, "points": 22 },
+          { "quarter": 3, "points": 26 }
+        ]
+      }
+    },
+    {
+      "id": 2006,
+      "league": "WNBA",
+      "allianceId": 7,
+      "time": "2025-10-09 18:00",
+      "homeTeam": "華盛頓神秘人",
+      "awayTeam": "紐約自由人",
+      "homeScore": 92,
+      "awayScore": 88,
+      "status": "finished",
+      "venue": "Capital One Arena",
+      "bettingInfo": "受讓 4.5贏55%",
+      "winner": "華盛頓神秘人",
+      "scoreBreakdown": {
+        "quarters": [
+          { "label": "1", "quarter": 1 },
+          { "label": "2", "quarter": 2 },
+          { "label": "3", "quarter": 3 },
+          { "label": "4", "quarter": 4 }
+        ],
+        "awayScores": [
+          { "quarter": 1, "points": 24 },
+          { "quarter": 2, "points": 22 },
+          { "quarter": 3, "points": 26 },
+          { "quarter": 4, "points": 16 }
+        ],
+        "homeScores": [
+          { "quarter": 1, "points": 28 },
+          { "quarter": 2, "points": 24 },
+          { "quarter": 3, "points": 22 },
+          { "quarter": 4, "points": 18 }
+        ]
+      },
+      "teamStats": {
+        "away": {
+          "fieldGoalsMade": 32,
+          "fieldGoalsAttempted": 75,
+          "fieldGoalPct": 42.7,
+          "threePointsMade": 6,
+          "threePointsAttempted": 20,
+          "threePointPct": 30,
+          "freeThrowsMade": 18,
+          "freeThrowsAttempted": 22,
+          "freeThrowPct": 81.8,
+          "totalRebounds": 38,
+          "offensiveRebounds": 10,
+          "turnovers": 12
+        },
+        "home": {
+          "fieldGoalsMade": 35,
+          "fieldGoalsAttempted": 78,
+          "fieldGoalPct": 44.9,
+          "threePointsMade": 7,
+          "threePointsAttempted": 22,
+          "threePointPct": 31.8,
+          "freeThrowsMade": 15,
+          "freeThrowsAttempted": 19,
+          "freeThrowPct": 78.9,
+          "totalRebounds": 42,
+          "offensiveRebounds": 12,
+          "turnovers": 10
+        }
+      }
+    },
+    {
+      "id": 2007,
+      "league": "NBA",
+      "allianceId": 2,
+      "time": "2025-10-11 15:00",
+      "homeTeam": "達拉斯獨行俠",
+      "awayTeam": "洛杉磯快艇",
+      "status": "scheduled",
+      "venue": "American Airlines Center",
+      "homeStats": { "winRate": "68%" },
+      "awayStats": { "winRate": "71%" },
+      "recentForm": "4勝2負",
+      "headToHead": "52%",
+      "avgPoints": "116.8",
+      "avgPointsAllowed": "114.5"
+    }
+  ],
+  "iceHockeyGames": [
+    {
+      "id": 3001,
+      "league": "俄羅斯冰球",
+      "allianceId": 87,
+      "time": "2025-10-10 19:00",
+      "homeTeam": "切列波",
+      "awayTeam": "火車頭",
+      "homeScore": 4,
+      "awayScore": 3,
+      "status": "finished",
+      "venue": "切列波體育館",
+      "bettingInfo": "受讓 0.5贏55%",
+      "winner": "切列波",
+      "scoreBreakdown": {
+        "periods": [
+          { "label": "1", "period": 1 },
+          { "label": "2", "period": 2 },
+          { "label": "3", "period": 3 },
+          { "label": "OT", "period": 4 },
+          { "label": "SO", "period": 5 }
+        ],
+        "awayScores": [
+          { "period": 1, "label": "1", "awayScore": 0, "homeScore": 2 },
+          { "period": 2, "label": "2", "awayScore": 0, "homeScore": 2 },
+          { "period": 3, "label": "3", "awayScore": 3, "homeScore": 0 },
+          { "period": 4, "label": "OT", "awayScore": 0, "homeScore": 0 },
+          { "period": 5, "label": "SO", "awayScore": 0, "homeScore": 0 }
+        ],
+        "homeScores": [
+          { "period": 1, "label": "1", "awayScore": 0, "homeScore": 2 },
+          { "period": 2, "label": "2", "awayScore": 0, "homeScore": 2 },
+          { "period": 3, "label": "3", "awayScore": 3, "homeScore": 0 },
+          { "period": 4, "label": "OT", "awayScore": 0, "homeScore": 0 },
+          { "period": 5, "label": "SO", "awayScore": 0, "homeScore": 0 }
+        ],
+        "awayTotal": 3,
+        "homeTotal": 4,
+        "hasOvertime": false,
+        "hasShootout": false
+      }
+    },
+    {
+      "id": 3002,
+      "league": "NHL冰球",
+      "allianceId": 91,
+      "time": "2025-10-10 20:00",
+      "homeTeam": "軍刀",
+      "awayTeam": "雪崩",
+      "homeScore": 1,
+      "awayScore": 3,
+      "status": "finished",
+      "venue": "KeyBank Center",
+      "bettingInfo": "1分輸50%",
+      "winner": "雪崩",
+      "scoreBreakdown": {
+        "periods": [
+          { "label": "1", "period": 1 },
+          { "label": "2", "period": 2 },
+          { "label": "3", "period": 3 },
+          { "label": "OT", "period": 4 },
+          { "label": "SO", "period": 5 }
+        ],
+        "awayScores": [
+          { "period": 1, "label": "1", "awayScore": 1, "homeScore": 1 },
+          { "period": 2, "label": "2", "awayScore": 2, "homeScore": 0 },
+          { "period": 3, "label": "3", "awayScore": 0, "homeScore": 0 },
+          { "period": 4, "label": "OT", "awayScore": 0, "homeScore": 0 },
+          { "period": 5, "label": "SO", "awayScore": 0, "homeScore": 0 }
+        ],
+        "homeScores": [
+          { "period": 1, "label": "1", "awayScore": 1, "homeScore": 1 },
+          { "period": 2, "label": "2", "awayScore": 2, "homeScore": 0 },
+          { "period": 3, "label": "3", "awayScore": 0, "homeScore": 0 },
+          { "period": 4, "label": "OT", "awayScore": 0, "homeScore": 0 },
+          { "period": 5, "label": "SO", "awayScore": 0, "homeScore": 0 }
+        ],
+        "awayTotal": 3,
+        "homeTotal": 1,
+        "hasOvertime": false,
+        "hasShootout": false
+      }
+    },
+    {
+      "id": 3003,
+      "league": "俄羅斯冰球",
+      "allianceId": 87,
+      "time": "2025-10-11 18:30",
+      "homeTeam": "莫斯科斯巴達",
+      "awayTeam": "聖彼得堡SK",
+      "status": "scheduled",
+      "venue": "莫斯科體育館",
+      "homeStats": { "winRate": "68%" },
+      "awayStats": { "winRate": "71%" },
+      "recentForm": "4勝2負",
+      "headToHead": "55%",
+      "avgGoals": "3.2",
+      "avgGoalsAllowed": "2.8"
+    },
+    {
+      "id": 3004,
+      "league": "NHL冰球",
+      "allianceId": 91,
+      "time": "2025-10-10 21:00",
+      "homeTeam": "金騎士",
+      "awayTeam": "黑鷹",
+      "homeScore": 2,
+      "awayScore": 1,
+      "status": "live",
+      "currentPeriod": 2,
+      "timeRemaining": "12:45",
+      "venue": "PPG Paints Arena",
+      "scoreBreakdown": {
+        "periods": [
+          { "label": "1", "period": 1 },
+          { "label": "2", "period": 2 },
+          { "label": "3", "period": 3 }
+        ],
+        "awayScores": [
+          { "period": 1, "label": "1", "awayScore": 0, "homeScore": 1 },
+          { "period": 2, "label": "2", "awayScore": 1, "homeScore": 1 }
+        ],
+        "homeScores": [
+          { "period": 1, "label": "1", "awayScore": 0, "homeScore": 1 },
+          { "period": 2, "label": "2", "awayScore": 1, "homeScore": 1 }
+        ],
+        "awayTotal": 1,
+        "homeTotal": 2,
+        "hasOvertime": false,
+        "hasShootout": false
+      }
+    },
+    {
+      "id": 3005,
+      "league": "俄羅斯冰球",
+      "allianceId": 87,
+      "time": "2025-10-11 20:00",
+      "homeTeam": "莫斯科中央陸軍",
+      "awayTeam": "喀山Ak Bars",
+      "status": "live",
+      "currentPeriod": 3,
+      "timeRemaining": "05:20",
+      "venue": "莫斯科體育館",
+      "scoreBreakdown": {
+        "periods": [
+          { "label": "1", "period": 1 },
+          { "label": "2", "period": 2 },
+          { "label": "3", "period": 3 }
+        ],
+        "awayScores": [
+          { "period": 1, "label": "1", "awayScore": 1, "homeScore": 0 },
+          { "period": 2, "label": "2", "awayScore": 1, "homeScore": 1 },
+          { "period": 3, "label": "3", "awayScore": 0, "homeScore": 0 }
+        ],
+        "homeScores": [
+          { "period": 1, "label": "1", "awayScore": 1, "homeScore": 0 },
+          { "period": 2, "label": "2", "awayScore": 1, "homeScore": 1 },
+          { "period": 3, "label": "3", "awayScore": 0, "homeScore": 0 }
+        ],
+        "awayTotal": 2,
+        "homeTotal": 1,
+        "hasOvertime": false,
+        "hasShootout": false
+      }
+    },
+    {
+      "id": 3006,
+      "league": "NHL冰球",
+      "allianceId": 91,
+      "time": "2025-10-12 19:00",
+      "homeTeam": "加拿大人",
+      "awayTeam": "遊騎兵",
+      "status": "scheduled",
+      "venue": "Bell Centre",
+      "homeStats": { "winRate": "72%" },
+      "awayStats": { "winRate": "68%" },
+      "recentForm": "4勝1負",
+      "headToHead": "58%",
+      "avgGoals": "3.1",
+      "avgGoalsAllowed": "2.4"
+    }
+  ],
+  "americanFootballGames": [
+    {
+      "id": 4001,
+      "league": "NFL美式足球",
+      "allianceId": 93,
+      "time": "2025-10-10 18:00",
+      "homeTeam": "獵鷹",
+      "awayTeam": "比爾",
+      "homeScore": 24,
+      "awayScore": 14,
+      "status": "finished",
+      "venue": "Mercedes-Benz體育場",
+      "bettingInfo": "受讓 4分輸50%",
+      "winner": "獵鷹",
+      "scoreBreakdown": {
+        "periods": [
+          { "label": "1", "period": 1 },
+          { "label": "2", "period": 2 },
+          { "label": "3", "period": 3 },
+          { "label": "4", "period": 4 },
+          { "label": "OT", "period": 5 }
+        ],
+        "awayScores": [
+          { "period": 1, "label": "1", "awayScore": 7, "homeScore": 14 },
+          { "period": 2, "label": "2", "awayScore": 0, "homeScore": 7 },
+          { "period": 3, "label": "3", "awayScore": 7, "homeScore": 0 },
+          { "period": 4, "label": "4", "awayScore": 0, "homeScore": 3 },
+          { "period": 5, "label": "OT", "awayScore": 0, "homeScore": 0 }
+        ],
+        "homeScores": [
+          { "period": 1, "label": "1", "awayScore": 7, "homeScore": 14 },
+          { "period": 2, "label": "2", "awayScore": 0, "homeScore": 7 },
+          { "period": 3, "label": "3", "awayScore": 7, "homeScore": 0 },
+          { "period": 4, "label": "4", "awayScore": 0, "homeScore": 3 },
+          { "period": 5, "label": "OT", "awayScore": 0, "homeScore": 0 }
+        ],
+        "awayTotal": 14,
+        "homeTotal": 24,
+        "hasOvertime": false
+      }
+    },
+    {
+      "id": 4002,
+      "league": "NFL美式足球",
+      "allianceId": 93,
+      "time": "2025-10-10 21:25",
+      "homeTeam": "鋼人",
+      "awayTeam": "酋長",
+      "homeScore": 17,
+      "awayScore": 20,
+      "status": "live",
+      "currentPeriod": 4,
+      "timeRemaining": "02:30",
+      "venue": "Heinz Field",
+      "scoreBreakdown": {
+        "periods": [
+          { "label": "1", "period": 1 },
+          { "label": "2", "period": 2 },
+          { "label": "3", "period": 3 },
+          { "label": "4", "period": 4 }
+        ],
+        "awayScores": [
+          { "period": 1, "label": "1", "awayScore": 7, "homeScore": 0 },
+          { "period": 2, "label": "2", "awayScore": 10, "homeScore": 7 },
+          { "period": 3, "label": "3", "awayScore": 3, "homeScore": 3 },
+          { "period": 4, "label": "4", "awayScore": 0, "homeScore": 7 }
+        ],
+        "homeScores": [
+          { "period": 1, "label": "1", "awayScore": 7, "homeScore": 0 },
+          { "period": 2, "label": "2", "awayScore": 10, "homeScore": 7 },
+          { "period": 3, "label": "3", "awayScore": 3, "homeScore": 3 },
+          { "period": 4, "label": "4", "awayScore": 0, "homeScore": 7 }
+        ],
+        "awayTotal": 20,
+        "homeTotal": 17,
+        "hasOvertime": false
+      }
+    },
+    {
+      "id": 4003,
+      "league": "NFL美式足球",
+      "allianceId": 93,
+      "time": "2025-10-12 18:00",
+      "homeTeam": "老鷹",
+      "awayTeam": "海盜",
+      "status": "scheduled",
+      "venue": "Mercedes-Benz體育場",
+      "homeStats": { "winRate": "75%" },
+      "awayStats": { "winRate": "60%" },
+      "recentForm": "5勝1負",
+      "headToHead": "58%",
+      "avgPoints": "28.5",
+      "avgPointsAllowed": "22.3"
+    }
+  ],
+  "tennisGames": [
+    {
+      "id": 5001,
+      "league": "網球",
+      "allianceId": 21,
+      "time": "2025-10-10 13:05",
+      "homeTeam": "汀娜.娜丁.史密斯[澳大利亞]",
+      "awayTeam": "艾娃.威德爾[荷蘭]",
+      "homeScore": 1,
+      "awayScore": 2,
+      "status": "finished",
+      "venue": "中央球場",
+      "bettingInfo": "開賽時間 01:05",
+      "winner": "艾娃.威德爾[荷蘭]",
+      "scoreBreakdown": {
+        "sets": [
+          { "setNumber": 1, "awayGames": 6, "homeGames": 3 },
+          { "setNumber": 2, "awayGames": 3, "homeGames": 6 },
+          { "setNumber": 3, "awayGames": 6, "homeGames": 4 },
+          { "setNumber": 4, "awayGames": 0, "homeGames": 0 },
+          { "setNumber": 5, "awayGames": 0, "homeGames": 0 }
+        ],
+        "awaySets": 2,
+        "homeSets": 1,
+        "awayTotalGames": 15,
+        "homeTotalGames": 13
+      }
+    },
+    {
+      "id": 5002,
+      "league": "網球",
+      "allianceId": 21,
+      "time": "2025-10-11 15:30",
+      "homeTeam": "塞雷娜.威廉姆斯[美國]",
+      "awayTeam": "瑪麗亞.莎拉波娃[俄羅斯]",
+      "status": "live",
+      "currentSet": 2,
+      "currentGames": { "away": 4, "home": 2 },
+      "scoreBreakdown": {
+        "sets": [
+          { "setNumber": 1, "awayGames": 6, "homeGames": 4 },
+          { "setNumber": 2, "awayGames": 4, "homeGames": 2 },
+          { "setNumber": 3, "awayGames": 0, "homeGames": 0 },
+          { "setNumber": 4, "awayGames": 0, "homeGames": 0 },
+          { "setNumber": 5, "awayGames": 0, "homeGames": 0 }
+        ],
+        "awaySets": 1,
+        "homeSets": 0,
+        "awayTotalGames": 10,
+        "homeTotalGames": 6
+      }
+    },
+    {
+      "id": 5003,
+      "league": "網球",
+      "allianceId": 21,
+      "time": "2025-10-12 14:00",
+      "homeTeam": "諾瓦克.喬科維奇[塞爾維亞]",
+      "awayTeam": "拉斐爾.納達爾[西班牙]",
+      "status": "scheduled",
+      "homeStats": {
+        "overallRecord": "45勝5負",
+        "homeRecord": "28勝3負",
+        "recentForm": "8勝2負",
+        "avgGames": "24.5/18.3"
+      },
+      "awayStats": {
+        "overallRecord": "42勝8負",
+        "awayRecord": "25勝5負",
+        "recentForm": "7勝3負",
+        "avgGames": "23.8/19.2"
+      },
+      "headToHead": "15勝12負"
     }
   ],
   "alliances": [
