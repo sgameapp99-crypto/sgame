@@ -639,3 +639,4 @@ function allianceHasGames(allianceId: number): boolean {
   }
 }
 </style>
+
