@@ -4,7 +4,7 @@
 
     <!-- 功能導航區域 -->
     <div class="games-overview mt-lg">
-      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-lg">
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-lg">
         <!-- 對戰資訊 -->
         <div class="feature-card">
           <div class="card-icon">⚾</div>
@@ -25,15 +25,6 @@
           </RouterLink>
         </div>
 
-        <!-- 戰績排名 -->
-        <div class="feature-card">
-          <div class="card-icon">📊</div>
-          <h3 class="card-title">戰績排名</h3>
-          <p class="card-description">查看聯盟各分區的即時排名、勝率統計和連勝情況</p>
-          <RouterLink class="btn btn-primary btn-sm" :to="{ name: 'games-standings' }">
-            查看排名
-          </RouterLink>
-        </div>
 
         <!-- 賽事結果查詢 -->
         <div class="feature-card">

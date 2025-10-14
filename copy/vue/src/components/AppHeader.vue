@@ -81,9 +81,7 @@
               <li>
                 <RouterLink class="ddsmoothmenu-link" :to="{ name: 'games-teams' }">球隊資訊</RouterLink>
               </li>
-              <li>
-                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'games-standings' }">戰績排名</RouterLink>
-              </li>
+
               <li>
                 <RouterLink class="ddsmoothmenu-link" :to="{ name: 'games-results' }">賽事結果查詢</RouterLink>
               </li>

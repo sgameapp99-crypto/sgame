@@ -19,6 +19,7 @@
 ```
 src/
 ├── components/          # 可重用組件
+│   ├── AllianceMenu.vue # 聯盟選單組件
 │   ├── legal/          # 法律條款相關組件
 │   │   ├── TermsOfService.vue      # 服務條款組件
 │   │   ├── PrivacyPolicy.vue       # 隱私權政策組件
@@ -28,12 +29,109 @@ src/
 ├── pages/              # 頁面組件
 │   ├── LegalPage.vue   # 法律條款頁面
 │   ├── HomePage.vue    # 首頁
+│   ├── LivescorePage.vue # 即時比分頁面
 │   ├── LoginPage.vue   # 登入頁面
 │   └── ...
 ├── stores/             # Pinia 狀態管理
 ├── router/             # 路由配置
 └── utils/              # 工具函數
 ```
+
+## 聯盟選單組件
+
+### AllianceMenu.vue - 聯盟選單組件
+
+一個可重用的聯盟選單組件，包含運動聯盟選擇、展開/收起功能、足球聯賽選擇和時間篩選器。
+
+#### 功能特色
+
+- **多運動種類支援**: 支援棒球、籃球、足球、冰球、美式足球、網球等多種運動
+- **展開/收起功能**: 每個運動種類都可以展開顯示更多聯盟選項
+- **足球聯賽選擇**: 當選擇足球時自動顯示聯賽選單
+- **時間篩選器**: 支援昨天、今天、明天等時間篩選
+- **日曆功能**: 提供完整的日曆選擇器
+- **響應式設計**: 適配桌面、平板、手機等多種螢幕尺寸
+
+#### Props 接口
+
+```typescript
+interface Props {
+  selectedAlliance: number;           // 當前選中的聯盟ID
+  selectedSoccerLeague: number | null; // 當前選中的足球聯賽ID
+  selectedStatusType: 'finished' | 'live' | 'scheduled'; // 當前選中的狀態類型
+  baseballExpanded: boolean;         // 棒球展開狀態
+  basketballExpanded: boolean;       // 籃球展開狀態
+  otherExpanded: boolean;           // 其他展開狀態
+  soccerLeaguesExpanded: boolean;   // 足球聯賽展開狀態
+  calendarVisible: boolean;         // 日曆可見狀態
+  currentMonth: string;             // 當前月份顯示
+  selectedDate: Date;               // 選中的日期
+  calendarDates: CalendarDate[];    // 日曆日期數組
+}
+```
+
+#### Events 接口
+
+```typescript
+// 聯盟選擇事件
+emit('select-alliance', allianceId: number)
+
+// 足球聯賽選擇事件
+emit('select-soccer-league', leagueId: number)
+
+// 時間選項選擇事件
+emit('select-date-option', option: DateOption)
+
+// 展開/收起事件
+emit('toggle-baseball-expanded')
+emit('toggle-basketball-expanded')
+emit('toggle-other-expanded')
+emit('toggle-calendar')
+
+// 日曆操作事件
+emit('select-date', date: Date)
+emit('prev-month')
+emit('next-month')
+emit('close-calendar')
+```
+
+#### 使用範例
+
+```vue
+<template>
+  <AllianceMenu
+    :selected-alliance="selectedAlliance"
+    :selected-soccer-league="selectedSoccerLeague"
+    :selected-status-type="selectedStatusType"
+    :baseball-expanded="baseballExpanded"
+    :basketball-expanded="basketballExpanded"
+    :other-expanded="otherExpanded"
+    :soccer-leagues-expanded="soccerLeaguesExpanded"
+    :calendar-visible="calendarVisible"
+    :current-month="currentMonth"
+    :selected-date="selectedDate"
+    :calendar-dates="calendarDates"
+    @select-alliance="handleAllianceSelect"
+    @select-soccer-league="handleSoccerLeagueSelect"
+    @select-date-option="handleDateOptionSelect"
+    @toggle-baseball-expanded="toggleBaseballExpanded"
+    @toggle-basketball-expanded="toggleBasketballExpanded"
+    @toggle-other-expanded="toggleOtherExpanded"
+    @toggle-calendar="toggleCalendar"
+    @select-date="handleDateSelect"
+    @prev-month="prevMonth"
+    @next-month="nextMonth"
+    @close-calendar="closeCalendar"
+  />
+</template>
+```
+
+#### 適用場景
+
+- **即時比分頁面**: 用於篩選不同聯盟和時間的比賽
+- **賽程頁面**: 用於選擇特定聯盟查看賽程
+- **統計頁面**: 用於選擇聯盟查看統計數據
+- **其他運動相關頁面**: 任何需要聯盟選擇功能的頁面
 
 ## 法律條款功能
 
@@ -118,6 +216,12 @@ npm run lint
 5. **代碼註釋**: 重要功能需要添加中文註釋
 
 ## 更新日誌
+
+### v1.1.0 (2025-10-14)
+- 重構聯盟選單組件：將 LivescorePage.vue 中的聯盟選單邏輯抽離為獨立的 AllianceMenu.vue 組件
+- 組件化設計：AllianceMenu 組件支援多種運動聯盟選擇、展開/收起功能、足球聯賽選擇和時間篩選
+- 代碼優化：提升代碼可維護性和重用性，減少重複代碼
+- 完善文檔：更新 README.md，詳細說明 AllianceMenu 組件的使用方法和接口
 
 ### v1.0.0 (2024-01-XX)
 - 初始版本發布
