@@ -12,9 +12,10 @@
       <!-- header menu start -->
       <div id="smoothmenu1" class="ddsmoothmenu">
         <ul class="drop-down-menu">
-          <li class="ddsmoothmenu-outer">
+          <li class="ddsmoothmenu-outer" v-if="false">
             <RouterLink class="ddsmoothmenu-item js-header-menu--guess" :to="{ name: 'guess' }">
               <span></span>玩競猜
+            <!-- 這個部分目前不需要使用，所以先隱藏-->
             </RouterLink>
             <ul>
               <li>
