@@ -3,59 +3,20 @@
       <div class="heading-2">球隊資訊</div>
 
       <!-- 聯盟選擇 -->
-      <div class="alliance-menu mb-lg">
-        <div class="tagsection">
-          <div class="tag-league-boxall">
-            <!-- 棒球聯盟 -->
-            <div class="tag-league-box tag-box">
-              <div class="tag-box-first">
-                <ol class="tag-league">
-                  <li class="fold-head"></li>
-                  <li>棒球</li>
-                  <li class="fold-footer"></li>
-                </ol>
-              </div>
-              <div class="tag-box-last">
-                <ol class="tag-con">
-                  <li :class="{ 'tag-chosen': selectedAlliance === 1 }">
-                    <a href="#" @click.prevent="selectAlliance(1)">MLB</a>
-                  </li>
-                  <li :class="{ 'tag-chosen': selectedAlliance === 2 }">
-                    <a href="#" @click.prevent="selectAlliance(2)">日棒</a>
-                  </li>
-                  <li :class="{ 'tag-chosen': selectedAlliance === 6 }">
-                    <a href="#" @click.prevent="selectAlliance(6)">中職</a>
-                  </li>
-                  <li :class="{ 'tag-chosen': selectedAlliance === 9 }">
-                    <a href="#" @click.prevent="selectAlliance(9)">韓棒</a>
-                  </li>
-                </ol>
-              </div>
-            </div>
-
-            <!-- 籃球聯盟 -->
-            <div class="tag-league-box tag-box">
-              <div class="tag-box-first">
-                <ol class="tag-league">
-                  <li class="fold-head"></li>
-                  <li>籃球</li>
-                  <li class="fold-footer"></li>
-                </ol>
-              </div>
-              <div class="tag-box-last">
-                <ol class="tag-con">
-                  <li :class="{ 'tag-chosen': selectedAlliance === 3 }">
-                    <a href="#" @click.prevent="selectAlliance(3)">NBA</a>
-                  </li>
-                  <li :class="{ 'tag-chosen': selectedAlliance === 97 }">
-                    <a href="#" @click.prevent="selectAlliance(97)">日籃</a>
-                  </li>
-                </ol>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AllianceMenu
+        :selected-alliance="selectedAlliance"
+        :selected-soccer-league="null"
+        :selected-status-type="'live'"
+        :baseball-expanded="baseballExpanded"
+        :basketball-expanded="basketballExpanded"
+        :other-expanded="otherExpanded"
+        :soccer-leagues-expanded="false"
+        :show-time-selector="false"
+        @select-alliance="selectAlliance"
+        @toggle-baseball-expanded="toggleBaseballExpanded"
+        @toggle-basketball-expanded="toggleBasketballExpanded"
+        @toggle-other-expanded="toggleOtherExpanded"
+      />
 
       <!-- 球隊列表 -->
       <div v-if="loading" class="text-center py-xl">載入中...</div>
@@ -67,9 +28,6 @@
           class="team-card"
           @click="viewTeamDetail(team.id)"
         >
-          <div class="team-logo">
-            <img :src="team.logo || '/images/default-team.png'" :alt="team.name" />
-          </div>
           <div class="team-info">
             <h3 class="team-name">{{ team.name }}</h3>
             <div class="team-short">{{ team.short_name }}</div>
@@ -152,10 +110,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { gamesApi, type Team } from '../services/gamesApi';
+import { gamesApi, type Team } from '../../services/gamesApi';
+import AllianceMenu from '../../components/AllianceMenu.vue';
 
 // 響應式數據
 const selectedAlliance = ref(1);
+const baseballExpanded = ref(false);
+const basketballExpanded = ref(false);
+const otherExpanded = ref(false);
 const loading = ref(false);
 const errorMessage = ref('');
 const teams = ref<Team[]>([]);
@@ -165,6 +127,18 @@ const selectedTeam = ref<Team | null>(null);
 function selectAlliance(allianceId: number) {
   selectedAlliance.value = allianceId;
   loadTeams(allianceId);
+}
+
+function toggleBaseballExpanded() {
+  baseballExpanded.value = !baseballExpanded.value;
+}
+
+function toggleBasketballExpanded() {
+  basketballExpanded.value = !basketballExpanded.value;
+}
+
+function toggleOtherExpanded() {
+  otherExpanded.value = !otherExpanded.value;
 }
 
 async function viewTeamDetail(teamId: number) {

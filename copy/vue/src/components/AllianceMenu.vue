@@ -172,7 +172,7 @@
         </div>
 
         <!-- 時間選擇器 -->
-        <div class="tag-league-box tag-box calendar-wrapper">
+        <div v-if="showTimeSelector" class="tag-league-box tag-box calendar-wrapper">
           <div class="tag-box-first">
             <ol class="tag-league">
               <li class="fold-head"></li>
@@ -241,6 +241,8 @@ interface Props {
   basketballExpanded: boolean;
   otherExpanded: boolean;
   soccerLeaguesExpanded: boolean;
+  showTimeSelector: boolean;
+  dateOptionsFilter: ('finished' | 'live' | 'scheduled')[];
   calendarVisible: boolean;
   currentMonth: string;
   selectedDate: Date;
@@ -255,6 +257,8 @@ const props = withDefaults(defineProps<Props>(), {
   basketballExpanded: false,
   otherExpanded: false,
   soccerLeaguesExpanded: false,
+  showTimeSelector: true,
+  dateOptionsFilter: () => ['finished', 'live', 'scheduled'],
   calendarVisible: false,
   currentMonth: '九月 2025',
   selectedDate: () => new Date(),
@@ -300,16 +304,21 @@ const dateOptions = computed(() => {
 
   // 昨天(已完成)、今天(進行中)、明天(未進行)
   const dateLabels = ['昨天', '今天', '明天'];
-  const statusTypes = ['finished', 'live', 'scheduled'];
+  const statusTypes: ('finished' | 'live' | 'scheduled')[] = ['finished', 'live', 'scheduled'];
 
   for (let i = 0; i < 3; i++) {
-    const isSelected = props.selectedStatusType === statusTypes[i];
+    const statusType = statusTypes[i];
 
-    options.push({
-      display: dateLabels[i],
-      type: statusTypes[i], // finished, live, scheduled
-      isSelected
-    });
+    // 根據 dateOptionsFilter 過濾顯示的選項
+    if (props.dateOptionsFilter.includes(statusType)) {
+      const isSelected = props.selectedStatusType === statusType;
+
+      options.push({
+        display: dateLabels[i],
+        type: statusType,
+        isSelected
+      });
+    }
   }
 
   return options;
@@ -639,4 +648,8 @@ function allianceHasGames(allianceId: number): boolean {
   }
 }
 </style>
+
+export default {
+  name: 'AllianceMenu'
+}
 

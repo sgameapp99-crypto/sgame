@@ -7,131 +7,38 @@
           <div class="menugroupbox gamedata-menugroupbox">
             <div class="menugroupbox-top"></div>
             <div class="menugroupbox-con">
-              <div class="tagsection">
-                <!-- 聯盟選擇 -->
-                <div class="tag-league-boxall">
-                  <!-- 棒球聯盟 -->
-                  <div class="tag-league-box tag-box">
-                    <div class="tag-box-first">
-                      <ol class="tag-league">
-                        <li class="fold-head"></li>
-                        <li>棒球</li>
-                        <li class="fold-footer"></li>
-                      </ol>
-                    </div>
-                    <div class="tag-box-last">
-                      <ol class="tag-con">
-                        <li :class="{ 'tag-chosen': selectedAlliance === 1 }" @click="selectAlliance(1)">
-                          MLB
-                        </li>
-                        <li :class="{ 'tag-chosen': selectedAlliance === 3 }" @click="selectAlliance(3)">
-                          日棒
-                        </li>
-                        <li :class="{ 'tag-chosen': selectedAlliance === 4 }" @click="selectAlliance(4)">
-                          中職
-                        </li>
-                        <li :class="{ 'tag-chosen': selectedAlliance === 6 }" @click="selectAlliance(6)">
-                          韓棒
-                        </li>
-                        <div :class="['games_close', { 'expanded': baseballExpanded }]">
-                          <li :class="{ 'tag-chosen': selectedAlliance === 83 }" @click="selectAlliance(83)">
-                            澳棒
-                          </li>
-                        </div>
-                        <a href="#" :class="['more_play_btn', { 'reportActive': baseballExpanded }]" @click.prevent="toggleBaseballExpanded">
-                          <strong>▼</strong>
-                          <span>▲</span>
-                        </a>
-                      </ol>
-                    </div>
-                  </div>
+              <AllianceMenu
+                :selected-alliance="selectedAlliance"
+                :selected-soccer-league="null"
+                :selected-status-type="'live'"
+                :baseball-expanded="baseballExpanded"
+                :basketball-expanded="basketballExpanded"
+                :other-expanded="otherExpanded"
+                :soccer-leagues-expanded="false"
+                :calendar-visible="false"
+                :current-month="'九月 2025'"
+                :selected-date="new Date()"
+                :calendar-dates="[]"
+                @select-alliance="selectAlliance"
+                @toggle-baseball-expanded="toggleBaseballExpanded"
+                @toggle-basketball-expanded="toggleBasketballExpanded"
+                @toggle-other-expanded="toggleOtherExpanded"
+              />
+            </div>
+            <div class="menugroupbox-bottom"></div>
+          </div>
 
-                  <!-- 籃球聯盟 -->
-                  <div class="tag-league-box tag-box">
-                    <div class="tag-box-first">
-                      <ol class="tag-league">
-                        <li class="fold-head"></li>
-                        <li>籃球</li>
-                        <li class="fold-footer"></li>
-                      </ol>
-                    </div>
-                    <div class="tag-box-last">
-                      <ol class="tag-con">
-                        <li :class="{ 'tag-chosen': selectedAlliance === 2 }" @click="selectAlliance(2)">
-                          NBA
-                        </li>
-                        <li :class="{ 'tag-chosen': selectedAlliance === 7 }" @click="selectAlliance(7)">
-                          WNBA
-                        </li>
-                        <li :class="{ 'tag-chosen': selectedAlliance === 8 }" @click="selectAlliance(8)">
-                          歐籃
-                        </li>
-                        <li :class="{ 'tag-chosen': selectedAlliance === 12 }" @click="selectAlliance(12)">
-                          澳籃
-                        </li>
-                        <li :class="{ 'tag-chosen': selectedAlliance === 92 }" @click="selectAlliance(92)">
-                          韓籃
-                        </li>
-                        <li :class="{ 'tag-chosen': selectedAlliance === 97 }" @click="selectAlliance(97)">
-                          日籃
-                        </li>
-                        <li :class="{ 'tag-chosen': selectedAlliance === 18 }" @click="selectAlliance(18)">
-                          TPBL
-                        </li>
-                        <div :class="['games_close', { 'expanded': basketballExpanded }]">
-                          <li :class="{ 'tag-chosen': selectedAlliance === 16 }" @click="selectAlliance(16)">
-                            P+
-                          </li>
-                          <li :class="{ 'tag-chosen': selectedAlliance === 89 }" @click="selectAlliance(89)">
-                            SBL
-                          </li>
-                          <li :class="{ 'tag-chosen': selectedAlliance === 94 }" @click="selectAlliance(94)">
-                            中籃
-                          </li>
-                        </div>
-                        <a href="#" :class="['more_play_btn', { 'reportActive': basketballExpanded }]" @click.prevent="toggleBasketballExpanded">
-                          <strong>▼</strong>
-                          <span>▲</span>
-                        </a>
-                      </ol>
-                    </div>
-                  </div>
-
-                  <!-- 其他聯盟 -->
-                  <div class="tag-league-box tag-box">
-                    <div class="tag-box-first">
-                      <ol class="tag-league">
-                        <li class="fold-head"></li>
-                        <li>其他</li>
-                        <li class="fold-footer"></li>
-                      </ol>
-                    </div>
-                    <div class="tag-box-last">
-                      <ol class="tag-con">
-                        <li :class="{ 'tag-chosen': selectedAlliance === 87 }" @click="selectAlliance(87)">
-                          俄冰
-                        </li>
-                        <li :class="{ 'tag-chosen': selectedAlliance === 91 }" @click="selectAlliance(91)">
-                          NHL冰球
-                        </li>
-                        <li :class="{ 'tag-chosen': selectedAlliance === 93 }" @click="selectAlliance(93)">
-                          美足
-                        </li>
-                      </ol>
-                    </div>
-                  </div>
-
-                  <!-- 對戰球隊選擇 -->
-                  <div class="tag-league-box tag-box">
-                    <div class="tag-box-first">
-                      <ol class="tag-league">
-                        <li class="fold-head"></li>
-                        <li>對戰球隊</li>
-                        <li class="fold-footer"></li>
-                      </ol>
-                    </div>
-                    <div class="tag-box-last">
-                      <ol class="tag-con tag-con-battle">
+          <!-- 對戰球隊選擇 -->
+          <div class="tag-league-box tag-box">
+            <div class="tag-box-first">
+              <ol class="tag-league">
+                <li class="fold-head"></li>
+                <li>對戰球隊</li>
+                <li class="fold-footer"></li>
+              </ol>
+            </div>
+            <div class="tag-box-last">
+              <ol class="tag-con tag-con-battle">
                         <li class="marker marker_m js-marker" @mouseenter="showBattlesList" @mouseleave="hideBattlesList">
                           <a href="javascript:void(0)" class="dropdown-title dropdown-title_m">
                             <span v-if="selectedGame">
@@ -165,10 +72,6 @@
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            <div class="menugroupbox-bottom"></div>
-          </div>
 
           <!-- 數據內容區域 -->
           <div id="gamesDataBlock" v-if="selectedGame">
@@ -411,18 +314,19 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { getGames } from '../data/mockApi';
-import type { UnifiedGame } from '../data/types';
+import { getGames } from '../../data/mockApi';
+import type { UnifiedGame } from '../../data/types';
+import AllianceMenu from '../../components/AllianceMenu.vue';
 
 // 響應式數據
 const selectedAlliance = ref(1);
 const baseballExpanded = ref(false);
 const basketballExpanded = ref(false);
+const otherExpanded = ref(false);
 const battlesListVisible = ref(false);
 const selectedGame = ref<UnifiedGame | null>(null);
 const games = ref<UnifiedGame[]>([]);
@@ -457,6 +361,10 @@ function toggleBaseballExpanded() {
 
 function toggleBasketballExpanded() {
   basketballExpanded.value = !basketballExpanded.value;
+}
+
+function toggleOtherExpanded() {
+  otherExpanded.value = !otherExpanded.value;
 }
 
 function showBattlesList() {

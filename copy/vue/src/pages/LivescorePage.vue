@@ -15,6 +15,8 @@
       :current-month="currentMonth"
       :selected-date="selectedDate"
       :calendar-dates="calendarDates"
+      :show-time-selector="true"
+      :date-options-filter="['live']"
       @select-alliance="selectAlliance"
       @select-soccer-league="selectSoccerLeague"
       @select-date-option="selectDateOption"

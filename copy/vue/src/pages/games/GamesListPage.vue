@@ -31,8 +31,8 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { loadLegacyHtml, parseBasicContent, parseFirstTable, type ParsedTable } from '../utils/simpleLegacyParser';
-import { rewriteLegacyUrls } from '../utils/rewriteLegacy';
+import { loadLegacyHtml, parseBasicContent, parseFirstTable, type ParsedTable } from '../../utils/simpleLegacyParser';
+import { rewriteLegacyUrls } from '../../utils/rewriteLegacy';
 
 const route = useRoute();
 const loading = ref(true);

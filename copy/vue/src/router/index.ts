@@ -46,33 +46,33 @@ const router = createRouter({
     {
       path: '/games',
       name: 'games',
-      component: () => import('../pages/GamesPage.vue'),
+      component: () => import('../pages/games/GamesPage.vue'),
     },
     {
       path: '/games/battle/:gameId?',
       name: 'games-battle',
-      component: () => import('../pages/GamesBattlePage.vue'),
+      component: () => import('../pages/games/GamesBattlePage.vue'),
     },
     {
       path: '/games/teams',
       name: 'games-teams',
-      component: () => import('../pages/GamesTeamsPage.vue'),
+      component: () => import('../pages/games/GamesTeamsPage.vue'),
     },
     {
       path: '/games/standings',
       name: 'games-standings',
-      component: () => import('../pages/GamesStandingsPage.vue'),
+      component: () => import('../pages/games/GamesStandingsPage.vue'),
     },
     {
       path: '/games/results',
       name: 'games-results',
-      component: () => import('../pages/GamesResultsPage.vue'),
+      component: () => import('../pages/games/GamesResultsPage.vue'),
     },
     // 保留舊路由以向後相容
     {
       path: '/games/list',
       name: 'games-list',
-      component: () => import('../pages/GamesListPage.vue'),
+      component: () => import('../pages/games/GamesListPage.vue'),
     },
     {
       path: '/games/detail/:id?',
