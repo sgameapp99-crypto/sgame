@@ -8,17 +8,28 @@
           <tr>
             <td class="helpClearf" width="660">
               <div class="menu_title">看板</div>
-              <ForumNav :nav-links="navLinks" :categories="categories" @select-board="onSelectBoard" />
+              <ForumNav :categories="categories" @select-board="onSelectBoard" />
             </td>
             <td class="helpClearf" colspan="2" valign="top">
               <div class="menu_category">
                 <div class="row">
                   <div class="title">排序</div>
                   <div class="content">
-                    <span v-if="sort === 'latestReply'" style="font-weight: bold; color: red;">最新回覆</span>
-                    <a v-else href="#" @click.prevent="onSort('latestReply')">最新回覆</a>
-                    <a v-if="sort !== 'latestReply'" href="#" @click.prevent="onSort('latestPost')">最新文章</a>
-                    <span v-else style="font-weight: bold; color: red;">最新文章</span>
+                    <a
+                      href="#"
+                      @click.prevent="onSort('latestReply')"
+                      :style="sort === 'latestReply' ? 'font-weight: bold; color: red;' : 'color: #0066CC;'"
+                    >
+                      最新回覆
+                    </a>
+                    <span style="margin: 0 8px;">|</span>
+                    <a
+                      href="#"
+                      @click.prevent="onSort('latestPost')"
+                      :style="sort === 'latestPost' ? 'font-weight: bold; color: red;' : 'color: #0066CC;'"
+                    >
+                      最新文章
+                    </a>
                   </div>
                 </div>
                 <div class="row" style="display: block; margin-top: 30px; text-align: right;">
@@ -123,8 +134,24 @@ import '../assets/css/forum-original.css';
 const route = useRoute();
 const router = useRouter();
 
-const navLinks = ref<{ text: string; href: string }[]>([]);
-const categories = ref<{ title: string; boards: string[] }[]>([]);
+const categories = ref<{ title: string; boards: string[] }[]>([
+  {
+    title: '棒球',
+    boards: ['MLB', '日棒', '中職', '韓棒', '澳棒', '國際棒賽']
+  },
+  {
+    title: '籃球',
+    boards: ['NBA', 'WNBA', '韓籃', '日籃', '歐籃', '中籃', '國際籃賽', '綜合籃賽', '菲籃', '澳籃', 'P+', 'TPBL']
+  },
+  {
+    title: '其他',
+    boards: ['玩競猜', '足球', 'NHL冰球', '俄冰', '美足', '網球', '賽馬', '電競', '猜數字', '彩球', '排球', '乒乓球', '羽球']
+  },
+  {
+    title: '全部',
+    boards: ['全部', '閒聊', '都蘭特區', '炫耀', '公告']
+  }
+]);
 const posts = ref<ForumPostRow[]>([]);
 const pagination = ref<{ current: number; pages: number[] } | null>(null);
 const selectedBoard = ref<{ category: string; board: string } | null>(null);
@@ -132,9 +159,28 @@ const sort = ref<'latestReply' | 'latestPost'>('latestReply');
 const currentPage = ref<number>(1);
 
 const displayPosts = computed(() => {
-  if (!selectedBoard.value) return posts.value;
-  const keyword = selectedBoard.value.board;
-  return posts.value.filter((p) => p.boardTag === keyword || p.title.includes(keyword));
+  let filteredPosts = posts.value;
+
+  // 先根據看板過濾
+  if (selectedBoard.value) {
+    const keyword = selectedBoard.value.board;
+    filteredPosts = filteredPosts.filter((p) => p.boardTag === keyword || p.title.includes(keyword));
+  }
+
+  // 根據排序方式排序
+  return filteredPosts.sort((a, b) => {
+    if (sort.value === 'latestReply') {
+      // 最新回覆：按最後回覆時間排序
+      const aDate = new Date(a.lastReplyDate || a.authorDate || 0);
+      const bDate = new Date(b.lastReplyDate || b.authorDate || 0);
+      return bDate.getTime() - aDate.getTime();
+    } else {
+      // 最新文章：按發文時間排序
+      const aDate = new Date(a.authorDate || 0);
+      const bDate = new Date(b.authorDate || 0);
+      return bDate.getTime() - aDate.getTime();
+    }
+  });
 });
 
 const lastPage = computed(() => pagination.value?.pages?.[pagination.value.pages.length - 1]);
@@ -173,8 +219,8 @@ async function load(page?: number) {
     html = await res.text();
   }
   const parsed = parseForum(html);
-  navLinks.value = parsed.navLinks;
-  categories.value = parsed.categories;
+  // navLinks.value = parsed.navLinks; // 不再使用navLinks
+  // categories.value = parsed.categories; // 不再從解析中獲取，使用硬編碼分類
   posts.value = parsed.posts;
   pagination.value = parsed.pagination;
 }
