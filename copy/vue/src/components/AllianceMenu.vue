@@ -302,16 +302,16 @@ const soccerLeagues = [
 const dateOptions = computed(() => {
   const options = [];
 
-  // 昨天(已完成)、今天(進行中)、明天(未進行)
-  const dateLabels = ['昨天', '今天', '明天'];
-  const statusTypes: ('finished' | 'live' | 'scheduled')[] = ['finished', 'live', 'scheduled'];
+  // 今天(未進行)、明天(未進行)、後天(未進行) - 預測頁面專用
+  const dateLabels = ['今天', '明天', '後天'];
+  const statusTypes: ('finished' | 'live' | 'scheduled')[] = ['scheduled', 'scheduled', 'scheduled'];
 
   for (let i = 0; i < 3; i++) {
     const statusType = statusTypes[i];
 
     // 根據 dateOptionsFilter 過濾顯示的選項
     if (props.dateOptionsFilter.includes(statusType)) {
-      const isSelected = props.selectedStatusType === statusType;
+      const isSelected = props.selectedStatusType === statusType && i === 0; // 預設選擇今天
 
       options.push({
         display: dateLabels[i],

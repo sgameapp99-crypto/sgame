@@ -48,90 +48,113 @@ src/
 - **多運動種類支援**: 支援棒球、籃球、足球、冰球、美式足球、網球等多種運動
 - **展開/收起功能**: 每個運動種類都可以展開顯示更多聯盟選項
 - **足球聯賽選擇**: 當選擇足球時自動顯示聯賽選單
-- **時間篩選器**: 支援昨天、今天、明天等時間篩選
+- **時間篩選器**: 支援昨天、今天、明天等時間篩選（預測頁面專用：今天、明天、後天）
 - **日曆功能**: 提供完整的日曆選擇器
 - **響應式設計**: 適配桌面、平板、手機等多種螢幕尺寸
+
+## 預測功能組件
+
+### PredictPage.vue - 預測頁面
+
+重構後的預測頁面，使用 AllianceMenu 組件進行聯盟和時間選擇，整合 PredictGamesTable 組件顯示賽事列表。
+
+#### 功能特色
+
+- **組件化設計**: 使用 AllianceMenu 組件統一聯盟選擇體驗
+- **預測專用時間篩選**: 僅顯示今天、明天、後天，避免舊日期預測
+- **模擬數據支持**: 內建 Mock 賽事數據，便於開發和測試
+- **即時篩選**: 根據選擇的聯盟和日期動態篩選賽事
+
+### PredictGamesTable.vue - 賽事預測表格組件
+
+專門用於渲染賽事預測表格的組件，包含投注選項和賽事資訊顯示。
+
+#### 功能特色
+
+- **完整的投注界面**: 支援國際盤和運彩盤的各種投注選項
+- **賽事資訊展示**: 顯示比賽時間、隊伍資訊、投手資料
+- **互動式選項**: 支援讓分、大小、不讓分等多種投注類型
+- **響應式設計**: 適配各種螢幕尺寸
+- **登入提示**: 未登入時顯示登入提示
 
 #### Props 接口
 
 ```typescript
+interface Game {
+  gameId: string;
+  allianceId: number;
+  gameDate: Date;
+  gameTime: string;
+  homeTeam: {
+    id: number;
+    name: string;
+    pitcher: string;
+  };
+  awayTeam: {
+    id: number;
+    name: string;
+    pitcher: string;
+  };
+  internationalOdds: {
+    spread: {
+      home: { line: string; odds: string };
+      away: { line: string; odds: string };
+    };
+    total: {
+      over: { line: string; odds: string };
+      under: { line: string; odds: string };
+    };
+  };
+  taiwanOdds: {
+    spread: {
+      home: { line: string; odds: string };
+      away: { line: string; odds: string };
+    };
+    moneyline: {
+      home: { odds: string };
+      away: { odds: string };
+    };
+    total: {
+      over: { line: string; odds: string };
+      under: { line: string; odds: string };
+    };
+  };
+}
+
 interface Props {
-  selectedAlliance: number;           // 當前選中的聯盟ID
-  selectedSoccerLeague: number | null; // 當前選中的足球聯賽ID
-  selectedStatusType: 'finished' | 'live' | 'scheduled'; // 當前選中的狀態類型
-  baseballExpanded: boolean;         // 棒球展開狀態
-  basketballExpanded: boolean;       // 籃球展開狀態
-  otherExpanded: boolean;           // 其他展開狀態
-  soccerLeaguesExpanded: boolean;   // 足球聯賽展開狀態
-  calendarVisible: boolean;         // 日曆可見狀態
-  currentMonth: string;             // 當前月份顯示
-  selectedDate: Date;               // 選中的日期
-  calendarDates: CalendarDate[];    // 日曆日期數組
+  games: Game[];                                    // 賽事數據數組
+  selectedAlliance: number;                         // 當前選中的聯盟ID
+  selectedDate: Date;                              // 選中的日期
+  selectedStatusType: 'finished' | 'live' | 'scheduled'; // 狀態類型
 }
 ```
 
 #### Events 接口
 
 ```typescript
-// 聯盟選擇事件
-emit('select-alliance', allianceId: number)
-
-// 足球聯賽選擇事件
-emit('select-soccer-league', leagueId: number)
-
-// 時間選項選擇事件
-emit('select-date-option', option: DateOption)
-
-// 展開/收起事件
-emit('toggle-baseball-expanded')
-emit('toggle-basketball-expanded')
-emit('toggle-other-expanded')
-emit('toggle-calendar')
-
-// 日曆操作事件
-emit('select-date', date: Date)
-emit('prev-month')
-emit('next-month')
-emit('close-calendar')
+// 預測選擇事件
+emit('select-prediction', prediction: any)
 ```
 
 #### 使用範例
 
 ```vue
 <template>
-  <AllianceMenu
+  <PredictGamesTable
+    :games="filteredGames"
     :selected-alliance="selectedAlliance"
-    :selected-soccer-league="selectedSoccerLeague"
-    :selected-status-type="selectedStatusType"
-    :baseball-expanded="baseballExpanded"
-    :basketball-expanded="basketballExpanded"
-    :other-expanded="otherExpanded"
-    :soccer-leagues-expanded="soccerLeaguesExpanded"
-    :calendar-visible="calendarVisible"
-    :current-month="currentMonth"
     :selected-date="selectedDate"
-    :calendar-dates="calendarDates"
-    @select-alliance="handleAllianceSelect"
-    @select-soccer-league="handleSoccerLeagueSelect"
-    @select-date-option="handleDateOptionSelect"
-    @toggle-baseball-expanded="toggleBaseballExpanded"
-    @toggle-basketball-expanded="toggleBasketballExpanded"
-    @toggle-other-expanded="toggleOtherExpanded"
-    @toggle-calendar="toggleCalendar"
-    @select-date="handleDateSelect"
-    @prev-month="prevMonth"
-    @next-month="nextMonth"
-    @close-calendar="closeCalendar"
+    :selected-status-type="selectedStatusType"
+    @select-prediction="handlePredictionSelect"
   />
 </template>
 ```
 
 #### 適用場景
 
-- **即時比分頁面**: 用於篩選不同聯盟和時間的比賽
-- **賽程頁面**: 用於選擇特定聯盟查看賽程
-- **統計頁面**: 用於選擇聯盟查看統計數據
-- **其他運動相關頁面**: 任何需要聯盟選擇功能的頁面
+- **預測頁面**: 主要的賽事預測功能頁面
+- **投注頁面**: 任何需要顯示賽事投注選項的頁面
+- **賽事詳情頁面**: 顯示特定賽事的詳細投注資訊
 
 ## 法律條款功能
 
@@ -216,6 +239,13 @@ npm run lint
 5. **代碼註釋**: 重要功能需要添加中文註釋
 
 ## 更新日誌
+
+### v1.2.0 (2025-10-15)
+- 重構預測頁面：PredictPage.vue 整合 AllianceMenu 組件，實現統一的聯盟選擇體驗
+- 新增 PredictGamesTable 組件：專門處理賽事預測表格的渲染，支援完整的投注選項顯示
+- 預測專用時間篩選：修改 AllianceMenu 組件在預測頁面的時間選項為今天、明天、後天，避免舊日期預測
+- Mock 數據支持：內建模擬賽事數據，便於開發和測試賽事篩選功能
+- 組件化架構優化：提升代碼可維護性和重用性，實現組件間的清晰分離
 
 ### v1.1.0 (2025-10-14)
 - 重構聯盟選單組件：將 LivescorePage.vue 中的聯盟選單邏輯抽離為獨立的 AllianceMenu.vue 組件
