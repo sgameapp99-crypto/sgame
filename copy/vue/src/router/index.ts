@@ -1,11 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useSessionStore } from '../stores/session';
-import HomePage from '../pages/HomePage.vue';
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', name: 'home', component: HomePage },
+    { path: '/', name: 'home', component: () => import('../pages/ForumPage.vue') },
     { path: '/test-nav', name: 'test-nav', component: () => import('../pages/TestNavigationPage.vue') },
     { path: '/forum-test', name: 'forum-test', component: () => import('../pages/ForumTestPage.vue') },
     { path: '/forum', name: 'forum', component: () => import('../pages/ForumPage.vue') },

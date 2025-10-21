@@ -339,27 +339,27 @@
                     <li class="medal-box-content">
                       <span class="medal-icon">🏅</span>
                       <span>莊家殺手</span>
-                      <big>0</big>
+                      <strong class="medal-count">0</strong>
                     </li>
                     <li class="medal-box-content">
                       <span class="medal-icon">🎯</span>
                       <span>單場殺手</span>
-                      <big>0</big>
+                      <strong class="medal-count">0</strong>
                     </li>
                     <li class="medal-box-content">
                       <span class="medal-icon">🏆</span>
                       <span>蟬聯莊家殺手</span>
-                      <big>0</big>
+                      <strong class="medal-count">0</strong>
                     </li>
                     <li class="medal-box-content">
                       <span class="medal-icon">⭐</span>
                       <span>蟬聯單場殺手</span>
-                      <big>0</big>
+                      <strong class="medal-count">0</strong>
                     </li>
                     <li class="medal-box-content">
                       <span class="medal-icon">📈</span>
                       <span>殺手販售預測<br>突破200人</span>
-                      <big>0</big>
+                      <strong class="medal-count">0</strong>
                     </li>
                   </ul>
                 </div>
@@ -392,7 +392,7 @@
         <!-- 會員側邊欄 -->
         <div id="member-sidebar" class="member-sidebar">
           <div class="photoframe">
-            <img :src="memberInfo.avatarUrl || defaultBlackAvatar" :alt="memberInfo.name" />
+            <img :src="getAvatarUrl(memberInfo.avatarUrl)" :alt="memberInfo.name" />
           </div>
           <p class="memberidname">{{ memberInfo.name }}</p>
           <div class="member-level-badge" :style="{ borderColor: levelColor }" aria-live="polite">
@@ -481,14 +481,15 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
-import api from '../api/client';
+import { memberAPI, levelAPI } from '../api';
+import { getAvatarUrl, DEFAULT_AVATAR, addTimestampToUrl } from '../utils/avatar';
 
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
 
-// 預設全黑頭像（避免違和感）
-const defaultBlackAvatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="%23000"/></svg>';
+// 使用統一的預設頭像
+const defaultBlackAvatar = DEFAULT_AVATAR;
 
 // 響應式數據
 const activeTab = ref('predict');
@@ -721,14 +722,18 @@ async function loadMemberData() {
 
   // 載入會員基本資料
   try {
-    const res = await api.get(`/members/${encodeURIComponent(targetId)}/profile`);
-    if (res.status === 200) {
-      const p = res.data;
+    const data = await memberAPI.getProfile(targetId);
+    if (data.success && data.profile) {
+      const p = data.profile;
+      // 處理頭像 URL：優先使用 avatarUrl，回退到 avatar，並加上時間戳避免快取
+      const rawAvatarUrl = p.avatarUrl || p.avatar;
+      const finalAvatarUrl = rawAvatarUrl ? addTimestampToUrl(rawAvatarUrl) : undefined;
+      
       memberInfo.value = {
         id: p.id || targetId,
         name: p.name || memberInfo.value.name,
         avatar: p.avatar || defaultBlackAvatar,
-        avatarUrl: p.avatar ? `${p.avatar}?v=${Date.now()}` : defaultBlackAvatar,
+        avatarUrl: finalAvatarUrl,
         followers: p.followersCount ?? memberInfo.value.followers,
         joinDate: p.joinedAt || memberInfo.value.joinDate,
         level: p.level || memberInfo.value.level,
@@ -736,17 +741,21 @@ async function loadMemberData() {
         levelProgress: p.levelProgress || memberInfo.value.levelProgress,
         bio: p.bio || memberInfo.value.bio,
       };
+      
+      // 處理關係資訊
+      if (data.relationships) {
+        isFollowing.value = !!data.relationships.isFollowing;
+      }
     }
   } catch {}
 
-  // 載入與目前使用者的關係（決定追蹤按鈕）
-  try {
-    const r = await api.get(`/members/${encodeURIComponent(targetId)}/relationships`);
-    if (r.status === 200) {
-      const rel = r.data;
+  // 如果還沒有關係資訊,單獨載入
+  if (typeof isFollowing.value === 'undefined') {
+    try {
+      const rel = await memberAPI.getRelationships(targetId);
       isFollowing.value = !!rel?.isFollowing;
-    }
-  } catch {}
+    } catch {}
+  }
 }
 
 // 監聽大頭貼更新事件
@@ -758,9 +767,24 @@ function handleAvatarUpdate(event: Event) {
     const customEvent = event as CustomEvent;
     if (customEvent.detail?.url) {
       const timestamp = new Date(customEvent.detail.updatedAt || Date.now()).getTime();
-      memberInfo.value.avatarUrl = `${customEvent.detail.url}?v=${timestamp}`;
+      // url 已經是相對路徑 (如 /uploads/avatars/xxx.jpg)，使用工具函數加時間戳
+      memberInfo.value.avatarUrl = addTimestampToUrl(customEvent.detail.url, timestamp);
     }
     // 然後重新載入完整資料
+    loadMemberData();
+  }
+}
+
+// 監聽名稱更新事件
+function handleNameUpdate(event: Event) {
+  // 如果是自己的會員頁面，立即更新顯示的名稱
+  const targetId = getViewingMemberId();
+  if (targetId === session.userId) {
+    const customEvent = event as CustomEvent;
+    if (customEvent.detail?.name) {
+      memberInfo.value.name = customEvent.detail.name;
+    }
+    // 然後重新載入完整資料以確保同步
     loadMemberData();
   }
 }
@@ -786,11 +810,14 @@ onMounted(async () => {
   
   // 監聽大頭貼更新事件
   window.addEventListener('avatar-updated', handleAvatarUpdate);
+  // 監聽名稱更新事件
+  window.addEventListener('name-updated', handleNameUpdate);
 });
 
 onUnmounted(() => {
   // 移除事件監聽器
   window.removeEventListener('avatar-updated', handleAvatarUpdate);
+  window.removeEventListener('name-updated', handleNameUpdate);
 });
 
 // 追蹤/取消追蹤串接 API
@@ -799,7 +826,7 @@ async function followUser() {
   followLoading.value = true;
   try {
     const id = memberInfo.value.id;
-    const res = await api.post(`/members/${encodeURIComponent(String(id))}/follow`);
+    const res = await memberAPI.follow(id);
     if (res.status === 204) {
       if (!isFollowing.value) {
         isFollowing.value = true;
@@ -815,7 +842,7 @@ async function unfollowUser() {
   unfollowLoading.value = true;
   try {
     const id = memberInfo.value.id;
-    const res = await api.delete(`/members/${encodeURIComponent(String(id))}/follow`);
+    const res = await memberAPI.unfollow(id);
     if (res.status === 204) {
       if (isFollowing.value) {
         isFollowing.value = false;
@@ -1217,7 +1244,7 @@ async function unfollowUser() {
   .medal-box-content { background: #f9f9f9; border: 1px solid #e6e6e6; border-radius: 6px; padding: 10px; width: 130px; text-align: center; }
   .medal-box-content .medal-icon { display: block; font-size: 24px; line-height: 1; margin: 0 auto 6px; }
   .medal-box-content span { display: block; color: #333; font-size: 12px; }
-  .medal-box-content big { display: block; color: #ff6c00; font-weight: bold; margin-top: 4px; }
+  .medal-box-content .medal-count { display: block; color: #ff6c00; font-weight: bold; margin-top: 4px; font-size: 18px; }
 
   .member-forum-tablecon { width: 100%; border-collapse: collapse; border: 1px solid #DCDCDC; background: #fff; }
   .member-forum-tablecon th, .member-forum-tablecon td { border-bottom: 1px solid #DCDCDC; padding: 10px 12px; font-size: 13px; color: #404040; }

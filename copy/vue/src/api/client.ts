@@ -2,6 +2,7 @@ import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { useSessionStore } from '../stores/session';
 
 // 單例
+// 使用代理方式訪問後端 API (瀏覽器無法直接訪問自簽名證書的 HTTPS)
 const api = axios.create({
   baseURL: '/api',
   withCredentials: true,
@@ -15,6 +16,7 @@ const noAuthPrefixes = [
   '/auth/forgot-password',
   '/auth/verify-reset-token',
   '/auth/reset-password',
+  '/auth/session',  // session 查詢允許返回 401，不應觸發導向
   '/health',
 ];
 
@@ -44,11 +46,21 @@ api.interceptors.response.use(
   (error) => {
     try {
       const status = error?.response?.status;
+      const requestUrl = error?.config?.url || '';
+      
       if (status === 401) {
         const session = useSessionStore();
         session?.setToken?.(null);
-        const redirect = encodeURIComponent(window.location.pathname + window.location.search);
-        if (!window.location.pathname.startsWith('/login')) {
+        
+        // 不在以下情況觸發自動導向：
+        // 1. 已經在登入或註冊頁面
+        // 2. 請求的是白名單 API（如 /auth/session 查詢本來就可能返回 401）
+        const currentPath = window.location.pathname;
+        const isAuthPage = currentPath.startsWith('/login') || currentPath.startsWith('/register');
+        const isWhitelistAPI = shouldBypassAuth(requestUrl);
+        
+        if (!isAuthPage && !isWhitelistAPI) {
+          const redirect = encodeURIComponent(window.location.pathname + window.location.search);
           window.location.assign(`/login?redirect=${redirect}`);
         }
       }

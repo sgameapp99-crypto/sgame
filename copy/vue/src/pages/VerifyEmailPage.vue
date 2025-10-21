@@ -53,7 +53,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useSessionStore } from '../stores/session';
-import api from '../api/client';
+import { authAPI } from '../api';
 
 const router = useRouter();
 const route = useRoute();
@@ -102,8 +102,7 @@ const resendLabel = computed(() => (cooldown.value > 0 ? `重新發送 (${cooldo
 
 async function fetchStatus() {
   try {
-    const res = await api.get('/auth/verification-status');
-    const data = res.data || {};
+    const data = await authAPI.getVerificationStatus();
     if (typeof data?.isVerified === 'boolean') {
       userEmail.value = data.email || '';
       if (data.isVerified) {
@@ -118,8 +117,7 @@ async function sendCode() {
   try {
     errorMessage.value = '';
     successMessage.value = '';
-    const res = await api.post('/auth/send-verification');
-    const data = res.data || {};
+    const data = await authAPI.sendVerificationCode();
     if (data?.success) {
       successMessage.value = '驗證碼已發送至您的郵箱';
       expiresIn.value = Number(data.expiresIn) || 300;
@@ -156,9 +154,8 @@ async function submitCode() {
   errorMessage.value = '';
   successMessage.value = '';
   try {
-    const res = await api.post('/auth/verify-email', { code: code.value });
-    const data = res.data || {};
-    if (res.status === 200 && data?.success) {
+    const data = await authAPI.verifyEmail(code.value);
+    if (data?.success) {
       successMessage.value = data?.message || '郵箱驗證成功！';
       try {
         // 立即更新本地驗證狀態，避免路由守衛因 TTL 使用舊值而阻擋

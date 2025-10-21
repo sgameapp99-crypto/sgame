@@ -12,10 +12,11 @@
 
       <!-- 第三方登入 -->
       <div class="oauth-row">
-        <button class="oauth-btn google" @click="oauth('google')"><i class="icon">G</i> 使用 Google 登入</button>
+        <button class="oauth-btn google" @click="oauth('google')" disabled title="開發環境不支援 (私有IP限制)"><i class="icon">G</i> 使用 Google 登入（開發環境不可用）</button>
         <button class="oauth-btn facebook" disabled title="Facebook 登入尚未完成"><i class="icon">f</i> Facebook 登入（開發中）</button>
         <button class="oauth-btn line" disabled title="Line 登入尚未完成"><i class="icon">L</i> Line 登入（開發中）</button>
       </div>
+      <p style="font-size: 11px; color: #999; margin: 8px 0 0 0; text-align: center;">⚠️ Google OAuth 需要公網環境才能使用</p>
 
       <div class="sep">
         <span>或</span>
@@ -24,6 +25,7 @@
 
       <form class="login-form" @submit.prevent="onSubmit">
         <p v-if="errorMessage" class="message-error">{{ errorMessage }}</p>
+        <p v-if="successMessage" class="message-success">{{ successMessage }}</p>
 
         <label class="field">
           <div>暱稱/名稱</div>
@@ -68,7 +70,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import api from '../api/client';
+import { authAPI } from '../api';
 
 const router = useRouter();
 const route = useRoute();
@@ -78,6 +80,7 @@ const email = ref('anuuyu1999@gmail.com');
 const password = ref('Qq!00000');
 const passwordConfirm = ref('Qq!00000');
 const errorMessage = ref('');
+const successMessage = ref('');
 const submitting = ref(false);
 
 const showPwdLenErr = ref(false);
@@ -152,50 +155,43 @@ async function onSubmit() {
 
   try {
     submitting.value = true;
-    const res = await api.post('/auth/register', { email: email.value, password: password.value, name: name.value });
+    const data = await authAPI.register({ 
+      email: email.value, 
+      password: password.value, 
+      name: name.value 
+    });
 
-    if (res.status === 201 || res.status === 200) {
-      let redirectUrl: string | undefined;
-      let needsVerification = false;
-      try {
-        const data = res.data || {} as any;
-        redirectUrl = data?.redirectUrl;
-        needsVerification = !!data?.needsVerification;
-      } catch {}
-      if (needsVerification) {
-        // 確認是否已建立登入會話，若尚未登入則導至登入頁再回到驗證頁，避免驗證頁 401 造成重導循環
-        try {
-          const sres = await fetch('/api/auth/session', { credentials: 'include' });
-          const sdata = await sres.json().catch(() => ({}));
-          if (sdata?.loggedIn) {
-            router.push({ name: 'verify-email', query: { auto: '0' } });
-          } else {
-            router.push({ name: 'login', query: { redirect: '/verify-email?auto=0' } });
-          }
-        } catch {
-          router.push({ name: 'login', query: { redirect: '/verify-email?auto=0' } });
-        }
+    if (data.success) {
+      if (data.needsVerification) {
+        // 顯示成功訊息並導向登入頁，登入後自動跳轉到驗證頁面
+        successMessage.value = '註冊成功！請先登入以完成郵箱驗證。';
+        setTimeout(() => {
+          router.push({ 
+            name: 'login', 
+            query: { redirect: '/verify-email?auto=1' } 
+          });
+        }, 1500); // 1.5秒後跳轉
         return;
       }
+      // 處理其他情況（如後端提供 redirectUrl）
       const qRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : undefined;
-      if (redirectUrl) window.location.href = redirectUrl;
+      if (data.redirectUrl) window.location.href = data.redirectUrl;
       else if (qRedirect) router.push(qRedirect);
       else router.push('/member');
       return;
     }
 
-    const err = res.data || {};
-    if (res.status === 409 && err?.code === 'EMAIL_TAKEN') {
+    errorMessage.value = data.message || '註冊失敗，請稍後再試';
+  } catch (e: any) {
+    const status = e?.response?.status;
+    const err = e?.response?.data || {};
+    if (status === 409 && err?.code === 'EMAIL_TAKEN') {
       errorMessage.value = 'Email 已被使用，請改用其他 Email 或前往登入';
-      return;
-    }
-    if (res.status === 422) {
+    } else if (status === 422) {
       errorMessage.value = err?.message || '輸入資料驗證失敗';
-      return;
+    } else {
+      errorMessage.value = err?.message || '網路或伺服器錯誤';
     }
-    errorMessage.value = err?.message || '註冊失敗，請稍後再試';
-  } catch (e) {
-    errorMessage.value = '網路或伺服器錯誤';
   } finally {
     submitting.value = false;
   }
@@ -240,4 +236,5 @@ async function onSubmit() {
 .submit { padding: 8px 14px; background: #095a8b; color: #fff; border: 0; border-radius: 4px; cursor: pointer; }
 .signup { color: #0277bd; font-size: 14px; }
 .message-error { color: #dc3545; font-size: 13px; margin: 0; }
+.message-success { color: #28a745; font-size: 13px; margin: 0; }
 </style>

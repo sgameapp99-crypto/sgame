@@ -12,15 +12,16 @@ module.exports = {
       watch: false,
       env: {
         NODE_ENV: 'development',
+        NODE_TLS_REJECT_UNAUTHORIZED: '0',
         VITE_HTTPS: 'true',
-        VITE_PROXY_TARGET: 'http://10.10.0.2:8080',
+        VITE_PROXY_TARGET: 'https://10.2.0.2:8080',
         VITE_PROXY_ENABLE: 'true',
         VITE_PROXY_PREFIX: '/api',
         VITE_PROXY_CHANGE_ORIGIN: 'true',
         VITE_PROXY_SECURE: 'false',
         VITE_DEV_HOST: '0.0.0.0',
         VITE_DEV_PORT: '5175',
-        VITE_HMR_HOST: '34.80.28.226',
+        VITE_HMR_HOST: '34.80.46.175',
         VITE_HMR_PORT: '5175'
       }
     },

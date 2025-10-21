@@ -20,6 +20,66 @@
         </section>
 
         <section class="section">
+          <h2 class="section-title">顯示名稱</h2>
+          <div class="name-box">
+            <!-- 顯示模式 -->
+            <div v-if="!isEditingName" class="name-display-mode">
+              <div class="name-display-group">
+                <label class="input-label">
+                  <span>目前名稱</span>
+                </label>
+                <div class="name-display-value">
+                  {{ displayName || '載入中...' }}
+                </div>
+              </div>
+              <div class="name-actions">
+                <button class="btn" @click="startEditName">
+                  ✎ 編輯名稱
+                </button>
+              </div>
+            </div>
+
+            <!-- 編輯模式 -->
+            <div v-else class="name-edit-mode">
+              <div class="name-input-group">
+                <label for="displayName" class="input-label">
+                  <span>新名稱</span>
+                  <small class="hint-text">2-10 字元，僅允許中文和英文字母</small>
+                </label>
+                <input
+                  id="displayName"
+                  ref="nameInput"
+                  v-model.trim="editingName"
+                  type="text"
+                  class="inputtext"
+                  placeholder="請輸入 2-10 個中英文字元"
+                  maxlength="10"
+                  :disabled="nameUpdating"
+                  @input="validateNameInput"
+                  @keyup.enter="updateDisplayName"
+                  @keyup.esc="cancelEditName"
+                />
+                <div class="char-count" :class="{ 'warning': editingName.length < 2 || editingName.length > 10 }">
+                  {{ editingName.length }}/10
+                </div>
+              </div>
+              <div v-if="nameErrors.length > 0" class="error-messages">
+                <p v-for="(error, index) in nameErrors" :key="index" class="error-text">{{ error }}</p>
+              </div>
+              <div class="name-actions">
+                <button class="btn" :disabled="nameUpdating || nameErrors.length > 0 || !editingName" @click="updateDisplayName">
+                  {{ nameUpdating ? '更新中…' : '✓ 確認更新' }}
+                </button>
+                <button class="btn-link" :disabled="nameUpdating" @click="cancelEditName">
+                  ✗ 取消
+                </button>
+              </div>
+              <p v-if="nameMessage" :class="{ 'ok': nameOk, 'err': !nameOk }">{{ nameMessage }}</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
           <h2 class="section-title">安全性</h2>
           <div class="security-actions">
             <button class="btn secondary" @click="openRecover">重設密碼（透過郵件）</button>
@@ -55,10 +115,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import api from '../api/client';
+import { api, authAPI, memberAPI } from '../api';
 import { useSessionStore } from '../stores/session';
+import { validateName } from '../utils/nameValidation';
 
 const router = useRouter();
 const session = useSessionStore();
@@ -70,6 +131,15 @@ const defaultBlackAvatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.or
 const uploading = ref(false);
 const avatarMessage = ref('');
 const avatarOk = ref(false);
+// 名稱修改相關
+const displayName = ref('');
+const editingName = ref('');
+const isEditingName = ref(false);
+const nameInput = ref<HTMLInputElement | null>(null);
+const nameUpdating = ref(false);
+const nameMessage = ref('');
+const nameOk = ref(false);
+const nameErrors = ref<string[]>([]);
 // 忘記密碼彈窗
 const showRecover = ref(false);
 const recoverEmail = ref('');
@@ -98,8 +168,7 @@ async function submitRecover() {
   if (!recoverEmail.value) { recoverError.value = '請輸入 Email'; return; }
   try {
     recoverSubmitting.value = true;
-    const res = await api.post('/auth/forgot-password', { email: recoverEmail.value });
-    const data = res.data || {};
+    const data = await authAPI.forgotPassword({ email: recoverEmail.value });
     recoverSuccess.value = data?.message || '密碼重設郵件已發送，請查收';
   } catch (e: any) {
     const code = e?.response?.data?.code;
@@ -129,11 +198,8 @@ async function uploadAvatar() {
     uploading.value = true;
     avatarMessage.value = '';
     avatarOk.value = false;
-    const form = new FormData();
-    form.append('file', selectedFile.value);
-    const res = await api.post('/me/avatar', form, { headers: { 'Content-Type': 'multipart/form-data' } });
-    const data = res.data || {};
-    avatarMessage.value = data?.message || '大頭貼已更新';
+    const data = await memberAPI.uploadAvatar(selectedFile.value);
+    avatarMessage.value = '大頭貼已更新';
     avatarOk.value = true;
     // 廣播事件給會員頁即時刷新頭像
     const evt = new CustomEvent('avatar-updated', { detail: { url: data?.url, updatedAt: data?.updatedAt } });
@@ -168,39 +234,168 @@ async function uploadAvatar() {
   }
 }
 
+/**
+ * 開始編輯名稱
+ */
+async function startEditName() {
+  isEditingName.value = true;
+  editingName.value = displayName.value;
+  nameErrors.value = [];
+  nameMessage.value = '';
+  nameOk.value = false;
+  
+  // 使用 nextTick 確保 input 已經渲染後再聚焦
+  await nextTick();
+  nameInput.value?.focus();
+}
+
+/**
+ * 取消編輯名稱
+ */
+function cancelEditName() {
+  isEditingName.value = false;
+  editingName.value = '';
+  nameErrors.value = [];
+  nameMessage.value = '';
+  nameOk.value = false;
+}
+
+/**
+ * 即時驗證輸入的名稱
+ */
+function validateNameInput() {
+  if (editingName.value) {
+    nameErrors.value = validateName(editingName.value);
+  } else {
+    nameErrors.value = [];
+  }
+  // 清除舊訊息
+  nameMessage.value = '';
+  nameOk.value = false;
+}
+
+/**
+ * 更新顯示名稱
+ */
+async function updateDisplayName() {
+  // 前端驗證
+  const validationErrors = validateName(editingName.value);
+  if (validationErrors.length > 0) {
+    nameErrors.value = validationErrors;
+    return;
+  }
+
+  try {
+    nameUpdating.value = true;
+    nameMessage.value = '';
+    nameOk.value = false;
+    nameErrors.value = [];
+
+    const data = await memberAPI.updateName(editingName.value);
+    
+    if (data.success) {
+      // 更新顯示的名稱
+      displayName.value = data.name;
+      
+      nameMessage.value = `名稱已更新為：${data.name}`;
+      nameOk.value = true;
+      
+      // 廣播事件通知其他組件名稱已更新
+      const evt = new CustomEvent('name-updated', { 
+        detail: { name: data.name, updatedAt: data.updatedAt } 
+      });
+      window.dispatchEvent(evt);
+      
+      // 更新 session 中的用戶資料
+      try { 
+        await session.ensureProfile(); 
+      } catch {}
+      
+      // 延遲關閉編輯模式，讓使用者看到成功訊息
+      setTimeout(() => {
+        isEditingName.value = false;
+        editingName.value = '';
+        nameMessage.value = '';
+        nameOk.value = false;
+      }, 1500);
+    }
+  } catch (e: any) {
+    const status = e?.response?.status;
+    const code = e?.response?.data?.code;
+    const errors = e?.response?.data?.errors;
+    const message = e?.response?.data?.message;
+    
+    if (errors && Array.isArray(errors)) {
+      // 後端返回的驗證錯誤陣列
+      nameErrors.value = errors;
+    } else if (message) {
+      nameMessage.value = message;
+      nameOk.value = false;
+    } else {
+      // 根據狀態碼顯示相應錯誤
+      if (status === 401) {
+        nameMessage.value = '尚未登入，請重新登入後再試';
+      } else if (status === 422 || code === 'NAME_INVALID') {
+        nameMessage.value = '名稱格式不正確，請檢查輸入';
+      } else {
+        nameMessage.value = '更新失敗，請稍後再試';
+      }
+      nameOk.value = false;
+    }
+  } finally {
+    nameUpdating.value = false;
+  }
+}
+
 // 初次進入時強制刷新 Session/個資並破快取顯示最新頭像
 onMounted(async () => {
   try {
     await session.fetchSession(true);
     await session.ensureProfile();
-    // 以 members profile 取得頭像（session.user 未含 avatar）
+    // 以 members profile 取得頭像和名稱（session.user 未含 avatar）
     const uid = session.userId || (session.user?.id as any);
     if (uid) {
       try {
         const r = await api.get(`/members/${encodeURIComponent(String(uid))}/profile`);
-        const p = r.data || {};
-        const url = p?.avatar;
+        const p = r.data?.profile || r.data || {};
+        const url = p?.avatar || p?.avatarUrl;
         if (url) avatarPreview.value = `${url}?v=${Date.now()}`;
+        // 載入當前名稱
+        if (p?.name) displayName.value = p.name;
       } catch {}
     }
   } catch {}
 
   // 監聽 avatar 更新事件（來自其他頁）
-  const handler = (e: Event) => {
+  const avatarHandler = (e: Event) => {
     const ce = e as CustomEvent;
     if (ce.detail?.url) {
       const ts = new Date(ce.detail?.updatedAt || Date.now()).getTime();
       avatarPreview.value = `${ce.detail.url}?v=${ts}`;
     }
   };
-  window.addEventListener('avatar-updated', handler);
+  window.addEventListener('avatar-updated', avatarHandler);
+  
+  // 監聽名稱更新事件（來自其他頁）
+  const nameHandler = (e: Event) => {
+    const ce = e as CustomEvent;
+    if (ce.detail?.name) {
+      displayName.value = ce.detail.name;
+    }
+  };
+  window.addEventListener('name-updated', nameHandler);
+  
   // 保存以便卸載
-  (window as any)._ms_avatar_handler = handler;
+  (window as any)._ms_avatar_handler = avatarHandler;
+  (window as any)._ms_name_handler = nameHandler;
 });
 
 onUnmounted(() => {
-  const handler = (window as any)._ms_avatar_handler;
-  if (handler) window.removeEventListener('avatar-updated', handler);
+  const avatarHandler = (window as any)._ms_avatar_handler;
+  if (avatarHandler) window.removeEventListener('avatar-updated', avatarHandler);
+  
+  const nameHandler = (window as any)._ms_name_handler;
+  if (nameHandler) window.removeEventListener('name-updated', nameHandler);
 });
 </script>
 
@@ -237,6 +432,37 @@ onUnmounted(() => {
 
 .ok { color: #28a745; font-size: 13px; margin: 6px 0 0; grid-column: 1 / -1; }
 .err { color: #dc3545; font-size: 13px; margin: 6px 0 0; grid-column: 1 / -1; }
+
+/* 名稱修改區塊 */
+.name-box { display: flex; flex-direction: column; gap: 10px; }
+
+/* 顯示模式 */
+.name-display-mode { display: flex; flex-direction: column; gap: 12px; }
+.name-display-group { display: flex; flex-direction: column; gap: 6px; }
+.name-display-value { 
+  padding: 10px 12px; 
+  background: #f8f9fa; 
+  border: 1px solid #e0e0e0; 
+  border-radius: 4px; 
+  color: #333; 
+  font-size: 14px;
+  font-weight: 500;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+}
+
+/* 編輯模式 */
+.name-edit-mode { display: flex; flex-direction: column; gap: 10px; }
+.name-input-group { display: flex; flex-direction: column; gap: 6px; position: relative; }
+.input-label { display: flex; flex-direction: column; gap: 4px; font-weight: 500; color: #333; }
+.input-label span { font-size: 14px; }
+.hint-text { color: #666; font-size: 12px; font-weight: normal; }
+.char-count { position: absolute; top: 34px; right: 10px; font-size: 12px; color: #999; pointer-events: none; }
+.char-count.warning { color: #dc3545; font-weight: bold; }
+.error-messages { display: flex; flex-direction: column; gap: 4px; }
+.error-text { color: #dc3545; font-size: 13px; margin: 0; }
+.name-actions { display: flex; gap: 10px; align-items: center; }
 
 @media (max-width: 768px) {
   .settings-container { padding: 10px; }

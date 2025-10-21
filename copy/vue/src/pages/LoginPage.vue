@@ -6,10 +6,11 @@
       </div>
 
       <div class="oauth-row">
-        <button class="oauth-btn google" @click="oauth('google')"><i class="icon">G</i> Google 登入</button>
+        <button class="oauth-btn google" @click="oauth('google')" disabled title="開發環境不支援 (私有IP限制)"><i class="icon">G</i> Google 登入（開發環境不可用）</button>
         <button class="oauth-btn facebook" disabled title="Facebook 登入尚未完成"><i class="icon">f</i> Facebook 登入（開發中）</button>
         <button class="oauth-btn line" disabled title="Line 登入尚未完成"><i class="icon">L</i> Line 登入（開發中）</button>
       </div>
+      <p style="font-size: 11px; color: #999; margin: 8px 0 0 0; text-align: center;">⚠️ Google OAuth 需要公網環境才能使用</p>
 
       <div class="sep">
         <span>或</span>
@@ -48,7 +49,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import api from '../api/client';
+import { authAPI } from '../api';
 import { useSessionStore } from '../stores/session';
 import { useRouter, useRoute } from 'vue-router';
 
@@ -116,7 +117,7 @@ async function onSubmit() {
     await session.ensureProfile();
     // 登入後立即檢查 Email 驗證狀態，未驗證則直接導向驗證頁
     try {
-      const vs = await api.get('/auth/verification-status').then(r => r.data).catch(() => undefined as any);
+      const vs = await authAPI.getVerificationStatus().catch(() => undefined as any);
       if (vs && vs.isVerified === false) {
         router.replace({ name: 'verify-email', query: { auto: '0' } });
         return;
@@ -138,7 +139,7 @@ async function onSubmit() {
       const qRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : undefined;
       await session.fetchSession(true);
       try {
-        const vs = await api.get('/auth/verification-status').then(r => r.data).catch(() => undefined as any);
+        const vs = await authAPI.getVerificationStatus().catch(() => undefined as any);
         if (vs && vs.isVerified === false) {
           router.replace({ name: 'verify-email', query: { auto: '0' } });
           return;
@@ -159,7 +160,7 @@ async function onSubmit() {
     } else {
       await session.fetchSession(true);
       try {
-        const vs2 = await api.get('/auth/verification-status').then(r => r.data).catch(() => undefined as any);
+        const vs2 = await authAPI.getVerificationStatus().catch(() => undefined as any);
         if (vs2 && vs2.isVerified === false) {
           router.replace({ name: 'verify-email', query: { auto: '0' } });
           return;
@@ -195,11 +196,11 @@ function startCooldown(sec: number) {
 // 若已登入且帶有 redirect 參數，直接導向
 onMounted(async () => {
   try {
-    const s = await api.get('/auth/session').then(r => r.data).catch(() => ({}));
+    const s = await authAPI.getSession().catch(() => ({}));
     if (s?.loggedIn) {
       // 已登入時先檢查驗證狀態
       try {
-        const vs = await api.get('/auth/verification-status').then(r => r.data).catch(() => undefined as any);
+        const vs = await authAPI.getVerificationStatus().catch(() => undefined as any);
         if (vs && vs.isVerified === false) {
           router.replace({ name: 'verify-email', query: { auto: '0' } });
           return;

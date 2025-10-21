@@ -2,35 +2,43 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import fs from 'fs'
 import path from 'path'
-
-// 使用簡化別名，避免 Node 相關型別需求
+import https from 'https'
 
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, '', 'VITE_')
 	const host = env.VITE_DEV_HOST || '0.0.0.0'
 	const port = Number(env.VITE_DEV_PORT || 5175)
 	const previewPort = Number(env.VITE_PREVIEW_PORT || port)
-	const proxyPrefix = env.VITE_PROXY_PREFIX || '/api'
-	const proxyTarget = env.VITE_PROXY_TARGET || 'http://10.10.0.2:8080'
+	const proxyTarget = env.VITE_PROXY_TARGET || 'https://10.2.0.2:8080'
 	const proxyEnable = env.VITE_PROXY_ENABLE !== 'false'
-	const proxySecure = env.VITE_PROXY_SECURE === 'true'
-	const proxyChangeOrigin = env.VITE_PROXY_CHANGE_ORIGIN !== 'false'
+
+	// 調試日誌
+	console.log('=== Vite 配置調試 ===')
+	console.log('Mode:', mode)
+	console.log('Proxy Enabled:', proxyEnable)
+	console.log('Proxy Target:', proxyTarget)
+	console.log('Host:', host)
+	console.log('Port:', port)
+	console.log('====================')
 
 	// HMR WebSocket 配置
-	const hmrHost = env.VITE_HMR_HOST || '34.80.28.226'
-	const hmrPort = Number(env.VITE_HMR_PORT || port)
+	// 自動檢測: 如果有 VITE_HMR_HOST 就用,否則讓瀏覽器自動決定
+	const hmrConfig = env.VITE_HMR_HOST 
+		? { host: env.VITE_HMR_HOST, port: Number(env.VITE_HMR_PORT || port) }
+		: { clientPort: Number(env.VITE_HMR_PORT || port) }
 
 	// HTTPS 配置
 	const useHttps = env.VITE_HTTPS === 'true'
-	let httpsConfig = false
+	let httpsConfig: false | { key: Buffer; cert: Buffer } = false
 	if (useHttps) {
 		try {
 			httpsConfig = {
 				key: fs.readFileSync(path.resolve(__dirname, 'ssl/key.pem')),
 				cert: fs.readFileSync(path.resolve(__dirname, 'ssl/cert.pem'))
 			}
+			console.log('✅ HTTPS 已啟用')
 		} catch (error) {
-			console.warn('SSL certificates not found, falling back to HTTP')
+			console.warn('⚠️ SSL certificates not found, falling back to HTTP')
 		}
 	}
 
@@ -45,58 +53,75 @@ export default defineConfig(({ mode }) => {
 			host,
 			port,
 			https: httpsConfig,
-			allowedHosts: [
-
-				'localhost',
-				'10.1.0.2',    // 前端內網IP
-				'127.0.0.1'
-			],
-			hmr: {
-				host: hmrHost,
-				port: hmrPort
-			},
+			// 允許所有 host,讓 proxy 在公網 IP 下也能工作
+			strictPort: false,
+			hmr: hmrConfig,
 			proxy: proxyEnable
 				? {
-					[proxyPrefix]: {
+					'/api': {
 						target: proxyTarget,
-						changeOrigin: proxyChangeOrigin,
-						secure: proxySecure,
-						// 保留完整路徑：不移除 /api 前綴，因為後端路徑就是 /api/auth/register
-						// 在 HTTPS 環境下，允許代理到 HTTP 後端（開發環境）
-						...(useHttps && { rejectUnauthorized: false })
+						changeOrigin: true,
+						secure: false,
+						ws: true,
+						agent: new https.Agent({
+							rejectUnauthorized: false
+						}),
+						configure: (proxy, options) => {
+							proxy.on('proxyReq', (proxyReq, req, res) => {
+								console.log('🔄 Proxying:', req.method, req.url, '→', proxyTarget + req.url)
+							})
+							proxy.on('proxyRes', (proxyRes, req, res) => {
+								console.log('✅ Response:', proxyRes.statusCode, req.url)
+							})
+							proxy.on('error', (err, req, res) => {
+								console.error('❌ Proxy Error:', err.message, req.url)
+							})
+						}
 					},
 					'/health': {
 						target: proxyTarget,
-						changeOrigin: proxyChangeOrigin,
-						secure: proxySecure,
-						// 在 HTTPS 環境下，允許代理到 HTTP 後端（開發環境）
-						...(useHttps && { rejectUnauthorized: false })
+						changeOrigin: true,
+						secure: false,
+						agent: new https.Agent({
+							rejectUnauthorized: false
+						})
 					},
-					'/static': {
-						target: proxyTarget,
-						changeOrigin: proxyChangeOrigin,
-						secure: proxySecure,
-						// 在 HTTPS 環境下，允許代理到 HTTP 後端（開發環境）
-						...(useHttps && { rejectUnauthorized: false })
+				'/levels': {
+					target: proxyTarget,
+					changeOrigin: true,
+					secure: false,
+					agent: new https.Agent({
+						rejectUnauthorized: false
+					})
+				},
+				// 代理靜態資源（頭像等上傳檔案）
+				'/uploads': {
+					target: proxyTarget,
+					changeOrigin: true,
+					secure: false,
+					agent: new https.Agent({
+						rejectUnauthorized: false
+					}),
+					configure: (proxy, options) => {
+						proxy.on('proxyReq', (proxyReq, req, res) => {
+							console.log('🖼️  Proxying static file:', req.method, req.url, '→', proxyTarget + req.url)
+						})
+						proxy.on('proxyRes', (proxyRes, req, res) => {
+							console.log('✅ Static file response:', proxyRes.statusCode, req.url)
+						})
+						proxy.on('error', (err, req, res) => {
+							console.error('❌ Static file proxy error:', err.message, req.url)
+						})
 					}
-				  }
-				: undefined
+				}
+			  }
+			: undefined
 		},
 		preview: {
 			host,
 			port: previewPort,
-			allowedHosts: [
-				'34.81.135.104.nip.io',
-				'34.80.28.226',
-				'localhost',
-				'10.1.0.2',    // 前端內網IP
-				'127.0.0.1'
-			],
-			hmr: {
-				host: hmrHost,
-				port: previewPort
-			}
-			// preview 模式不需要代理，因為它服務靜態文件
+			hmr: hmrConfig
 		}
 	}
 })
+
