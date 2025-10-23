@@ -212,12 +212,33 @@
               <!-- 提交區域 -->
               <tr>
                 <td colspan="7">
-                  <div class="div-submitpredict" id="div-submit" style="z-index: 0; position: static; bottom: 0px; top: auto;">
-                    <a href="/member/login?height=260&amp;width=580&amp;modal=true" class="headerLoginButton">
+                  <!-- 未登入狀態 -->
+                  <div v-if="!session.loggedIn" class="div-submitpredict" id="div-submit" style="z-index: 0; position: static; bottom: 0px; top: auto;">
+                    <a @click="$router.push('/login')" class="headerLoginButton" style="cursor: pointer;">
                       <h3>預測賽事請先登入</h3>
                     </a>
                   </div>
-                  <div style="display: none; width: 958px; height: 38px; float: none;"></div>
+                  <!-- 已登入狀態 -->
+                  <div v-else class="div-submitpredict" id="div-submit" style="z-index: 0; position: static; bottom: 0px; top: auto;">
+                    <div class="submit-prediction-bar">
+                      <div class="selected-count">
+                        已選擇 <strong>{{ selectedCount }}</strong> 場賽事預測
+                      </div>
+                      <button 
+                        type="button" 
+                        class="btn-submit-prediction" 
+                        :disabled="selectedCount === 0 || submitting"
+                        @click="handleSubmitPredictions"
+                      >
+                        <span v-if="!submitting">
+                          <i class="fas fa-paper-plane"></i> 提交預測
+                        </span>
+                        <span v-else>
+                          <i class="fas fa-spinner fa-spin"></i> 提交中...
+                        </span>
+                      </button>
+                    </div>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -233,49 +254,11 @@
 </template>
 
 <script setup lang="ts" name="PredictGamesTable">
-import { defineProps, defineEmits, ref } from 'vue';
-
-// 定義 Props
-interface Game {
-  gameId: string;
-  allianceId: number;
-  gameDate: Date;
-  gameTime: string;
-  homeTeam: {
-    id: number;
-    name: string;
-    pitcher: string;
-  };
-  awayTeam: {
-    id: number;
-    name: string;
-    pitcher: string;
-  };
-  internationalOdds: {
-    spread: {
-      home: { line: string; odds: string };
-      away: { line: string; odds: string };
-    };
-    total: {
-      over: { line: string; odds: string };
-      under: { line: string; odds: string };
-    };
-  };
-  taiwanOdds: {
-    spread: {
-      home: { line: string; odds: string };
-      away: { line: string; odds: string };
-    };
-    moneyline: {
-      home: { odds: string };
-      away: { odds: string };
-    };
-    total: {
-      over: { line: string; odds: string };
-      under: { line: string; odds: string };
-    };
-  };
-}
+import { defineProps, defineEmits, ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useSessionStore } from '../stores/session';
+import { predictionsAPI } from '../api';
+import type { Game } from '../types/game';
 
 const props = defineProps<{
   games: Game[];
@@ -287,7 +270,13 @@ const props = defineProps<{
 // 定義 Emits
 const emit = defineEmits<{
   'select-prediction': [prediction: any];
+  'submit-success': [message: string];
+  'submit-error': [message: string];
 }>();
+
+// Store & Router
+const session = useSessionStore();
+const router = useRouter();
 
 // 響應式數據：追蹤每個游戲的預測選擇
 interface Prediction {
@@ -298,6 +287,17 @@ interface Prediction {
 }
 
 const predictions = ref<Record<string, Prediction>>({});
+const submitting = ref(false);
+
+// 計算選擇的預測數量
+const selectedCount = computed(() => {
+  // 計算有多少個不同的 gameId
+  const gameIds = new Set<string>();
+  Object.values(predictions.value).forEach(p => {
+    gameIds.add(p.gameId);
+  });
+  return gameIds.size;
+});
 
 // 工具函數
 function formatDate(date: Date): string {
@@ -320,6 +320,129 @@ function handlePredictionChange(gameId: string, type: Prediction['type'], select
 
   // 發送事件給父組件
   emit('select-prediction', prediction);
+}
+
+// 提交預測
+async function handleSubmitPredictions() {
+  if (selectedCount.value === 0) {
+    return;
+  }
+
+  submitting.value = true;
+
+  try {
+    // 將預測按 gameId 分組
+    const predictionsByGame: Record<string, Prediction[]> = {};
+    Object.values(predictions.value).forEach(p => {
+      if (!predictionsByGame[p.gameId]) {
+        predictionsByGame[p.gameId] = [];
+      }
+      predictionsByGame[p.gameId].push(p);
+    });
+
+    // 逐個提交預測
+    const results = [];
+    for (const [gameId, gamePredictions] of Object.entries(predictionsByGame)) {
+      for (const pred of gamePredictions) {
+        try {
+          // 找到對應的賽事以獲取賠率
+          const game = props.games.find(g => g.gameId === gameId);
+          let odds = '1.90'; // 預設賠率
+
+          if (game) {
+            // 根據預測類型和選擇獲取正確的賠率
+            if (pred.type === 'international_spread') {
+              odds = pred.selection === 'home' 
+                ? game.internationalOdds.spread.home.odds 
+                : game.internationalOdds.spread.away.odds;
+            } else if (pred.type === 'international_total') {
+              odds = pred.selection === 'over' 
+                ? game.internationalOdds.total.over.odds 
+                : game.internationalOdds.total.under.odds;
+            } else if (pred.type === 'taiwan_spread') {
+              odds = pred.selection === 'home' 
+                ? game.taiwanOdds.spread.home.odds 
+                : game.taiwanOdds.spread.away.odds;
+            } else if (pred.type === 'taiwan_moneyline') {
+              odds = pred.selection === 'home' 
+                ? game.taiwanOdds.moneyline.home.odds 
+                : game.taiwanOdds.moneyline.away.odds;
+            } else if (pred.type === 'taiwan_total') {
+              odds = pred.selection === 'over' 
+                ? game.taiwanOdds.total.over.odds 
+                : game.taiwanOdds.total.under.odds;
+            }
+          }
+
+          const requestData = {
+            gameId: pred.gameId,
+            predictionType: pred.type,
+            selection: pred.selection,
+            odds: odds,
+            price: 100, // 預設價格，可以從設定中獲取
+            isMainPick: false
+          };
+          
+          console.log('提交預測請求:', requestData);
+
+          const result = await predictionsAPI.createPrediction(requestData);
+
+          results.push(result);
+        } catch (e: any) {
+          console.error(`提交預測失敗 (${gameId}):`, e);
+          console.error('錯誤詳情:', {
+            status: e?.response?.status,
+            code: e?.response?.data?.code,
+            message: e?.response?.data?.message,
+            data: e?.response?.data
+          });
+          throw e;
+        }
+      }
+    }
+
+    // 提交成功
+    emit('submit-success', `成功提交 ${results.length} 筆預測！`);
+
+    // 清空選擇
+    predictions.value = {};
+    
+    // 清除所有 radio 選項
+    const form = document.getElementById('predict_form') as HTMLFormElement;
+    if (form) {
+      const radios = form.querySelectorAll('input[type="radio"]');
+      radios.forEach((radio: any) => {
+        radio.checked = false;
+      });
+    }
+  } catch (e: any) {
+    const code = e?.response?.data?.code;
+    const message = e?.response?.data?.message;
+    const status = e?.response?.status;
+    
+    console.error('提交預測失敗:', {
+      status,
+      code,
+      message,
+      fullError: e
+    });
+    
+    if (status === 500) {
+      emit('submit-error', '伺服器錯誤，請稍後再試或聯絡管理員');
+    } else if (code === 'GAME_STARTED') {
+      emit('submit-error', '賽事已開始，無法建立預測');
+    } else if (code === 'PREDICTION_EXISTS') {
+      emit('submit-error', '已對部分賽事建立過相同類型的預測');
+    } else if (code === 'GAME_NOT_FOUND') {
+      emit('submit-error', '賽事不存在或已被移除');
+    } else if (code === 'UNAUTHORIZED') {
+      emit('submit-error', '登入已過期，請重新登入');
+    } else {
+      emit('submit-error', message || '提交預測失敗，請稍後再試');
+    }
+  } finally {
+    submitting.value = false;
+  }
 }
 </script>
 
@@ -537,6 +660,76 @@ function handlePredictionChange(gameId: string, type: Prediction['type'], select
 }
 
 /* 響應式設計 */
+/* 提交預測按鈕區域 */
+.submit-prediction-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.selected-count {
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.selected-count strong {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 4px;
+}
+
+.btn-submit-prediction {
+  padding: 12px 32px;
+  background: white;
+  color: #667eea;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-submit-prediction:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  background: #f8f9fa;
+}
+
+.btn-submit-prediction:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-submit-prediction:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #e0e0e0;
+  color: #999;
+}
+
+.btn-submit-prediction i {
+  margin-right: 8px;
+}
+
+.btn-submit-prediction .fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 768px) {
   .menugroupbox-con {
     padding: 10px;
@@ -564,6 +757,22 @@ function handlePredictionChange(gameId: string, type: Prediction['type'], select
   .th-bank-bet03 {
     width: auto;
     min-width: auto;
+  }
+  
+  .submit-prediction-bar {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .selected-count {
+    font-size: 14px;
+  }
+  
+  .btn-submit-prediction {
+    width: 100%;
+    padding: 10px 20px;
+    font-size: 14px;
   }
 }
 </style>

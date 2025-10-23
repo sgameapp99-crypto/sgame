@@ -19,6 +19,8 @@
                 :current-month="'九月 2025'"
                 :selected-date="new Date()"
                 :calendar-dates="[]"
+                :show-time-selector="false"
+                :date-options-filter="[]"
                 @select-alliance="selectAlliance"
                 @toggle-baseball-expanded="toggleBaseballExpanded"
                 @toggle-basketball-expanded="toggleBasketballExpanded"
@@ -463,7 +465,8 @@ onMounted(() => {
 
 .menugroupbox-top, .menugroupbox-bottom {
   height: 10px;
-  background: url('/images/menu_group_bg.png') repeat-x;
+  background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+  border-radius: 4px;
 }
 
 .menugroupbox-con {

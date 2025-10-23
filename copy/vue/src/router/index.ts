@@ -79,6 +79,7 @@ const router = createRouter({
       component: () => import('../pages/GameDetailPage.vue'),
     },
     { path: '/member/settings', name: 'member-settings', component: () => import('../pages/MemberSettingsPage.vue'), meta: { requiresAuth: true } },
+    { path: '/member/coins/purchase', name: 'coins-purchase', component: () => import('../pages/CoinsPurchasePage.vue'), meta: { requiresAuth: true } },
     // 法律條款頁面
     { path: '/legal', name: 'legal', component: () => import('../pages/LegalPage.vue') },
     {

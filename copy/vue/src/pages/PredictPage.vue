@@ -32,6 +32,12 @@
         @close-calendar="calendarVisible = false"
       />
 
+      <!-- 提交訊息提示 -->
+      <div v-if="submitMessage" class="submit-message" :class="{ success: submitSuccess, error: !submitSuccess }">
+        <div class="message-icon">{{ submitSuccess ? '✓' : '✗' }}</div>
+        <div class="message-text">{{ submitMessage }}</div>
+      </div>
+
       <!-- 賽事列表 -->
       <div v-if="filteredGames.length === 0" class="no-games-message">
         <div class="text-center py-xl">
@@ -46,12 +52,59 @@
         :selected-date="selectedDate"
         :selected-status-type="selectedStatusType"
         @select-prediction="handlePredictionSelect"
+        @submit-success="handleSubmitSuccess"
+        @submit-error="handleSubmitError"
       />
     </div>
   </div>
 </template>
 
 <style scoped>
+.submit-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  font-size: 15px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.submit-message.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.submit-message.error {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+
+.message-icon {
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.message-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .no-games-message {
   background: #f8f9fa;
   border: 1px solid #e9ecef;
@@ -62,16 +115,23 @@
 
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
-import { loadLegacyHtml, parseBasicContent } from '../utils/simpleLegacyParser';
-import { rewriteLegacyUrls } from '../utils/rewriteLegacy';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import { gamesAPI, predictionsAPI } from '../api';
+import { useSessionStore } from '../stores/session';
 import AllianceMenu from '../components/AllianceMenu.vue';
 import PredictGamesTable from '../components/PredictGamesTable.vue';
+import type { Game } from '../types/game';
+import type { PredictionType, PredictionSelection } from '../types/prediction';
 
 // 組件狀態
 const route = useRoute();
+const router = useRouter();
+const session = useSessionStore();
 const loading = ref(true);
 const errorMessage = ref('');
+const submitLoading = ref(false);
+const submitMessage = ref('');
+const submitSuccess = ref(false);
 
 // 聯盟選單狀態
 const selectedAlliance = ref(2); // 預設日本職棒
@@ -88,7 +148,43 @@ const currentMonth = ref('十月 2025');
 const selectedDate = ref(new Date());
 const calendarDates = ref<{ date: Date; day: number; isToday: boolean; isSelected: boolean; isCurrentMonth: boolean }[]>([]);
 
-// Mock 賽事數據
+// 賽事數據（使用真實 API）
+const games = ref<Game[]>([]);
+
+// 篩選後的賽事（明確類型標註以避免 Vue 類型推斷問題）
+const filteredGames = computed<Game[]>(() => {
+  return games.value; // API 已經做好篩選，直接返回
+});
+
+// 載入賽事數據
+async function loadGames() {
+  loading.value = true;
+  errorMessage.value = '';
+  
+  try {
+    const dateStr = selectedDate.value.toISOString().split('T')[0]; // YYYY-MM-DD
+    const result = await gamesAPI.getGames({
+      allianceId: selectedAlliance.value,
+      date: dateStr,
+      status: selectedStatusType.value,
+      soccerLeagueId: selectedSoccerLeague.value || undefined,
+    });
+    
+    if (result.success) {
+      games.value = result.data;
+    } else {
+      errorMessage.value = '載入賽事失敗';
+    }
+  } catch (e: any) {
+    errorMessage.value = e?.response?.data?.message || '載入賽事失敗，請稍後再試';
+    console.error('載入賽事錯誤:', e);
+  } finally {
+    loading.value = false;
+  }
+}
+
+// 以下為舊的 mock 數據，暫時保留註解供參考
+/*
 const mockGames = ref([
   // MLB 赛事 (allianceId: 1)
   {
@@ -294,24 +390,18 @@ const mockGames = ref([
     }
   }
 ]);
-
-// 篩選賽事
-const filteredGames = computed(() => {
-  return mockGames.value.filter(game => {
-    const allianceMatch = game.allianceId === selectedAlliance.value;
-    const dateMatch = game.gameDate.toDateString() === selectedDate.value.toDateString();
-    return allianceMatch && dateMatch;
-  });
-});
+*/
 
 // 事件處理
 function handleAllianceSelect(allianceId: number) {
   selectedAlliance.value = allianceId;
   selectedSoccerLeague.value = null;
+  loadGames(); // 重新載入賽事
 }
 
 function handleSoccerLeagueSelect(leagueId: number) {
   selectedSoccerLeague.value = leagueId;
+  loadGames(); // 重新載入賽事
 }
 
 function handleDateOptionSelect(option: any) {
@@ -332,11 +422,13 @@ function handleDateOptionSelect(option: any) {
       }
       break;
   }
+  loadGames(); // 重新載入賽事
 }
 
 function handleDateSelect(date: Date) {
   selectedDate.value = date;
   calendarVisible.value = false;
+  loadGames(); // 重新載入賽事
 }
 
 function handlePrevMonth() {
@@ -400,15 +492,34 @@ interface Prediction {
   value: string;
 }
 
+// 預測選擇處理（只記錄，不立即提交）
 function handlePredictionSelect(prediction: Prediction) {
-  // 這裡可以處理預測選擇邏輯，比如：
-  // - 存儲用戶的選擇
-  // - 發送給後端 API
-  // - 更新 UI 狀態
-  // - 計算預測結果等
+  // 這個函數現在只是記錄用戶的選擇
+  // 實際提交由 PredictGamesTable 組件的提交按鈕處理
+  console.log('預測選擇:', prediction);
+}
 
-  // TODO: 實現具體的預測處理邏輯
-  // console.log('預測選擇:', prediction);
+// 處理批次提交成功
+function handleSubmitSuccess(message: string) {
+  submitMessage.value = message;
+  submitSuccess.value = true;
+  
+  // 3 秒後清除訊息並重新載入賽事（可能有狀態變化）
+  setTimeout(() => {
+    submitMessage.value = '';
+    loadGames();
+  }, 3000);
+}
+
+// 處理批次提交失敗
+function handleSubmitError(message: string) {
+  submitMessage.value = message;
+  submitSuccess.value = false;
+  
+  // 5 秒後清除錯誤訊息
+  setTimeout(() => {
+    submitMessage.value = '';
+  }, 5000);
 }
 
 onMounted(async () => {
@@ -416,23 +527,14 @@ onMounted(async () => {
     // 初始化日曆
     updateCalendarDates();
 
-    // 如果有舊的邏輯可以保留，但主要功能改為組件化
-    const path = (route.query.path as string) || '/legacy/www.playsport.cc/predict/';
-    const CACHE_KEY = `predict_cache_${path}`;
-    const TTL_MS = 5 * 60 * 1000;
-    const cached = sessionStorage.getItem(CACHE_KEY);
-    if (cached) {
-      const data = JSON.parse(cached) as { ts: number; title: string; html: string };
-      if (data && Date.now() - data.ts < TTL_MS) {
-        loading.value = false;
-        return;
-      }
-    }
+    // 檢查登入狀態
+    await session.fetchSession();
+
+    // 載入賽事數據
+    await loadGames();
   } catch (e) {
     errorMessage.value = '載入預測相關內容失敗';
     console.error(e);
-  } finally {
-    loading.value = false;
   }
 });
 </script>

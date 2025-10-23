@@ -237,12 +237,13 @@ interface Props {
   selectedAlliance: number;
   selectedSoccerLeague: number | null;
   selectedStatusType: 'finished' | 'live' | 'scheduled';
+  selectedDateRange?: string; // 當前選擇的日期範圍（會員頁面使用）
   baseballExpanded: boolean;
   basketballExpanded: boolean;
   otherExpanded: boolean;
   soccerLeaguesExpanded: boolean;
   showTimeSelector: boolean;
-  dateOptionsFilter: ('finished' | 'live' | 'scheduled')[];
+  dateOptionsFilter: ('finished' | 'live' | 'scheduled' | 'week' | 'month' | 'all')[];
   calendarVisible: boolean;
   currentMonth: string;
   selectedDate: Date;
@@ -302,23 +303,66 @@ const soccerLeagues = [
 const dateOptions = computed(() => {
   const options = [];
 
-  // 今天(未進行)、明天(未進行)、後天(未進行) - 預測頁面專用
-  const dateLabels = ['今天', '明天', '後天'];
-  const statusTypes: ('finished' | 'live' | 'scheduled')[] = ['scheduled', 'scheduled', 'scheduled'];
+  // 取得今天的日期（只比較年月日，忽略時分秒）
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  for (let i = 0; i < 3; i++) {
-    const statusType = statusTypes[i];
+  // 檢查是否包含日期範圍選項（week, month, all）
+  const hasRangeOptions = props.dateOptionsFilter.some(opt => ['week', 'month', 'all'].includes(opt));
 
-    // 根據 dateOptionsFilter 過濾顯示的選項
-    if (props.dateOptionsFilter.includes(statusType)) {
-      const isSelected = props.selectedStatusType === statusType && i === 0; // 預設選擇今天
+  console.log('📊 dateOptions 計算屬性執行');
+  console.log('📊 props.dateOptionsFilter:', props.dateOptionsFilter);
+  console.log('📊 hasRangeOptions:', hasRangeOptions);
 
-      options.push({
-        display: dateLabels[i],
-        type: statusType,
-        isSelected
-      });
+  if (hasRangeOptions) {
+    // 會員頁面模式：一週內、一個月內、全部
+    const rangeOptions = [
+      { type: 'week', display: '一週內' },
+      { type: 'month', display: '一個月內' },
+      { type: 'all', display: '全部' }
+    ];
+
+    rangeOptions.forEach(opt => {
+      if (props.dateOptionsFilter.includes(opt.type as any)) {
+        options.push({
+          display: opt.display,
+          type: opt.type,
+          isSelected: props.selectedDateRange === opt.type // 根據當前選擇設置高亮
+        });
+      }
+    });
+    
+    console.log('📊 生成的日期範圍選項:', options);
+    console.log('📊 當前選擇的日期範圍:', props.selectedDateRange);
+  } else {
+    // 預測頁面模式：今天(未進行)、明天(未進行)、後天(未進行)
+    const dateLabels = ['今天', '明天', '後天'];
+    const statusTypes: ('finished' | 'live' | 'scheduled')[] = ['scheduled', 'scheduled', 'scheduled'];
+
+    for (let i = 0; i < 3; i++) {
+      const statusType = statusTypes[i];
+
+      // 根據 dateOptionsFilter 過濾顯示的選項
+      if (props.dateOptionsFilter.includes(statusType)) {
+        // 計算對應的日期
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + i); // i=0:今天, i=1:明天, i=2:後天
+        
+        // 比較 selectedDate 和目標日期（只比較年月日）
+        const selectedDateOnly = new Date(props.selectedDate);
+        selectedDateOnly.setHours(0, 0, 0, 0);
+        
+        const isSelected = selectedDateOnly.getTime() === targetDate.getTime();
+
+        options.push({
+          display: dateLabels[i],
+          type: statusType,
+          isSelected
+        });
+      }
     }
+    
+    console.log('📊 生成的狀態選項:', options);
   }
 
   return options;
@@ -361,6 +405,11 @@ function handleSoccerLeagueClick(leagueId: number, event?: Event) {
 }
 
 function handleDateOptionClick(option: any, event?: Event) {
+  console.log('🎯 AllianceMenu - handleDateOptionClick 被調用');
+  console.log('🎯 接收到的 option:', option);
+  console.log('🎯 option.type:', option?.type);
+  console.log('🎯 option.display:', option?.display);
+  
   if (event) {
     event.preventDefault();
     event.stopPropagation();
@@ -374,7 +423,10 @@ function handleDateOptionClick(option: any, event?: Event) {
       }, 150);
     }
   }
+  
+  console.log('🎯 準備 emit select-date-option 事件，參數:', option);
   emit('select-date-option', option);
+  console.log('🎯 emit 完成');
 }
 
 function allianceHasGames(allianceId: number): boolean {

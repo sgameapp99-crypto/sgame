@@ -4,48 +4,35 @@
 
       <!-- 主要內容區域 -->
       <div class="member-maincon">
-        <!-- 頂部篩選區（參考原站 tagsection） 僅預測分頁顯示 -->
-        <div class="tagsection" v-if="activeTab === 'predict'">
-          <div class="tag-league-boxall">
-            <div class="tag-league-box tag-box tag-box_memberMenu">
-              <div class="tag-box-first">
-                <ol class="tag-league">
-                  <li class="fold-head"></li>
-                  <li>棒球</li>
-                  <li class="fold-footer"></li>
-                </ol>
-              </div>
-              <div class="tag-box-last">
-                <ol class="tag-con">
-                  <li :class="{ 'tag-chosen': selectedLeague === 'MLB' }" @click="selectedLeague = 'MLB'">MLB</li>
-                  <li :class="{ 'nonepredict': false }" @click="selectedLeague = 'NPB'">
-                    <a href="#">日棒</a>
-                  </li>
-                  <li :class="{ 'nonepredict': false }" @click="selectedLeague = 'CPBL'">
-                    <a href="#">中職</a>
-                  </li>
-                </ol>
-              </div>
-            </div>
-          </div>
-
-          <div class="tag-date-box tag-box tag-box_memberDate">
-            <div class="tag-box-first">
-              <ol class="tag-date">
-                <li class="fold-head"></li>
-                <li>日期</li>
-                <li class="fold-footer"></li>
-              </ol>
-            </div>
-            <div class="tag-box-last">
-              <ol class="tag-con tag-con-big">
-                <li @click="selectedDate = ''"><p>全部</p><strong>(All)</strong></li>
-                <li @click="selectedDate = 'today'" :class="{ 'tag-chosenbig': selectedDate==='today' }"><p>今天</p><strong>(Today)</strong></li>
-                <li @click="selectedDate = 'week'" :class="{ 'tag-chosenbig': selectedDate==='week' }"><p>本週</p><strong>(Week)</strong></li>
-                <li @click="selectedDate = 'month'" :class="{ 'tag-chosenbig': selectedDate==='month' }"><p>本月</p><strong>(Month)</strong></li>
-              </ol>
-            </div>
-          </div>
+        <!-- 頂部篩選區 - 使用完整的 AllianceMenu 組件 -->
+        <div v-if="activeTab === 'predict'" class="member-alliance-menu">
+          <AllianceMenu
+            :selected-alliance="selectedAlliance"
+            :selected-soccer-league="selectedSoccerLeague"
+            :selected-status-type="selectedStatusType"
+            :selected-date-range="selectedDateRange"
+            :baseball-expanded="baseballExpanded"
+            :basketball-expanded="basketballExpanded"
+            :other-expanded="otherExpanded"
+            :soccer-leagues-expanded="soccerLeaguesExpanded"
+            :calendar-visible="calendarVisible"
+            :current-month="currentMonth"
+            :selected-date="selectedDate"
+            :calendar-dates="calendarDates"
+            :show-time-selector="true"
+            :date-options-filter="['week', 'month', 'all']"
+            @select-alliance="selectAlliance"
+            @select-soccer-league="selectSoccerLeague"
+            @select-date-option="selectDateOption"
+            @toggle-baseball-expanded="toggleBaseballExpanded"
+            @toggle-basketball-expanded="toggleBasketballExpanded"
+            @toggle-other-expanded="toggleOtherExpanded"
+            @toggle-calendar="toggleCalendar"
+            @select-date="handleSelectDate"
+            @prev-month="prevMonth"
+            @next-month="nextMonth"
+            @close-calendar="closeCalendar"
+          />
         </div>
         <!-- 預測頁面 -->
         <div v-if="activeTab === 'predict'" class="tab-content">
@@ -61,31 +48,35 @@
                       <th class="managerpredictcon">預測</th>
                       <th class="predictresult">結果</th>
                     </tr>
-                    <template v-if="filteredPredictions.filter(p => p.gameMode === 'international').length > 0">
-                      <tr v-for="(prediction, index) in filteredPredictions.filter(p => p.gameMode === 'international')" :key="prediction.id" :class="{ 'evenrow': index % 2 === 1 }">
+                    <template v-if="filteredPredictions.filter((p: any) => p.predictionType?.startsWith('international_')).length > 0">
+                      <tr v-for="(prediction, index) in filteredPredictions.filter((p: any) => p.predictionType?.startsWith('international_'))" :key="prediction.id" :class="{ 'evenrow': index % 2 === 1 }">
                         <td rowspan="1" class="gamenum">
                           <ul>
-                            <li></li>
-                            <li>{{ new Date(prediction.date).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }) }}</li>
+                            <li>{{ prediction.gameInfo?.allianceName || 'N/A' }}</li>
+                            <li>{{ prediction.gameInfo?.gameTime || '--:--' }}</li>
                           </ul>
                         </td>
                         <td rowspan="1">
                           <table border="0" cellspacing="0" cellpadding="0">
                             <tr>
-                              <th>{{ prediction.homeTeam }}</th>
+                              <th>{{ prediction.gameInfo?.homeTeam || '主隊' }}</th>
                               <td class="secondteam"></td>
                             </tr>
                             <tr>
-                              <th class="secondteam">{{ prediction.awayTeam }}(主)</th>
+                              <th class="secondteam">{{ prediction.gameInfo?.awayTeam || '客隊' }}(主)</th>
                               <td class="secondteam"></td>
                             </tr>
                           </table>
                         </td>
                         <td class="managerpredictcon">
-                          {{ prediction.title }} <span class="predict-bet-weight">{{ prediction.type }}</span>
+                          {{ prediction.predictionTypeLabel || prediction.predictionType }} 
+                          <span class="predict-bet-weight">{{ prediction.selectionLabel || prediction.selection }}</span>
                         </td>
-                        <td class="predictresult" :class="{ 'incorrect': prediction.result === '囧' }">
-                          <span>{{ prediction.result }}</span>
+                        <td class="predictresult" :class="{ 'incorrect': prediction.status === 'lose' }">
+                          <span v-if="prediction.status === 'pending'">等待中</span>
+                          <span v-else-if="prediction.status === 'win'">✓</span>
+                          <span v-else-if="prediction.status === 'lose'">囧</span>
+                          <span v-else>{{ prediction.status }}</span>
                         </td>
                       </tr>
                     </template>
@@ -111,31 +102,35 @@
                       <th class="managerpredictcon">預測</th>
                       <th class="predictresult">結果</th>
                     </tr>
-                    <template v-if="filteredPredictions.filter(p => p.gameMode === 'bank').length > 0">
-                      <tr v-for="(prediction, index) in filteredPredictions.filter(p => p.gameMode === 'bank')" :key="prediction.id" :class="{ 'evenrow': index % 2 === 1 }">
+                    <template v-if="filteredPredictions.filter((p: any) => p.predictionType?.startsWith('taiwan_')).length > 0">
+                      <tr v-for="(prediction, index) in filteredPredictions.filter((p: any) => p.predictionType?.startsWith('taiwan_'))" :key="prediction.id" :class="{ 'evenrow': index % 2 === 1 }">
                         <td rowspan="1" class="gamenum">
                           <ul>
-                            <li></li>
-                            <li>{{ new Date(prediction.date).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }) }}</li>
+                            <li>{{ prediction.gameInfo?.allianceName || 'N/A' }}</li>
+                            <li>{{ prediction.gameInfo?.gameTime || '--:--' }}</li>
                           </ul>
                         </td>
                         <td rowspan="1">
                           <table border="0" cellspacing="0" cellpadding="0">
                             <tr>
-                              <th>{{ prediction.homeTeam }}</th>
+                              <th>{{ prediction.gameInfo?.homeTeam || '主隊' }}</th>
                               <td class="secondteam"></td>
                             </tr>
                             <tr>
-                              <th class="secondteam">{{ prediction.awayTeam }}(主)</th>
+                              <th class="secondteam">{{ prediction.gameInfo?.awayTeam || '客隊' }}(主)</th>
                               <td class="secondteam"></td>
                             </tr>
                           </table>
                         </td>
                         <td class="managerpredictcon">
-                          {{ prediction.title }} <span class="predict-bet-weight">{{ prediction.type }}</span>
+                          {{ prediction.predictionTypeLabel || prediction.predictionType }} 
+                          <span class="predict-bet-weight">{{ prediction.selectionLabel || prediction.selection }}</span>
                         </td>
-                        <td class="predictresult" :class="{ 'incorrect': prediction.result === '囧' }">
-                          <span>{{ prediction.result }}</span>
+                        <td class="predictresult" :class="{ 'incorrect': prediction.status === 'lose' }">
+                          <span v-if="prediction.status === 'pending'">等待中</span>
+                          <span v-else-if="prediction.status === 'win'">✓</span>
+                          <span v-else-if="prediction.status === 'lose'">囧</span>
+                          <span v-else>{{ prediction.status }}</span>
                         </td>
                       </tr>
                     </template>
@@ -402,6 +397,13 @@
           <div class="member-level-progress" role="progressbar" :aria-valuenow="progressPercent" aria-valuemin="0" aria-valuemax="100" :aria-label="`等級進度 ${progressPercent}%`">
             <div class="bar" :style="{ width: progressPercent + '%', background: levelColor }"></div>
           </div>
+          
+          <!-- 彩幣餘額顯示 -->
+          <div class="coin-balance-display">
+            <div class="coin-balance-label">當前彩幣餘額</div>
+            <div class="coin-balance-amount">{{ coinBalance.toLocaleString() }} 彩幣</div>
+          </div>
+          
           <ul class="member-showroom-nav">
             <li :class="{ 'chosen': activeTab === 'predict' }" @click="activeTab = 'predict'">
               <a href="#" class="sidebarEventBtn">
@@ -481,8 +483,10 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
-import { memberAPI, levelAPI } from '../api';
+import { memberAPI, levelAPI, predictionsAPI, coinsAPI } from '../api';
 import { getAvatarUrl, DEFAULT_AVATAR, addTimestampToUrl } from '../utils/avatar';
+import type { Prediction } from '../types/prediction';
+import AllianceMenu from '../components/AllianceMenu.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -494,10 +498,23 @@ const defaultBlackAvatar = DEFAULT_AVATAR;
 // 響應式數據
 const activeTab = ref('predict');
 const selectedLeague = ref('');
-const selectedDate = ref('');
+const selectedDateRange = ref('all'); // 預設為"全部"，顯示今天到未來所有預測
 const isFollowing = ref(false);
 const followLoading = ref(false);
 const unfollowLoading = ref(false);
+
+// AllianceMenu 相關的響應式數據
+const selectedAlliance = ref(1); // 預設選擇 MLB
+const selectedSoccerLeague = ref<number | null>(null);
+const selectedStatusType = ref<'finished' | 'live' | 'scheduled'>('all' as any); // 會員頁使用 'all' 顯示全部
+const baseballExpanded = ref(false);
+const basketballExpanded = ref(false);
+const otherExpanded = ref(false);
+const soccerLeaguesExpanded = ref(false);
+const calendarVisible = ref(false);
+const currentMonth = ref('');
+const selectedDate = ref(new Date());
+const calendarDates = ref<{ date: Date; day: number; isToday: boolean; isSelected: boolean; isCurrentMonth: boolean }[]>([]);
   // 遊戲紀錄狀態
   const showCopyPrompt = ref(false);
   const betAccountId = ref('23333762');
@@ -559,8 +576,26 @@ const memberStats = ref({
   bankSingleKiller: 0
 });
 
-// 預測記錄
-const predictions = ref([
+// 預測記錄 - 使用真實 API
+const predictions = ref<Prediction[]>([]);
+const predictionsLoading = ref(false);
+const predictionsError = ref('');
+const totalPredictions = ref(0);
+const currentPage = ref(1);
+const pageSize = ref(20);
+
+// 購買預測功能
+const purchaseLoading = ref(false);
+const purchaseMessage = ref('');
+const purchaseSuccess = ref(false);
+const selectedPredictionId = ref<string | null>(null);
+
+// 彩幣餘額
+const coinBalance = ref(0);
+
+// 舊的 mock 數據，暫時保留註解供參考
+/*
+const oldPredictions = ref([
   {
     id: 1,
     league: 'MLB',
@@ -598,6 +633,7 @@ const predictions = ref([
     result: 'pending'
   }
 ]);
+*/
 
 // 論壇文章
 const memberPosts = ref([
@@ -648,31 +684,213 @@ const memberHonors = ref([
   }
 ]);
 
-// 計算屬性
+// API 函數
+
+/**
+ * 載入會員預測
+ */
+async function loadPredictions() {
+  console.log('🚀 loadPredictions 函數開始執行');
+  predictionsLoading.value = true;
+  predictionsError.value = '';
+
+  try {
+    // 使用與 getViewingMemberId 相同的邏輯獲取會員 ID
+    const userId = route.params.id as string || session.userId || session.user?.id;
+    console.log('🔑 獲取到的 userId:', userId);
+    console.log('🔑 route.params.id:', route.params.id);
+    console.log('🔑 session.userId:', session.userId);
+    console.log('🔑 session.user?.id:', session.user?.id);
+    console.log('🔑 session.loggedIn:', session.loggedIn);
+    
+    if (!userId) {
+      predictionsError.value = '無法載入預測：未指定會員';
+      console.error('❌ userId 為空，提前返回');
+      console.error('❌ 請檢查登入狀態');
+      return;
+    }
+
+    // 計算日期範圍：今天開始
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startDate = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    // 結束日期根據選擇的篩選器決定
+    let endDate: string | undefined;
+    if (selectedDateRange.value === 'week') {
+      const futureDate = new Date(today);
+      futureDate.setDate(futureDate.getDate() + 7);
+      endDate = futureDate.toISOString().split('T')[0];
+    } else if (selectedDateRange.value === 'month') {
+      const futureDate = new Date(today);
+      futureDate.setDate(futureDate.getDate() + 30);
+      endDate = futureDate.toISOString().split('T')[0];
+    }
+    // 'all' 或未選擇時，不設置 endDate，顯示所有未來預測
+
+    const requestParams = {
+      memberId: userId, // 後端要求使用 memberId 參數
+      page: currentPage.value,
+      size: pageSize.value,
+      startDate: startDate,
+      endDate: endDate,  // 可能為 undefined
+    };
+
+    // 調試信息：顯示請求參數
+    console.log('🔍 載入會員預測 - 請求參數:', requestParams);
+    console.log('🔍 當前日期範圍選擇:', selectedDateRange.value);
+    console.log('🔍 路由參數 ID:', route.params.id);
+ 
+
+    // 統一使用 getPredictions API，傳入日期範圍參數
+    const result = await predictionsAPI.getPredictions(requestParams);
+
+    console.log('✅ 預測 API 回應:', {
+      success: result.success,
+      dataCount: result.data?.length || 0,
+      total: result.pagination?.total || 0,
+      firstPrediction: result.data?.[0]
+    });
+
+    if (result.success) {
+      predictions.value = result.data || [];
+      totalPredictions.value = result.pagination?.total || 0;
+      
+      console.log('📦 設置的 predictions 數據:', predictions.value);
+      console.log('📦 predictions 數量:', predictions.value.length);
+      
+      if (predictions.value.length > 0) {
+        console.log('📦 第一筆預測的完整結構:', JSON.stringify(predictions.value[0], null, 2));
+        console.log('📦 第一筆預測的關鍵字段:');
+        const first = predictions.value[0];
+        console.log('   - id:', first.id);
+        console.log('   - gameId:', first.gameId);
+        console.log('   - gameInfo:', first.gameInfo);
+        console.log('   - predictionType:', first.predictionType);
+        console.log('   - status:', first.status);
+      }
+      
+      if (predictions.value.length === 0) {
+        console.log('⚠️ 沒有預測數據，可能原因：');
+        console.log('   - 該會員確實沒有預測');
+        console.log('   - 日期範圍內沒有預測');
+        console.log('   - memberId 參數不正確');
+      }
+    } else {
+      predictionsError.value = '載入預測失敗';
+      console.error('❌ API 返回失敗:', result);
+    }
+  } catch (e: any) {
+    predictionsError.value = e?.response?.data?.message || '載入預測失敗，請稍後再試';
+    console.error('❌ 載入預測錯誤:', {
+      message: e?.message,
+      status: e?.response?.status,
+      data: e?.response?.data,
+      fullError: e
+    });
+  } finally {
+    predictionsLoading.value = false;
+  }
+}
+
+/**
+ * 載入彩幣餘額
+ */
+async function loadCoinBalance() {
+  if (!session.loggedIn) return;
+
+  try {
+    const result = await coinsAPI.getCoinInfo();
+    // 後端返回格式：{ accountId, balance, earned, spent }
+    if (result.balance !== undefined) {
+      coinBalance.value = result.balance;
+    }
+  } catch (e) {
+    console.warn('載入彩幣餘額失敗:', e);
+  }
+}
+
+/**
+ * 購買預測
+ */
+async function purchasePrediction(predictionId: string) {
+  if (!session.loggedIn) {
+    purchaseMessage.value = '請先登入以購買預測';
+    purchaseSuccess.value = false;
+    // 導向登入頁面
+    setTimeout(() => {
+      router.push({ name: 'login', query: { redirect: route.fullPath } });
+    }, 1500);
+    return;
+  }
+
+  purchaseLoading.value = true;
+  purchaseMessage.value = '';
+  purchaseSuccess.value = false;
+  selectedPredictionId.value = predictionId;
+
+  try {
+    const result = await predictionsAPI.purchasePrediction(Number(predictionId));
+
+    if (result.success) {
+      purchaseMessage.value = '購買成功！';
+      purchaseSuccess.value = true;
+
+      // 更新餘額
+      if (result.remainingCoins !== undefined) {
+        coinBalance.value = result.remainingCoins;
+      }
+
+      // 重新載入預測以顯示購買後的內容
+      await loadPredictions();
+
+      // 3 秒後清除訊息
+      setTimeout(() => {
+        purchaseMessage.value = '';
+        selectedPredictionId.value = null;
+      }, 3000);
+    }
+  } catch (e: any) {
+    const message = e?.response?.data?.message;
+    const code = e?.response?.data?.code;
+
+    if (code === 'INSUFFICIENT_BALANCE') {
+      purchaseMessage.value = '彩幣餘額不足';
+    } else if (code === 'ALREADY_PURCHASED') {
+      purchaseMessage.value = '您已購買過此預測';
+    } else if (code === 'SELF_PURCHASE') {
+      purchaseMessage.value = '無法購買自己的預測';
+    } else {
+      purchaseMessage.value = message || '購買失敗，請稍後再試';
+    }
+    purchaseSuccess.value = false;
+  } finally {
+    purchaseLoading.value = false;
+  }
+}
+
+/**
+ * 檢查是否已購買預測
+ */
+function isPredictionPurchased(prediction: Prediction): boolean {
+  const currentUserId = session.userId || session.user?.id;
+  
+  // 如果是自己的預測，總是可見
+  if (prediction.userId === currentUserId) {
+    return true;
+  }
+
+  // 使用 isPurchased 欄位檢查是否已購買
+  return prediction.isPurchased || false;
+}
+
+// 計算屬性：只保留聯盟篩選，日期篩選已在 API 層面處理
 const filteredPredictions = computed(() => {
   let filtered = predictions.value;
   
-  if (selectedLeague.value) {
-    filtered = filtered.filter(p => p.league === selectedLeague.value);
-  }
-  
-  if (selectedDate.value) {
-    const today = new Date();
-    filtered = filtered.filter(p => {
-      const predDate = new Date(p.date);
-      switch (selectedDate.value) {
-        case 'today':
-          return predDate.toDateString() === today.toDateString();
-        case 'week':
-          const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-          return predDate >= weekAgo;
-        case 'month':
-          const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-          return predDate >= monthAgo;
-        default:
-          return true;
-      }
-    });
+  // 聯盟篩選（如果有選擇聯盟）
+  if (selectedAlliance.value) {
+    filtered = filtered.filter((p: any) => p.gameInfo?.allianceId === selectedAlliance.value);
   }
   
   return filtered;
@@ -730,14 +948,14 @@ async function loadMemberData() {
       const finalAvatarUrl = rawAvatarUrl ? addTimestampToUrl(rawAvatarUrl) : undefined;
       
       memberInfo.value = {
-        id: p.id || targetId,
+        id: String(p.id || targetId),
         name: p.name || memberInfo.value.name,
         avatar: p.avatar || defaultBlackAvatar,
-        avatarUrl: finalAvatarUrl,
+        avatarUrl: finalAvatarUrl || defaultBlackAvatar,
         followers: p.followersCount ?? memberInfo.value.followers,
         joinDate: p.joinedAt || memberInfo.value.joinDate,
         level: p.level || memberInfo.value.level,
-        levelInfo: p.levelInfo || memberInfo.value.levelInfo,
+        levelInfo: p.levelInfo as any || memberInfo.value.levelInfo,
         levelProgress: p.levelProgress || memberInfo.value.levelProgress,
         bio: p.bio || memberInfo.value.bio,
       };
@@ -808,6 +1026,17 @@ onMounted(async () => {
   await session.ensureProfile();
   await loadMemberData();
   
+  // 初始化日曆月份顯示
+  updateMonthDisplay();
+  
+  // 載入預測數據
+  await loadPredictions();
+  
+  // 載入彩幣餘額（僅當已登入時）
+  if (session.loggedIn) {
+    await loadCoinBalance();
+  }
+  
   // 監聽大頭貼更新事件
   window.addEventListener('avatar-updated', handleAvatarUpdate);
   // 監聽名稱更新事件
@@ -852,6 +1081,133 @@ async function unfollowUser() {
   } catch {}
   unfollowLoading.value = false;
 }
+
+// AllianceMenu 相關方法
+function selectAlliance(allianceId: number) {
+  selectedAlliance.value = allianceId;
+  
+  // 當選擇足球時，自動展開聯賽選單並選擇"全部"
+  if (allianceId === 5) {
+    soccerLeaguesExpanded.value = true;
+    selectedSoccerLeague.value = 0;
+  } else {
+    soccerLeaguesExpanded.value = false;
+    selectedSoccerLeague.value = null;
+  }
+  
+  // 重新載入預測數據
+  loadPredictions();
+}
+
+function selectSoccerLeague(leagueId: number) {
+  selectedSoccerLeague.value = leagueId;
+  loadPredictions();
+}
+
+async function selectDateOption(option: any) {
+  console.log('📅 selectDateOption 被調用，接收到的參數:', option);
+  console.log('📅 參數類型:', typeof option);
+  console.log('📅 option.type:', option?.type);
+  console.log('📅 option.value:', option?.value);
+  
+  // 提取日期範圍值
+  const rangeValue = option?.type || option?.value || option;
+  console.log('📅 最終的 rangeValue:', rangeValue);
+  
+  selectedDateRange.value = rangeValue;
+  calendarVisible.value = false;
+  
+  console.log('📅 設置後的 selectedDateRange.value:', selectedDateRange.value);
+  console.log('📅 準備調用 loadPredictions()...');
+  
+  // 重新載入預測，應用新的日期篩選
+  try {
+    await loadPredictions();
+    console.log('📅 loadPredictions() 執行完成');
+  } catch (error) {
+    console.error('📅 loadPredictions() 執行失敗:', error);
+  }
+}
+
+function toggleBaseballExpanded() {
+  baseballExpanded.value = !baseballExpanded.value;
+}
+
+function toggleBasketballExpanded() {
+  basketballExpanded.value = !basketballExpanded.value;
+}
+
+function toggleOtherExpanded() {
+  otherExpanded.value = !otherExpanded.value;
+}
+
+function toggleCalendar() {
+  calendarVisible.value = !calendarVisible.value;
+  if (calendarVisible.value) {
+    generateCalendar();
+  }
+}
+
+function closeCalendar() {
+  calendarVisible.value = false;
+}
+
+function handleSelectDate(date: Date) {
+  selectedDate.value = date;
+  calendarVisible.value = false;
+  // 可以添加根據特定日期載入預測的邏輯
+  loadPredictions();
+}
+
+function generateCalendar() {
+  const today = new Date();
+  const year = selectedDate.value.getFullYear();
+  const month = selectedDate.value.getMonth();
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startDate = new Date(firstDay);
+  startDate.setDate(startDate.getDate() - firstDay.getDay() + 1); // 星期一開始
+
+  const dates = [];
+  let current = new Date(startDate);
+
+  for (let i = 0; i < 42; i++) { // 6週 x 7天
+    const isToday = current.toDateString() === today.toDateString();
+    const isSelected = current.toDateString() === selectedDate.value.toDateString();
+    const isCurrentMonth = current.getMonth() === month;
+
+    dates.push({
+      date: new Date(current),
+      day: current.getDate(),
+      isToday,
+      isSelected,
+      isCurrentMonth
+    });
+
+    current.setDate(current.getDate() + 1);
+  }
+
+  calendarDates.value = dates;
+  updateMonthDisplay();
+}
+
+function prevMonth() {
+  selectedDate.value = new Date(selectedDate.value.getFullYear(), selectedDate.value.getMonth() - 1, 1);
+  generateCalendar();
+}
+
+function nextMonth() {
+  selectedDate.value = new Date(selectedDate.value.getFullYear(), selectedDate.value.getMonth() + 1, 1);
+  generateCalendar();
+}
+
+function updateMonthDisplay() {
+  const year = selectedDate.value.getFullYear();
+  const month = selectedDate.value.getMonth();
+  const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+  currentMonth.value = `${monthNames[month]} ${year}`;
+}
 </script>
 
 <style scoped>
@@ -859,6 +1215,15 @@ async function unfollowUser() {
   min-height: 100vh;
   background: #f5f5f5;
   font-family: "微軟正黑體", "Microsoft JhengHei", "新細明體", PMingLiU, Arial, Helvetica, sans-serif;
+}
+
+/* AllianceMenu 在會員頁面中的樣式調整 */
+.member-alliance-menu {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
 }
 
 .member-showroom {
@@ -935,8 +1300,30 @@ async function unfollowUser() {
 .member-level-badge .level-icon { font-size: 16px; line-height: 1; }
 .member-level-badge .level-name { font-size: 13px; font-weight: bold; }
 
-.member-level-progress { width: 100%; height: 8px; background: #eceff3; border-radius: 999px; overflow: hidden; margin: 6px 0 16px 0; }
+.member-level-progress { width: 100%; height: 8px; background: #eceff3; border-radius: 999px; overflow: hidden; margin: 6px 0 12px 0; }
 .member-level-progress .bar { height: 100%; width: 0; transition: width .4s ease; }
+
+/* 彩幣餘額顯示（側邊欄） */
+.coin-balance-display { 
+  margin: 0 0 16px 0; 
+  padding: 12px; 
+  background: linear-gradient(135deg, #f8f9fa 0%, #e3ffbf 100%); 
+  border: 2px solid #28a745; 
+  border-radius: 8px; 
+  text-align: center; 
+}
+.coin-balance-label { 
+  font-size: 12px; 
+  color: #666; 
+  margin-bottom: 6px; 
+  font-weight: 500;
+}
+.coin-balance-amount { 
+  font-size: 18px; 
+  font-weight: bold; 
+  color: #28a745; 
+  letter-spacing: 0.5px;
+}
 
 .member-showroom-nav {
   list-style: none;
@@ -1100,18 +1487,149 @@ async function unfollowUser() {
   gap: 15px;
 }
 
+/* 預測容器 */
+.allpredictionbox {
+  width: 100%;
+  margin-top: 10px;
+}
+
 /* 表格樣式（簡化版對齊原站） */
+/* 國際盤表格 */
 .universe-tablebox { margin-top: 10px; }
-.universe-tablecon { width: 100%; border-collapse: collapse; border: 1px solid #DCDCDC; background: #fff; }
-.universe-tablecon th, .universe-tablecon td { border-bottom: 1px solid #DCDCDC; padding: 8px; font-size: 13px; color: #404040; }
-.universe-tablecon th.gameevent { background: #B8CDF3; color: #000; text-align: left; }
-.universe-tablecon th.managerpredictcon, .universe-tablecon th.predictresult { text-align: center; }
+.universe-tablecon { 
+  width: 100%; 
+  border-collapse: collapse; 
+  border: 1px solid #DCDCDC; 
+  background: #fff; 
+}
+.universe-tablecon th, .universe-tablecon td { 
+  border-bottom: 1px solid #DCDCDC; 
+  border-right: 1px solid #DCDCDC;
+  padding: 8px; 
+  font-size: 13px; 
+  color: #404040; 
+}
+.universe-tablecon th.gameevent { 
+  background: #B8CDF3; 
+  color: #000; 
+  text-align: left; 
+  font-weight: bold;
+}
+.universe-tablecon th.managerpredictcon, 
+.universe-tablecon th.predictresult { 
+  text-align: center; 
+}
 .universe-tablecon tr.evenrow { background: #f8f9fb; }
-.gamenum ul { list-style: none; margin: 0; padding: 0; }
-.gamenum ul li { line-height: 18px; color: #666; }
-.predict-bet-weight { color: #ff6c00; margin-left: 6px; }
-.predictresult { text-align: center; }
-.predictresult.incorrect { color: #dc3545; font-weight: bold; }
+.universe-tablecon td:last-child { border-right: none; }
+
+/* 運彩盤表格 */
+.bank-tablebox { margin-top: 20px; }
+.bank-tablecon { 
+  width: 100%; 
+  border-collapse: collapse; 
+  border: 1px solid #DCDCDC; 
+  background: #fff; 
+}
+.bank-tablecon th, .bank-tablecon td { 
+  border-bottom: 1px solid #DCDCDC; 
+  border-right: 1px solid #DCDCDC;
+  padding: 8px; 
+  font-size: 13px; 
+  color: #404040; 
+}
+.bank-tablecon th.gameevent { 
+  background: #FFE4B5; 
+  color: #000; 
+  text-align: left; 
+  font-weight: bold;
+}
+.bank-tablecon th.managerpredictcon, 
+.bank-tablecon th.predictresult { 
+  text-align: center; 
+}
+.bank-tablecon tr.evenrow { background: #fffef8; }
+.bank-tablecon td:last-child { border-right: none; }
+
+/* 共用表格樣式 */
+.tablecon--height {
+  min-height: 200px;
+}
+.gamenum { 
+  width: 80px; 
+  text-align: center;
+  vertical-align: middle;
+}
+.gamenum ul { 
+  list-style: none; 
+  margin: 0; 
+  padding: 0; 
+}
+.gamenum ul li { 
+  line-height: 18px; 
+  color: #666;
+  font-size: 12px;
+}
+.gamenum ul li:first-child {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4px;
+}
+.managerpredictcon {
+  text-align: left;
+  padding-left: 12px;
+}
+.predict-bet-weight { 
+  color: #ff6c00; 
+  margin-left: 6px; 
+  font-weight: bold;
+}
+.predictresult { 
+  text-align: center; 
+  font-weight: bold;
+}
+.predictresult span {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+.predictresult.incorrect,
+.predictresult.incorrect span { 
+  color: #fff;
+  background: #dc3545;
+}
+.no-predict {
+  text-align: center;
+  padding: 30px;
+  color: #999;
+  font-size: 14px;
+}
+
+/* 球隊名稱嵌套表格 */
+.universe-tablecon td table,
+.bank-tablecon td table {
+  width: 100%;
+  border: none;
+}
+.universe-tablecon td table th,
+.universe-tablecon td table td,
+.bank-tablecon td table th,
+.bank-tablecon td table td {
+  border: none;
+  padding: 4px 8px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: normal;
+}
+.universe-tablecon td table th,
+.bank-tablecon td table th {
+  font-weight: 600;
+  color: #333;
+}
+.universe-tablecon td table .secondteam,
+.bank-tablecon td table .secondteam {
+  color: #666;
+  font-size: 12px;
+}
 
 /* ================= 戰績頁面（records-index） ================ */
 .records-index h1 {

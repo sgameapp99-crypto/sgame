@@ -85,6 +85,79 @@
             <button class="btn secondary" @click="openRecover">重設密碼（透過郵件）</button>
           </div>
         </section>
+
+        <section class="section">
+          <h2 class="section-title">預測設定</h2>
+          <div class="prediction-settings">
+            <div v-if="predictionSettingsLoading" class="loading-state">
+              載入中...
+            </div>
+            <div v-else-if="predictionSettingsError" class="error-state">
+              {{ predictionSettingsError }}
+              <button @click="loadPredictionSettings" class="btn-retry">重試</button>
+            </div>
+            <div v-else class="settings-form">
+              <div class="form-group">
+                <label for="defaultPrice" class="form-label">
+                  <span>預設預測價格</span>
+                  <small class="hint-text">建立預測時的預設彩幣價格（0 表示免費）</small>
+                </label>
+                <div class="input-with-suffix">
+                  <input
+                    id="defaultPrice"
+                    v-model.number="predictionSettings.defaultPrice"
+                    type="number"
+                    class="inputtext"
+                    placeholder="請輸入價格"
+                    min="0"
+                    max="10000"
+                    step="10"
+                    :disabled="savingSettings"
+                  />
+                  <span class="input-suffix">彩幣</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label checkbox-label">
+                  <input
+                    v-model="predictionSettings.allowPurchase"
+                    type="checkbox"
+                    :disabled="savingSettings"
+                  />
+                  <span>允許他人購買我的預測</span>
+                </label>
+                <small class="hint-text">關閉後，您的預測將不會在市場上顯示</small>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label checkbox-label">
+                  <input
+                    v-model="predictionSettings.autoPublish"
+                    type="checkbox"
+                    :disabled="savingSettings"
+                  />
+                  <span>自動公開預測</span>
+                </label>
+                <small class="hint-text">開啟後，建立預測時會自動公開給其他會員</small>
+              </div>
+
+              <div v-if="settingsMessage" :class="{ 'ok': settingsOk, 'err': !settingsOk }">
+                {{ settingsMessage }}
+              </div>
+
+              <div class="form-actions">
+                <button
+                  @click="savePredictionSettings"
+                  class="btn"
+                  :disabled="savingSettings"
+                >
+                  {{ savingSettings ? '儲存中...' : '儲存設定' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   </div>
@@ -117,7 +190,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import { api, authAPI, memberAPI } from '../api';
+import { api, authAPI, memberAPI, predictionsAPI } from '../api';
 import { useSessionStore } from '../stores/session';
 import { validateName } from '../utils/nameValidation';
 
@@ -146,6 +219,17 @@ const recoverEmail = ref('');
 const recoverSubmitting = ref(false);
 const recoverError = ref('');
 const recoverSuccess = ref('');
+// 預測設定相關
+const predictionSettingsLoading = ref(false);
+const predictionSettingsError = ref('');
+const predictionSettings = ref({
+  defaultPrice: 100,
+  allowPurchase: true,
+  autoPublish: true,
+});
+const savingSettings = ref(false);
+const settingsMessage = ref('');
+const settingsOk = ref(false);
 
 function goBack() {
   if (window.history.length > 1) router.back();
@@ -347,6 +431,54 @@ async function updateDisplayName() {
   }
 }
 
+/**
+ * 載入預測設定
+ */
+async function loadPredictionSettings() {
+  predictionSettingsLoading.value = true;
+  predictionSettingsError.value = '';
+  
+  try {
+    const data = await predictionsAPI.getPredictionSettings();
+    if (data.success && data.settings) {
+      predictionSettings.value = data.settings;
+    }
+  } catch (e: any) {
+    predictionSettingsError.value = e?.response?.data?.message || '載入預測設定失敗';
+  } finally {
+    predictionSettingsLoading.value = false;
+  }
+}
+
+/**
+ * 儲存預測設定
+ */
+async function savePredictionSettings() {
+  savingSettings.value = true;
+  settingsMessage.value = '';
+  settingsOk.value = false;
+  
+  try {
+    const data = await predictionsAPI.updatePredictionSettings(predictionSettings.value);
+    
+    if (data.success) {
+      settingsMessage.value = '設定已儲存';
+      settingsOk.value = true;
+      
+      // 1.5 秒後清除訊息
+      setTimeout(() => {
+        settingsMessage.value = '';
+        settingsOk.value = false;
+      }, 1500);
+    }
+  } catch (e: any) {
+    settingsMessage.value = e?.response?.data?.message || '儲存失敗，請稍後再試';
+    settingsOk.value = false;
+  } finally {
+    savingSettings.value = false;
+  }
+}
+
 // 初次進入時強制刷新 Session/個資並破快取顯示最新頭像
 onMounted(async () => {
   try {
@@ -365,6 +497,9 @@ onMounted(async () => {
       } catch {}
     }
   } catch {}
+
+  // 載入預測設定
+  loadPredictionSettings();
 
   // 監聽 avatar 更新事件（來自其他頁）
   const avatarHandler = (e: Event) => {
@@ -463,6 +598,21 @@ onUnmounted(() => {
 .error-messages { display: flex; flex-direction: column; gap: 4px; }
 .error-text { color: #dc3545; font-size: 13px; margin: 0; }
 .name-actions { display: flex; gap: 10px; align-items: center; }
+
+/* 預測設定區塊 */
+.prediction-settings { display: flex; flex-direction: column; gap: 12px; }
+.loading-state, .error-state { padding: 12px; background: #f8f9fa; border-radius: 4px; color: #666; font-size: 14px; }
+.error-state { background: #fff3f3; color: #d32f2f; display: flex; align-items: center; gap: 8px; }
+.btn-retry { padding: 4px 8px; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; }
+.btn-retry:hover { background: #c62828; }
+.settings-form { display: flex; flex-direction: column; gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { display: flex; flex-direction: column; gap: 4px; font-weight: 500; color: #333; font-size: 14px; }
+.form-label.checkbox-label { flex-direction: row; align-items: center; gap: 8px; }
+.form-label.checkbox-label input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+.input-with-suffix { position: relative; display: flex; align-items: center; }
+.input-suffix { position: absolute; right: 12px; color: #999; font-size: 13px; pointer-events: none; }
+.form-actions { display: flex; gap: 10px; align-items: center; padding-top: 8px; }
 
 @media (max-width: 768px) {
   .settings-container { padding: 10px; }

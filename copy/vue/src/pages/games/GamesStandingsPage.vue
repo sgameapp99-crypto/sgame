@@ -15,6 +15,8 @@
         :current-month="'九月 2025'"
         :selected-date="new Date()"
         :calendar-dates="[]"
+        :show-time-selector="false"
+        :date-options-filter="[]"
         @select-alliance="selectAlliance"
         @toggle-baseball-expanded="toggleBaseballExpanded"
         @toggle-basketball-expanded="toggleBasketballExpanded"

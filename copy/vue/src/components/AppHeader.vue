@@ -124,6 +124,7 @@
                 <ul class="functionbar-ullv2" v-show="showUserMenu">
                   <li><a href="#" @click.prevent="goToProfile">個人資料</a></li>
                   <li><a href="/member/settings">帳戶設定</a></li>
+                  <li><a href="/member/coins/purchase">彩幣購買</a></li>
                   <li><a href="#" @click.prevent="logout">登出</a></li>
                 </ul>
               </li>
@@ -146,12 +147,6 @@
                   <li><a href="/messages">查看訊息</a></li>
                   <li><a href="/notifications">通知設定</a></li>
                 </ul>
-              </li>
-              <li class="coinitem">
-                <a href="/member/coins" class="function-item-button">
-                  <i class="material-icons md-small">monetization_on</i>
-                  彩幣
-                </a>
               </li>
             </template>
           </ul>
@@ -453,28 +448,6 @@ function goToProfile() {
   text-decoration: none;
 }
 
-/* 彩幣按鈕特殊樣式 */
-.functionbar li.coinitem a {
-  background: #e3ffbf;
-  color: #212121;
-  padding: 8px 16px 0;
-}
-
-.functionbar li.coinitem a:visited {
-  color: #212121;
-}
-
-.functionbar li.coinitem a:hover {
-  background: #fff;
-  color: #212121;
-}
-
-.functionbar li.coinitem a:active,
-.functionbar li.coinitem a:active i {
-  color: #212121;
-}
-
-.functionbar li.coinitem a i,
 .functionbar li.loginitem a i,
 .functionbar li.signupitem a i {
   padding: 0 4px 0 0;
