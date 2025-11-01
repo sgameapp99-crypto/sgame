@@ -8,6 +8,12 @@ const router = createRouter({
     { path: '/test-nav', name: 'test-nav', component: () => import('../pages/TestNavigationPage.vue') },
     { path: '/forum-test', name: 'forum-test', component: () => import('../pages/ForumTestPage.vue') },
     { path: '/forum', name: 'forum', component: () => import('../pages/ForumPage.vue') },
+    {
+      path: '/forum/new',
+      name: 'forum-create',
+      component: () => import('../pages/CreatePostPage.vue'),
+      meta: { requiresAuth: true },
+    },
     { path: '/login', name: 'login', component: () => import('../pages/LoginPage.vue') },
     { path: '/register', name: 'register', component: () => import('../pages/RegisterPage.vue') },
     { path: '/verify-email', name: 'verify-email', component: () => import('../pages/VerifyEmailPage.vue'), meta: { requiresAuth: true } },
@@ -82,6 +88,13 @@ const router = createRouter({
     { path: '/member/coins/purchase', name: 'coins-purchase', component: () => import('../pages/CoinsPurchasePage.vue'), meta: { requiresAuth: true } },
     // 法律條款頁面
     { path: '/legal', name: 'legal', component: () => import('../pages/LegalPage.vue') },
+    // 管理員後台
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('../pages/AdminPage.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
@@ -92,6 +105,16 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const session = useSessionStore();
+  
+  // 檢查管理員權限（靜默重定向）
+  if (to.meta && (to.meta as any).requiresAdmin) {
+    await session.fetchSession(true);
+    if (!session.loggedIn || !session.isAdmin) {
+      // 靜默重定向到首頁，不顯示任何錯誤訊息
+      return { name: 'home', replace: true };
+    }
+  }
+  
   if (to.meta && (to.meta as any).requiresAuth) {
     // 強制刷新，避免 TTL 快取導致登入後短時間內仍判定未登入而重導
     await session.fetchSession(true);
@@ -103,7 +126,7 @@ router.beforeEach(async (to) => {
 
   // 全域：若已登入但尚未通過 Email 驗證，限制進入受保護頁（除了 /verify-email 與 /logout）
   const protectedNames = new Set(['member', 'member-view', 'predict', 'predict-buy', 'games', 'games-list', 'game-detail']);
-  const bypassNames = new Set(['verify-email', 'logout', 'login', 'register', 'home', 'forum', 'forum-test', 'test-nav', 'legal', 'post', 'not-found']);
+  const bypassNames = new Set(['verify-email', 'logout', 'login', 'register', 'home', 'forum', 'forum-test', 'test-nav', 'legal', 'post', 'not-found', 'admin']);
   if (!bypassNames.has((to.name as string) || '')) {
     try {
       await session.fetchSession();

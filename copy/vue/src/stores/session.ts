@@ -7,6 +7,9 @@ interface SessionUser {
   id?: string | number;
   name?: string;
   email?: string;
+  role?: 'user' | 'admin';
+  title?: string;
+  avatarUrl?: string;
 }
 
 interface SessionState {
@@ -37,6 +40,9 @@ export const useSessionStore = defineStore('session', {
     passwordExpiry: null,
     passwordExpiryCheckedAt: null,
   }),
+  getters: {
+    isAdmin: (state) => state.user?.role === 'admin',
+  },
   actions: {
     _set(loggedIn: boolean, user: SessionUser | null, userId?: string) {
       this.loggedIn = loggedIn;
@@ -65,7 +71,21 @@ export const useSessionStore = defineStore('session', {
           const res = await api.get('/auth/session');
           const data = res.data || {};
           const uid: string | undefined = data?.userId || data?.user?.id;
-          this._set(!!data?.loggedIn, data?.user || null, uid);
+          
+          // 處理後端返回的 user 物件（統一為巢狀結構）
+          let user = null;
+          if (data?.loggedIn && data?.user) {
+            user = {
+              id: data.user.id,
+              name: data.user.name,
+              email: data.user.email,
+              role: data.user.role || 'user',
+              title: data.user.title,
+              avatarUrl: data.user.avatarUrl,
+            };
+          }
+          
+          this._set(!!data?.loggedIn, user, uid);
         } catch {
           this._set(false, null, undefined);
         } finally {
@@ -124,6 +144,17 @@ export const useSessionStore = defineStore('session', {
       if (res.status === 200) {
         const data = (res.data || {}) as any;
         if (data?.token) this.setToken(String(data.token));
+        // 保存用戶資訊（包含 role）
+        if (data?.user) {
+          this.user = {
+            id: data.user.id,
+            name: data.user.name,
+            email: data.user.email,
+            role: data.user.role || 'user',
+            title: data.user.title,
+            avatarUrl: data.user.avatarUrl,
+          };
+        }
         // 保存密碼過期狀態
         if (data?.passwordExpiry) {
           this.passwordExpiry = data.passwordExpiry;
@@ -136,6 +167,7 @@ export const useSessionStore = defineStore('session', {
     async logout() {
       await authAPI.logout();
       this.setToken(null);
+      this.user = null;
       this.emailVerified = undefined;
       this.verificationCheckedAt = null;
       this.passwordExpiry = null;
@@ -155,6 +187,8 @@ export const useSessionStore = defineStore('session', {
             id: profile.id ?? this.userId,
             name: profile.name,
             email: this.user?.email,
+            title: profile.title,
+            avatarUrl: profile.avatarUrl,
           };
         }
       } catch {

@@ -75,10 +75,10 @@ import { authAPI } from '../api';
 const router = useRouter();
 const route = useRoute();
 
-const name = ref('Test');
-const email = ref('anuuyu1999@gmail.com');
-const password = ref('Qq!00000');
-const passwordConfirm = ref('Qq!00000');
+const name = ref('Name');
+const email = ref('email@example.com');
+const password = ref('');
+const passwordConfirm = ref('');
 const errorMessage = ref('');
 const successMessage = ref('');
 const submitting = ref(false);

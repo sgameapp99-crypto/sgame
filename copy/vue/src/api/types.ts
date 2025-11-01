@@ -1,8 +1,10 @@
+import type { JSONContent } from '@tiptap/vue-3';
+
 // API 類型定義
 
 // ==================== 通用類型 ====================
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message?: string;
   data?: T;
@@ -28,6 +30,12 @@ export interface LoginResponse {
   success: boolean;
   message: string;
   token?: string;
+  user?: {
+    id: number;
+    email: string;
+    name: string;
+    role: 'user' | 'admin';
+  };
   redirectUrl?: string;
   passwordExpiry?: PasswordExpiryStatus;
 }
@@ -55,6 +63,7 @@ export interface SessionData {
     id: number | string;
     email: string;
     name: string;
+    role?: 'user' | 'admin';
   };
   passwordExpiry?: PasswordExpiryStatus;
 }
@@ -179,4 +188,357 @@ export interface LevelStatsResponse {
   stats: LevelStats;
 }
 
+// ==================== 管理員相關 ====================
 
+export interface AdminGame {
+  id: string;
+  allianceId: number;
+  gameDate: string;
+  gameTime: string;
+  homeTeamName: string;
+  awayTeamName: string;
+  status: 'scheduled' | 'live' | 'finished' | 'cancelled';
+  gameMode: 'international' | 'taiwan';
+  finalScoreHome?: number;
+  finalScoreAway?: number;
+  internationalOdds?: {
+    spread?: {
+      home?: { line: string; odds: string };
+      away?: { line: string; odds: string };
+    };
+    total?: {
+      over?: { line: string; odds: string };
+      under?: { line: string; odds: string };
+    };
+    moneyline?: {
+      home?: { odds: string };
+      away?: { odds: string };
+    };
+  };
+  taiwanOdds?: Record<string, unknown> | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AdminPrediction {
+  id: number;
+  userId: number;
+  userName?: string;
+  gameId: string;
+  predictionType: string;
+  selection: string;
+  odds: string;
+  price: number;
+  status: 'pending' | 'win' | 'lose' | 'cancelled';
+  purchaseCount: number;
+  createdAt: string;
+}
+
+export interface AdminStats {
+  users: {
+    total: number;
+  };
+  games: {
+    total: number;
+    scheduled: number;
+    live: number;
+    finished: number;
+  };
+  predictions: {
+    total: number;
+    pending: number;
+    win: number;
+    lose: number;
+  };
+  purchases?: {
+    total: number;
+  };
+  coins: {
+    totalBalance: number;
+    totalEarned: number;
+    totalSpent: number;
+    transactions: number;
+  };
+}
+
+export interface GameResultUpdate {
+  finalScoreHome: number;
+  finalScoreAway: number;
+  autoCalculate?: boolean;
+}
+
+export interface CalculateResultsRequest {
+  gameIds?: string[];
+  force?: boolean;
+}
+
+export interface CalculateResultsResponse {
+  success: boolean;
+  message: string;
+  data: {
+    summary: {
+      processed: number;
+      wins: number;
+      loses: number;
+      cancelled: number;
+      errors: number;
+    };
+    details: {
+      totalProcessed: number;
+      wins: number;
+      loses: number;
+      cancelled: number;
+      errors: number;
+    };
+  };
+}
+
+export interface AdminStatsResponse {
+  success: boolean;
+  stats: AdminStats;
+}
+
+export interface AdminPredictionsResponse {
+  success: boolean;
+  data: AdminPrediction[];
+  pagination?: {
+    page: number;
+    size: number;
+    total: number;
+  };
+}
+
+export interface AdminGamesResponse {
+  success: boolean;
+  data: AdminGame[];
+  pagination?: {
+    page: number;
+    size: number;
+    total: number;
+  };
+}
+
+export interface Alliance {
+  id: number;
+  code: string;
+  nameZh: string;
+  nameEn: string;
+  sportType: string;
+}
+
+export interface AlliancesResponse {
+  success: boolean;
+  data: Alliance[];
+}
+
+// ==================== 論壇相關 ====================
+
+export interface ForumUser {
+  id: number;
+  name: string;
+  avatarUrl?: string;
+  title?: string;
+}
+
+export interface ForumBoard {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  postCount: number;
+  children?: ForumBoard[];
+}
+
+export interface ForumBoardPayload {
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  parentId?: number | null;
+  allowPost?: string;
+  allowComment?: string;
+  isPublic?: boolean;
+  isActive?: boolean;
+}
+
+export interface ForumBoardOrderItem {
+  id: number;
+  order: number;
+}
+
+export interface AdminForumBoard extends ForumBoard {
+  parentId?: number | null;
+  order?: number;
+  allowPost?: string;
+  allowComment?: string;
+  isPublic?: boolean;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  children?: AdminForumBoard[];
+}
+
+export type TipTapNode = JSONContent;
+
+export type TipTapDoc = JSONContent;
+
+export interface ForumPost {
+  id: number;
+  title: string;
+  contentPreview?: string;
+  author: ForumUser;
+  board: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+  isSticky: boolean;
+  isLocked: boolean;
+  viewCount: number;
+  commentCount: number;
+  likeCount: number;
+  createdAt: string;
+  updatedAt: string;
+  lastCommentAt?: string;
+  lastCommentUser?: ForumUser;
+}
+
+export interface ForumPostDetail extends ForumPost {
+  content: TipTapDoc; // TipTap JSON 結構
+  isLikedByMe: boolean;
+  attachments: ForumAttachment[];
+  tags: ForumTag[];
+}
+
+export interface ForumComment {
+  id: number;
+  postId: number;
+  content: TipTapDoc;
+  author: ForumUser;
+  floor: number;
+  likeCount: number;
+  isLikedByMe: boolean;
+  parentId?: number;
+  replies?: ForumComment[];
+  createdAt: string;
+  updatedAt: string;
+  contentText?: string;
+}
+
+export interface ForumAttachment {
+  id: number;
+  url: string;
+  thumbnailUrl?: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  width?: number;
+  height?: number;
+}
+
+export interface ForumTag {
+  id: number;
+  name: string;
+  slug: string;
+  postCount: number;
+}
+
+export interface AdminForumPost extends ForumPost {
+  status: 'draft' | 'published' | 'locked' | 'hidden';
+  isDeleted: boolean;
+  deletedAt?: string;
+  deletedBy?: number;
+  deleteReason?: string;
+}
+
+export interface ForumStats {
+  totalPosts: number;
+  totalComments: number;
+  totalUsers: number;
+  todayPosts: number;
+  todayComments: number;
+  todayNewUsers: number;
+  topBoards: Array<{
+    boardId: number;
+    boardName: string;
+    postCount: number;
+    commentCount: number;
+  }>;
+  topAuthors: Array<{
+    userId: number;
+    userName: string;
+    postCount: number;
+    totalLikes: number;
+  }>;
+  recentDeleted: Array<{
+    postId: number;
+    title: string;
+    deletedAt: string;
+    deletedBy: number;
+    deleteReason?: string;
+  }>;
+}
+
+export interface ForumBoardsResponse {
+  success: boolean;
+  data: ForumBoard[];
+}
+
+export interface AdminForumBoardsResponse {
+  success: boolean;
+  data: AdminForumBoard[];
+}
+
+export interface ForumPostsResponse {
+  success: boolean;
+  data: ForumPost[];
+  pagination: {
+    page: number;
+    size: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface ForumPostDetailResponse {
+  success: boolean;
+  data: ForumPostDetail;
+}
+
+export interface ForumCommentsResponse {
+  success: boolean;
+  data: ForumComment[];
+  pagination?: {
+    page: number;
+    size: number;
+    total: number;
+  };
+}
+
+export interface CommentPayload {
+  content: TipTapDoc;
+  parentId?: number;
+}
+
+export interface ForumTagsResponse {
+  success: boolean;
+  data: ForumTag[];
+}
+
+export interface ForumAdminPostsResponse {
+  success: boolean;
+  data: AdminForumPost[];
+  pagination: {
+    page: number;
+    size: number;
+    total: number;
+  };
+}
+
+export interface ForumStatsResponse {
+  success: boolean;
+  stats: ForumStats;
+}
