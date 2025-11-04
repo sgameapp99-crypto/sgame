@@ -5,7 +5,9 @@
     
     <!-- 主要內容區域 -->
     <main class="main-content">
-      <RouterView />
+      <div class="layout-container">
+        <RouterView />
+      </div>
     </main>
     
     <!-- 底部欄位 -->
@@ -47,7 +49,41 @@ body {
 .main-content {
   min-height: calc(100vh - 60px - 120px); /* 減去頂部導航高度和底部欄位高度 */
   background: #f5f5f5;
-  padding-bottom: 20px; /* 額外底部間距 */
+  padding: 32px 0 40px; /* 水平留白改由 layout-container 控制 */
+}
+
+.layout-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+@media (max-width: 1024px) {
+  .layout-container {
+    max-width: 1000px;
+    padding: 0 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 24px 0 32px;
+  }
+
+  .layout-container {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 16px 0 24px;
+  }
+
+  .layout-container {
+    padding: 0 12px;
+  }
 }
 
 /* 全域樣式重置 */

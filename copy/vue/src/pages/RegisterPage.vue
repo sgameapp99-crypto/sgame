@@ -12,11 +12,10 @@
 
       <!-- 第三方登入 -->
       <div class="oauth-row">
-        <button class="oauth-btn google" @click="oauth('google')" disabled title="開發環境不支援 (私有IP限制)"><i class="icon">G</i> 使用 Google 登入（開發環境不可用）</button>
+        <button class="oauth-btn google" @click="oauth('google')"><i class="icon">G</i> 使用 Google 登入</button>
         <button class="oauth-btn facebook" disabled title="Facebook 登入尚未完成"><i class="icon">f</i> Facebook 登入（開發中）</button>
         <button class="oauth-btn line" disabled title="Line 登入尚未完成"><i class="icon">L</i> Line 登入（開發中）</button>
       </div>
-      <p style="font-size: 11px; color: #999; margin: 8px 0 0 0; text-align: center;">⚠️ Google OAuth 需要公網環境才能使用</p>
 
       <div class="sep">
         <span>或</span>
@@ -208,7 +207,8 @@ async function onSubmit() {
   padding: 24px;
 }
 .login-dialog {
-  width: 386px;
+  width: min(420px, 100%);
+  max-width: 420px;
   min-height: 594px;
   background: #fff;
   border-radius: 8px;
@@ -237,4 +237,28 @@ async function onSubmit() {
 .signup { color: #0277bd; font-size: 14px; }
 .message-error { color: #dc3545; font-size: 13px; margin: 0; }
 .message-success { color: #28a745; font-size: 13px; margin: 0; }
+
+@media (max-width: 600px) {
+  .login-page {
+    padding: 16px;
+  }
+
+  .login-dialog {
+    min-height: auto;
+    padding: 16px 16px 20px;
+  }
+
+  .action-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .submit {
+    width: 100%;
+  }
+
+  .signup {
+    text-align: center;
+  }
+}
 </style>

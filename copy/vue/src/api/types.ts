@@ -132,6 +132,66 @@ export interface MemberProfileResponse {
   relationships?: MemberRelationships;
 }
 
+export interface MemberSearchParams {
+  nickname: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PageMeta {
+  page: number;
+  size: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+}
+
+export interface MemberSearchRelationships {
+  isSelf: boolean;
+  isFollowing?: boolean;
+  canFollow?: boolean;
+}
+
+export interface MemberSearchResult {
+  id: number;
+  name: string;
+  avatarUrl?: string | null;
+  level: string;
+  levelInfo?: LevelInfo;
+  score: number;
+  followersCount: number;
+  followingCount: number;
+  joinedAt: string;
+  bio?: string | null;
+  relationships?: MemberSearchRelationships;
+}
+
+export type MemberRecommendationType = 'accuracy' | 'level';
+
+export interface MemberRecommendationMeta {
+  type: MemberRecommendationType;
+  accuracy?: number;
+  winCount?: number;
+  totalPredictions?: number;
+  reason?: string;
+}
+
+export interface MemberRecommendation extends MemberSearchResult {
+  recommendation?: MemberRecommendationMeta;
+}
+
+export interface MemberSearchResponse {
+  success: boolean;
+  keyword: string;
+  results: MemberSearchResult[];
+  pagination: PageMeta;
+}
+
+export interface MemberRecommendationsResponse {
+  success: boolean;
+  recommendations: MemberRecommendation[];
+}
+
 export interface AvatarUploadResponse {
   success: boolean;
   url: string;

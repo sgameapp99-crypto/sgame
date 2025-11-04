@@ -1,0 +1,1685 @@
+openapi: 3.1.0
+info:
+  title: SGame Member API
+  version: 0.1.0
+  description: |
+    前後端協作用 API 規格（對外 REST + JSON）。
+    - 對外傳輸格式：application/json
+    - 規格文件格式：OpenAPI (YAML)
+servers:
+  - url: https://10.2.0.2:8080
+    description: Development (內網環境)
+  - url: https://api.example.com
+    description: Production
+  - url: https://staging-api.example.com
+    description: Staging
+tags:
+  - name: system
+    description: 系統狀態檢查
+  - name: auth
+    description: 認證
+  - name: members
+    description: 會員資料/頁面主體
+  - name: me
+    description: 個人設定/資料維護
+  - name: filters
+    description: 篩選/字典資料
+  - name: posts
+    description: 會員發文
+  - name: levels
+    description: 會員等級系統
+
+paths:
+  /health:
+    get:
+      tags: [system]
+      summary: 健康檢查
+      description: 檢查API服務、資料庫和Redis連接狀態
+      responses:
+        '200':
+          description: 服務正常運行
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  services:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                        example: "connected"
+                      redis:
+                        type: string
+                        example: "connected"
+
+  /levels:
+    get:
+      tags: [levels]
+      summary: 獲取所有等級資訊
+      responses:
+        '200':
+          description: 等級資訊列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  levels:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          example: "bronze"
+                        name:
+                          type: string
+                          example: "青銅"
+                        nameEn:
+                          type: string
+                          example: "Bronze"
+                        color:
+                          type: string
+                          example: "#CD7F32"
+                        icon:
+                          type: string
+                          example: "🥉"
+                        minScore:
+                          type: number
+                          example: 0
+                        maxScore:
+                          type: number
+                          nullable: true
+                          example: 999
+                        description:
+                          type: string
+                          example: "新手等級"
+                        benefits:
+                          type: array
+                          items:
+                            type: string
+                          example: ["基本會員功能", "每日登入獎勵"]
+
+  /levels/stats:
+    get:
+      tags: [levels]
+      summary: 獲取等級統計資訊
+      responses:
+        '200':
+          description: 等級統計
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  stats:
+                    type: object
+
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: 使用者登入
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+              required: [email, password]
+      responses:
+        '200':
+          description: 登入成功（同時以 Set-Cookie 下發 HttpOnly 會話）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "登入成功"
+                  token:
+                    type: string
+                    description: JWT Bearer Token
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  passwordExpiry:
+                    $ref: '#/components/schemas/PasswordExpiryInfo'
+        '204':
+          description: 登入成功（無回應內容；以 Set-Cookie 下發 HttpOnly 會話）
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: 參數驗證錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: 使用者註冊（Email/Password）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                name:
+                  type: string
+              required: [email, password, name]
+      responses:
+        '201':
+          description: 註冊成功（需要郵箱驗證）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    description: 註冊成功訊息
+                    example: "註冊成功，請檢查郵箱並完成驗證"
+                  redirectUrl:
+                    type: string
+                    description: 註冊後導回路徑
+                    example: "/login"
+                  needsVerification:
+                    type: boolean
+                    description: 是否需要郵箱驗證
+                    default: true
+                    example: true
+        '409':
+          description: Email 已被使用
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 參數驗證錯誤
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - $ref: '#/components/schemas/PasswordWeakError'
+
+  /auth/send-verification:
+    post:
+      tags: [auth]
+      summary: 發送郵箱驗證碼
+      description: 向用戶郵箱發送 6 位數驗證碼
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 驗證碼發送成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          description: 發送失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/verify-email:
+    post:
+      tags: [auth]
+      summary: 驗證郵箱驗證碼
+      description: 使用 6 位數驗證碼驗證用戶郵箱
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+                  description: 6位數驗證碼
+              required: [code]
+      responses:
+        '200':
+          description: 驗證成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationResponse'
+        '400':
+          description: 驗證失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailVerificationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: 參數驗證錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Note: /auth/resend-verification endpoint has been removed
+  # Use /auth/send-verification for both initial send and resend
+  # The service automatically handles cooldown periods (60 seconds)
+
+  /auth/verification-status:
+    get:
+      tags: [auth]
+      summary: 檢查驗證狀態
+      description: 獲取用戶郵箱驗證狀態
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 獲取驗證狀態成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/forgot-password:
+    post:
+      tags: [auth]
+      summary: 忘記密碼 - 發送重設郵件
+      description: 向用戶郵箱發送密碼重設郵件
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: 用戶郵箱
+              required: [email]
+      responses:
+        '200':
+          description: 重設郵件發送成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetResponse'
+        '400':
+          description: 發送失敗或帳號問題
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetResponse'
+        '422':
+          description: 參數驗證錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/verify-reset-token:
+    post:
+      tags: [auth]
+      summary: 驗證密碼重設令牌
+      description: 驗證從郵件中獲得的重設令牌是否有效
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: 重設令牌
+              required: [token]
+      responses:
+        '200':
+          description: 令牌驗證結果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenVerificationResponse'
+        '400':
+          description: 令牌無效或已過期
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenVerificationResponse'
+        '422':
+          description: 參數驗證錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/reset-password:
+    post:
+      tags: [auth]
+      summary: 重設密碼
+      description: 使用重設令牌設定新密碼
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: 重設令牌
+                newPassword:
+                  type: string
+                  minLength: 8
+                  description: 新密碼
+              required: [token, newPassword]
+      responses:
+        '200':
+          description: 密碼重設成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetResponse'
+        '400':
+          description: 令牌無效或密碼不符合要求
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/PasswordResetResponse'
+                  - $ref: '#/components/schemas/PasswordWeakError'
+        '422':
+          description: 參數驗證錯誤
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - $ref: '#/components/schemas/PasswordWeakError'
+
+  /auth/change-password:
+    post:
+      tags: [auth]
+      summary: 更新密碼
+      description: 已登入用戶更新密碼
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                  description: 當前密碼
+                newPassword:
+                  type: string
+                  minLength: 8
+                  description: 新密碼
+              required: [currentPassword, newPassword]
+      responses:
+        '200':
+          description: 密碼更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordChangeResponse'
+        '400':
+          description: 密碼驗證失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetResponse'
+        '422':
+          description: 新密碼不符合要求
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordWeakError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/password-expiry-status:
+    get:
+      tags: [auth]
+      summary: 檢查密碼過期狀態
+      description: 獲取用戶密碼過期狀態資訊
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 密碼過期狀態
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordExpiryStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/oauth/google/start:
+    get:
+      tags: [auth]
+      summary: Google OAuth 登入起始（導向供應商授權頁）
+      parameters:
+        - $ref: '#/components/parameters/RedirectUrl'
+      responses:
+        '302': { description: 重新導向至 Google 授權頁 }
+
+  /auth/oauth/google/callback:
+    get:
+      tags: [auth]
+      summary: Google OAuth 回調（交換授權碼、建立會話）
+      responses:
+        '302': { description: 建立會話並導回 redirectUrl 或導回 /login 顯示錯誤 }
+
+  /auth/oauth/facebook/start:
+    get:
+      tags: [auth]
+      summary: Facebook OAuth 登入起始（導向供應商授權頁）
+      parameters:
+        - $ref: '#/components/parameters/RedirectUrl'
+      responses:
+        '302': { description: 重新導向至 Facebook 授權頁 }
+
+  /auth/oauth/facebook/callback:
+    get:
+      tags: [auth]
+      summary: Facebook OAuth 回調（交換授權碼、建立會話）
+      responses:
+        '302': { description: 建立會話並導回 redirectUrl 或導回 /login 顯示錯誤 }
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: 登出
+      responses:
+        '204':
+          description: 已登出
+
+  /auth/session:
+    get:
+      tags: [auth]
+      summary: 查詢目前 Session/Token 有效性
+      responses:
+        '200':
+          description: Session 有效
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  loggedIn:
+                    type: boolean
+                    example: true
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      email:
+                        type: string
+                        format: email
+                      name:
+                        type: string
+        '401':
+          description: 未登入或Session無效
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "未登入"
+                  loggedIn:
+                    type: boolean
+                    example: false
+
+  /users/profile:
+    get:
+      tags: [users]
+      summary: 取得使用者個人資料（未完成/暫不提供）
+      description: 未完成/暫不提供
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200': { description: 用戶資料 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    put:
+      tags: [users]
+      summary: 更新使用者個人資料（未完成/暫不提供）
+      description: 未完成/暫不提供
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                phone:
+                  type: string
+                avatar:
+                  type: string
+      responses:
+        '200': { description: 更新成功 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /predictions:
+    get:
+      tags: [predictions]
+      summary: 取得預測列表（未完成/暫不提供）
+      description: 未完成/暫不提供
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 10 }
+        - in: query
+          name: sport
+          schema:
+            type: string
+            enum: [BASKETBALL, FOOTBALL, BASEBALL, TENNIS, SOCCER]
+      responses:
+        '200': { description: 預測列表 }
+    post:
+      tags: [predictions]
+      summary: 建立預測（未完成/暫不提供）
+      description: 未完成/暫不提供
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, description, sport, predictionType, odds, price]
+              properties:
+                title: { type: string }
+                description: { type: string }
+                sport: { type: string, enum: [BASKETBALL, FOOTBALL, BASEBALL, TENNIS, SOCCER] }
+                predictionType: { type: string, enum: [WIN_LOSE, HANDICAP, OVER_UNDER, CORRECT_SCORE] }
+                odds: { type: number }
+                price: { type: number }
+                matchInfo: { type: object }
+      responses:
+        '201': { description: 預測創建成功 }
+        '401': { description: 未授權 }
+
+  /predictions/{id}:
+    get:
+      tags: [predictions]
+      summary: 取得特定預測詳情（未完成/暫不提供）
+      description: 未完成/暫不提供
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: 預測詳情 }
+        '404': { description: 預測不存在 }
+  /me/avatar:
+    post:
+      tags: [me]
+      summary: 上傳並設定我的大頭貼（本機儲存，固定檔名 {userId}.webp）
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: 上傳成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  url:
+                    type: string
+                    example: "/uploads/avatars/2-1761064089932.jpg"
+                  updatedAt:
+                    type: string
+                    format: date-time
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '413':
+          description: 檔案過大
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '415':
+          description: 檔案格式不支援
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 上傳失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /me/name:
+    patch:
+      tags: [me]
+      summary: 更新我的用戶名稱
+      description: |
+        更新當前用戶的顯示名稱
+        - 長度：2-10 字元
+        - 內容：僅允許中文和英文字母
+        - 頻率：無限制
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 10
+                  description: 用戶名稱（2-10字元，僅中英文）
+                  example: "新名稱"
+              required: [name]
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  name:
+                    type: string
+                    example: "新名稱"
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    example: "2025-10-21T16:30:00.000Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: 名稱格式不正確
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NameValidationError'
+        '500':
+          description: 伺服器錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /members/search:
+    get:
+      tags: [members]
+      summary: 以暱稱搜尋會員
+      description: 支援模糊查詢與分頁，登入狀態下會回傳追蹤狀態資訊。
+      parameters:
+        - in: query
+          name: nickname
+          schema:
+            type: string
+            minLength: 1
+          required: true
+          description: 暱稱關鍵字（大小寫不敏感）
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          required: false
+          description: 頁碼（預設 1）
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+          required: false
+          description: 每頁筆數（預設 20，最大 50）
+      responses:
+        '200':
+          description: 搜尋結果列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  keyword:
+                    type: string
+                    description: 實際使用的搜尋關鍵字
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MemberSearchResult'
+                  pagination:
+                    $ref: '#/components/schemas/PageMeta'
+        '422':
+          description: 缺少必填參數或格式錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 伺服器錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /members/recommendations:
+    get:
+      tags: [members]
+      summary: 推薦會員（Top 5）
+      description: 依預測正確率優先排序，不足五位時以等級最高者補足。
+      responses:
+        '200':
+          description: 推薦清單
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  recommendations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MemberRecommendation'
+        '500':
+          description: 伺服器錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /members/{id}/profile:
+    get:
+      tags: [members]
+      summary: 會員基本資料
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: 會員基本資料及等級資訊
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  profile:
+                    $ref: '#/components/schemas/MemberProfile'
+                  relationships:
+                    type: object
+                    properties:
+                      isSelf:
+                        type: boolean
+                        description: 是否為本人
+                      isFollowing:
+                        type: boolean
+                        description: 是否已追蹤
+                      isMutual:
+                        type: boolean
+                        description: 是否互相關注
+
+  /members/{id}/relationships:
+    get:
+      tags: [members]
+      summary: 會員與目前使用者的關係
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: 關係資訊
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isSelf:
+                    type: boolean
+                  isFollowing:
+                    type: boolean
+                  isMutual:
+                    type: boolean
+
+  /members/{id}/follow:
+    post:
+      tags: [members]
+      summary: 追蹤會員
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '204': { description: 成功 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    delete:
+      tags: [members]
+      summary: 取消追蹤會員
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '204': { description: 成功 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /members/{id}/stats:
+    get:
+      tags: [members]
+      summary: 會員統計資訊
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberStats'
+
+  /members/{id}/honors:
+    get:
+      tags: [members]
+      summary: 會員榮譽列表
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: honors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemberHonor'
+
+  /members/{id}/predictions:
+    get:
+      tags: [members]
+      summary: 會員預測列表（未完成/暫不提供）
+      description: 未完成/暫不提供
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - $ref: '#/components/parameters/League'
+        - $ref: '#/components/parameters/DateRange'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: 預測清單（分頁）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictionsResponse'
+
+  /members/{id}/posts:
+    get:
+      tags: [posts]
+      summary: 會員發文列表（未完成/暫不提供）
+      description: 未完成/暫不提供
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: 發文清單（分頁）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostsResponse'
+
+  /filters/leagues:
+    get:
+      tags: [filters]
+      summary: 聯盟字典（未完成/暫不提供）
+      description: 未完成/暫不提供
+      responses:
+        '200':
+          description: leagues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/League'
+
+  /filters/dates:
+    get:
+      tags: [filters]
+      summary: 日期字典（近 N 天）（未完成/暫不提供）
+      description: 未完成/暫不提供
+      parameters:
+        - in: query
+          name: range
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 31
+          description: 回傳最近 N 天（含今天）
+      responses:
+        '200':
+          description: dates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DateFilterItem'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sgame_session
+
+  parameters:
+    MemberId:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      description: 會員 ID 或代號
+    League:
+      in: query
+      name: league
+      schema:
+        type: string
+        description: 聯盟代碼（例如 MLB/NPB/CPBL）
+    DateRange:
+      in: query
+      name: dateRange
+      schema:
+        type: string
+        enum: [today, week, month]
+      description: 預設用 today/week/month；若採用精確日期，改走 /filters/dates 與額外 date=YYYY-MM-DD 參數
+    Page:
+      in: query
+      name: page
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Size:
+      in: query
+      name: size
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    OAuthProvider:
+      in: path
+      name: provider
+      required: true
+      schema:
+        type: string
+        enum: [google, facebook, line]
+      description: 第三方登入供應商
+    RedirectUrl:
+      in: query
+      name: redirectUrl
+      required: false
+      schema:
+        type: string
+      description: 登入完成後導回的相對路徑，後端需做白名單檢查
+
+  responses:
+    Unauthorized:
+      description: 未授權
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    OAuthError:
+      description: 第三方登入錯誤
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OAuthError'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+    OAuthError:
+      type: object
+      properties:
+        code:
+          type: string
+          enum: [OAUTH_PROVIDER_DENIED, OAUTH_INVALID_STATE, OAUTH_EXCHANGE_FAILED, OAUTH_REDIRECT_INVALID]
+        message:
+          type: string
+        reload:
+          type: boolean
+
+    PageMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+          description: 總頁數
+        hasNext:
+          type: boolean
+          description: 是否仍有下一頁
+
+    LevelInfo:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        nameEn:
+          type: string
+        color:
+          type: string
+        icon:
+          type: string
+        minScore:
+          type: number
+        maxScore:
+          type: number
+          nullable: true
+        description:
+          type: string
+        benefits:
+          type: array
+          items:
+            type: string
+
+    League:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+          example: MLB
+        name:
+          type: string
+
+    DateFilterItem:
+      type: object
+      properties:
+        key:
+          type: string
+          example: '2025-09-16'
+        label:
+          type: string
+          example: '09/16(二)'
+
+    MemberProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 用戶ID
+        email:
+          type: string
+          format: email
+          description: 用戶郵箱
+        name:
+          type: string
+          description: 用戶名稱
+        avatarUrl:
+          type: string
+          nullable: true
+          description: 頭像URL
+        emailVerified:
+          type: boolean
+          description: 郵箱是否已驗證
+        createdAt:
+          type: string
+          format: date-time
+          description: 註冊時間
+        updatedAt:
+          type: string
+          format: date-time
+          description: 最後更新時間
+        level:
+          type: string
+          description: 等級代碼
+        score:
+          type: integer
+          description: 用戶分數，用於等級計算
+        bio:
+          type: string
+          description: 個人簡介
+        joinedAt:
+          type: string
+          format: date-time
+          description: 加入時間
+        followersCount:
+          type: integer
+          description: 追蹤者數量
+        followingCount:
+          type: integer
+          description: 追蹤中數量
+        levelInfo:
+          $ref: '#/components/schemas/LevelInfo'
+        levelProgress:
+          type: object
+          properties:
+            percentage:
+              type: number
+            currentScore:
+              type: number
+            levelMinScore:
+              type: number
+            levelMaxScore:
+              type: number
+            pointsToNext:
+              type: number
+        nextLevel:
+          $ref: '#/components/schemas/LevelInfo'
+
+    MemberSearchResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 用戶ID
+        name:
+          type: string
+          description: 暱稱
+        avatarUrl:
+          type: string
+          nullable: true
+          description: 大頭貼網址
+        level:
+          type: string
+          description: 等級代碼
+        levelInfo:
+          $ref: '#/components/schemas/LevelInfo'
+        score:
+          type: integer
+          description: 累積經驗值
+        followersCount:
+          type: integer
+          description: 追蹤者數量
+        followingCount:
+          type: integer
+          description: 追蹤中數量
+        joinedAt:
+          type: string
+          format: date-time
+          description: 加入時間
+        relationships:
+          type: object
+          properties:
+            isSelf:
+              type: boolean
+            isFollowing:
+              type: boolean
+            canFollow:
+              type: boolean
+
+    MemberRecommendation:
+      allOf:
+        - $ref: '#/components/schemas/MemberSearchResult'
+        - type: object
+          properties:
+            recommendation:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [accuracy, level]
+                  description: 推薦來源類型
+                accuracy:
+                  type: number
+                  format: float
+                  description: 預測正確率（僅 accuracy 類型）
+                winCount:
+                  type: integer
+                  description: 勝場數（僅 accuracy 類型）
+                totalPredictions:
+                  type: integer
+                  description: 預測場次（僅 accuracy 類型）
+                reason:
+                  type: string
+                  description: 人類可讀的推薦理由
+
+    MemberStats:
+      type: object
+      properties:
+        totalPredictions:
+          type: integer
+        winRate:
+          type: number
+          format: float
+        winStreak:
+          type: integer
+        ranking:
+          type: integer
+
+    MemberHonor:
+      type: object
+      properties:
+        id:
+          type: integer
+        icon:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+
+    MemberPost:
+      type: object
+      properties:
+        id:
+          type: integer
+        board:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        replies:
+          type: integer
+        views:
+          type: integer
+        push:
+          type: integer
+
+    PredictionItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        league:
+          type: string
+          example: MLB
+        gameDateTime:
+          type: string
+          format: date-time
+        homeTeam:
+          type: string
+        awayTeam:
+          type: string
+        market:
+          type: string
+          example: 讓分
+        selection:
+          type: string
+          example: 主 -1.5
+        isMainPick:
+          type: boolean
+        result:
+          type: string
+          enum: [win, lose, pending]
+        score:
+          type: object
+          properties:
+            home:
+              type: integer
+            away:
+              type: integer
+
+    PredictionsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PredictionItem'
+        pageMeta:
+          $ref: '#/components/schemas/PageMeta'
+
+    PostsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemberPost'
+        pageMeta:
+          $ref: '#/components/schemas/PageMeta'
+
+    VerificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 操作是否成功
+        message:
+          type: string
+          description: 回應訊息
+        expiresIn:
+          type: integer
+          description: 驗證碼過期時間（秒）
+          example: 300
+
+    VerificationStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 操作是否成功
+        isVerified:
+          type: boolean
+          description: 郵箱是否已驗證
+        email:
+          type: string
+          format: email
+          description: 用戶郵箱地址
+
+    EmailVerificationError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 操作是否成功
+          default: false
+        message:
+          type: string
+          description: 錯誤訊息
+        code:
+          type: string
+          enum: 
+            - VERIFICATION_CODE_EXPIRED
+            - VERIFICATION_CODE_INVALID
+            - EMAIL_ALREADY_VERIFIED
+            - RATE_LIMIT_EXCEEDED
+            - VERIFICATION_SEND_FAILED
+          description: 錯誤代碼
+
+    PasswordWeakError:
+      type: object
+      properties:
+        code:
+          type: string
+          enum: [PASSWORD_WEAK]
+          description: 密碼強度錯誤代碼
+        message:
+          type: string
+          description: 人類可讀的錯誤訊息
+          example: "密碼需為 8–12 碼，含大小寫、數字與特殊符號，不可含空白，且不可與 Email 相關"
+        details:
+          type: object
+          description: 機器可讀的驗證詳情
+          properties:
+            length:
+              type: boolean
+              description: 長度是否符合要求 (8-12)
+            hasUpper:
+              type: boolean
+              description: 是否包含大寫字母
+            hasLower:
+              type: boolean
+              description: 是否包含小寫字母
+            hasNumber:
+              type: boolean
+              description: 是否包含數字
+            hasSpecial:
+              type: boolean
+              description: 是否包含特殊字元
+            noWhitespace:
+              type: boolean
+              description: 是否不包含空白字元
+            notEmailLike:
+              type: boolean
+              description: 是否與 Email 無關
+        errors:
+          type: array
+          description: 具體錯誤訊息列表
+          items:
+            type: string
+          example: ["密碼長度必須為 8-12 字元", "密碼必須包含至少一個大寫字母"]
+
+    TooManyAttemptsError:
+      type: object
+      properties:
+        code:
+          type: string
+          enum: [TOO_MANY_ATTEMPTS]
+          description: 請求過於頻繁錯誤代碼
+        message:
+          type: string
+          description: 錯誤訊息
+          example: "註冊嘗試過於頻繁，請稍後再試"
+
+    NameValidationError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: false
+          description: 操作是否成功
+        code:
+          type: string
+          enum: [NAME_INVALID]
+          description: 名稱驗證錯誤代碼
+        message:
+          type: string
+          description: 人類可讀的錯誤訊息
+          example: "名稱格式不正確"
+        details:
+          type: object
+          description: 機器可讀的驗證詳情
+          properties:
+            length:
+              type: boolean
+              description: 長度是否符合要求 (2-10)
+            onlyChineseEnglish:
+              type: boolean
+              description: 是否僅包含中英文
+        errors:
+          type: array
+          description: 具體錯誤訊息列表
+          items:
+            type: string
+          example: ["名稱長度至少需要 2 個字元", "名稱僅允許中文和英文字母"]
+
+    LoginResponse:
+      type: object
+      properties:
+        redirectUrl:
+          type: string
+          description: 登入後導回路徑，若缺省則由前端決定（如首頁）
+        message:
+          type: string
+          description: 登入訊息
+          example: "登入成功"
+        token:
+          type: string
+          description: JWT Bearer Token，用於後續 API 認證
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        passwordExpiry:
+          $ref: '#/components/schemas/PasswordExpiryInfo'
+
+    PasswordExpiryInfo:
+      type: object
+      properties:
+        isExpired:
+          type: boolean
+          description: 密碼是否已過期
+        isWarning:
+          type: boolean
+          description: 是否在警告期內（7天內過期）
+        daysUntilExpiry:
+          type: integer
+          description: 距離過期天數
+        message:
+          type: string
+          description: 人類可讀的狀態訊息
+          example: "您的密碼狀態正常，距離過期還有 180 天。"
+
+    PasswordResetResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 操作是否成功
+        message:
+          type: string
+          description: 回應訊息
+          example: "密碼重設郵件已發送至您的郵箱，請在 24 小時內完成重設"
+
+    TokenVerificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 操作是否成功
+        valid:
+          type: boolean
+          description: 令牌是否有效
+        email:
+          type: string
+          format: email
+          description: 用戶郵箱地址（僅在令牌有效時提供）
+        message:
+          type: string
+          description: 回應訊息
+
+    PasswordChangeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 操作是否成功
+        message:
+          type: string
+          description: 回應訊息
+          example: "密碼更新成功"
+        passwordExpiry:
+          $ref: '#/components/schemas/PasswordExpiryInfo'
+
+    PasswordExpiryStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 操作是否成功
+        isExpired:
+          type: boolean
+          description: 密碼是否已過期
+        isWarning:
+          type: boolean
+          description: 是否在警告期內
+        daysUntilExpiry:
+          type: integer
+          description: 距離過期天數
+        daysSinceChange:
+          type: integer
+          description: 密碼變更後經過天數
+        lastChanged:
+          type: string
+          format: date-time
+          description: 密碼最後變更時間
+        message:
+          type: string
+          description: 人類可讀的狀態訊息
+
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+
+

@@ -27,9 +27,9 @@
         </ul>
       </div>
 
-      <p class="copyrights">
+      <p class="copyrights" v-if="false">
         © 2025 玩運彩 
-        <span>法律顧問：漢英得力法律事務所 陳鎮宏律師</span>
+        <span>法律顧問：XXXX法律事務所 XXXX律師</span>
       </p>
       
       <!-- reCAPTCHA服務的宣告說明 -->

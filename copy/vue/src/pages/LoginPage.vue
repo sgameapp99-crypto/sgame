@@ -6,11 +6,10 @@
       </div>
 
       <div class="oauth-row">
-        <button class="oauth-btn google" @click="oauth('google')" disabled title="開發環境不支援 (私有IP限制)"><i class="icon">G</i> Google 登入（開發環境不可用）</button>
+        <button class="oauth-btn google" @click="oauth('google')"><i class="icon">G</i> Google 登入</button>
         <button class="oauth-btn facebook" disabled title="Facebook 登入尚未完成"><i class="icon">f</i> Facebook 登入（開發中）</button>
         <button class="oauth-btn line" disabled title="Line 登入尚未完成"><i class="icon">L</i> Line 登入（開發中）</button>
       </div>
-      <p style="font-size: 11px; color: #999; margin: 8px 0 0 0; text-align: center;">⚠️ Google OAuth 需要公網環境才能使用</p>
 
       <div class="sep">
         <span>或</span>

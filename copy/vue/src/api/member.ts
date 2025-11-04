@@ -7,6 +7,9 @@ import type {
   AvatarUploadResponse,
   UpdateNameRequest,
   UpdateNameResponse,
+  MemberSearchParams,
+  MemberSearchResponse,
+  MemberRecommendationsResponse,
 } from './types';
 
 /**
@@ -30,6 +33,26 @@ export const memberAPI = {
   async getRelationships(memberId: string | number) {
     const response = await api.get<{ success: boolean; data: MemberRelationships }>(`/members/${memberId}/relationships`);
     return response.data.data;
+  },
+
+  /**
+   * 搜尋會員
+   * GET /api/members/search
+   */
+  async search(params: MemberSearchParams) {
+    const response = await api.get<MemberSearchResponse>('/members/search', {
+      params,
+    });
+    return response.data;
+  },
+
+  /**
+   * 取得推薦會員清單
+   * GET /api/members/recommendations
+   */
+  async getRecommendations() {
+    const response = await api.get<MemberRecommendationsResponse>('/members/recommendations');
+    return response.data;
   },
 
   /**

@@ -79,6 +79,7 @@ export interface PredictionsQueryParams {
   memberId?: string | number; // 後端使用 memberId 查詢目標會員的預測
   userId?: string; // 保留向後兼容（已廢棄，請使用 memberId）
   allianceId?: number;
+  gameId?: string;
   dateRange?: DateRange;
   gameMode?: GameMode;
   status?: PredictionStatus | 'all';

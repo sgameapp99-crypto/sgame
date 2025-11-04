@@ -1,6 +1,44 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 
+const DEFAULT_TITLE = '玩運彩預測平台';
+
+const ROUTE_TITLES: Record<string, string> = {
+  home: '玩運彩討論區首頁｜玩運彩',
+  'test-nav': '測試導覽｜玩運彩',
+  'forum-test': '論壇測試頁｜玩運彩',
+  forum: '討論區｜玩運彩',
+  'forum-create': '發表文章｜玩運彩',
+  login: '會員登入｜玩運彩',
+  register: '加入會員｜玩運彩',
+  'verify-email': 'Email 驗證｜玩運彩',
+  'password-change': '變更密碼｜玩運彩',
+  'forgot-password': '忘記密碼｜玩運彩',
+  'reset-password': '重設密碼｜玩運彩',
+  post: '文章內容｜玩運彩',
+  member: '我的會員中心｜玩運彩',
+  'member-view': '會員資訊｜玩運彩',
+  predict: '預測賽事｜玩運彩',
+  'predict-buy': '預測購買｜玩運彩',
+  guess: '玩競猜｜玩運彩',
+  livescore: '即時比分｜玩運彩',
+  'buy-predict': '找高手｜玩運彩',
+  billboard: '高手排行榜｜玩運彩',
+  'member-search': '玩家搜尋｜玩運彩',
+  games: '賽事資料｜玩運彩',
+  'games-battle': '對戰資訊｜玩運彩',
+  'games-teams': '球隊資訊｜玩運彩',
+  'games-standings': '排名戰績｜玩運彩',
+  'games-results': '賽事結果｜玩運彩',
+  'games-list': '賽事列表｜玩運彩',
+  'game-detail': '賽事詳情｜玩運彩',
+  'member-settings': '帳戶設定｜玩運彩',
+  'coins-purchase': '彩幣購買｜玩運彩',
+  legal: '法律條款｜玩運彩',
+  admin: '管理後台｜玩運彩',
+  'not-found': '頁面不存在｜玩運彩',
+};
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -139,6 +177,16 @@ router.beforeEach(async (to) => {
     } catch {}
   }
   return true;
+});
+
+router.afterEach((to) => {
+  if (typeof document === 'undefined') {
+    return;
+  }
+  const metaTitle = typeof (to.meta as any)?.title === 'string' ? (to.meta as any).title : undefined;
+  const routeName = typeof to.name === 'string' ? to.name : undefined;
+  const mappedTitle = routeName ? ROUTE_TITLES[routeName] : undefined;
+  document.title = metaTitle || mappedTitle || DEFAULT_TITLE;
 });
 
 export default router;

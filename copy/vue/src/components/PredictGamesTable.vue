@@ -4,8 +4,9 @@
       <div class="menugroupbox-top"></div>
       <div class="menugroupbox-con">
         <form id="predict_form" method="post" action="" class="jqtransformdone">
-          <table border="0" cellspacing="0" cellpadding="0" class="predictgame-table">
-            <tbody>
+          <div class="predict-table-scroll" aria-live="polite">
+            <table border="0" cellspacing="0" cellpadding="0" class="predictgame-table">
+              <tbody>
               <tr>
                 <th rowspan="2" scope="col" class="th-gameinfo">賽事資訊</th>
                 <th rowspan="2" scope="col" class="th-teaminfo">球隊資訊</th>
@@ -243,6 +244,7 @@
               </tr>
             </tbody>
           </table>
+          </div>
           <input type="hidden" name="allianceid" :value="selectedAlliance">
           <input type="hidden" name="gamerow" :value="games.length">
           <input type="hidden" name="categorytype" value="1">
@@ -472,10 +474,37 @@ async function handleSubmitPredictions() {
   padding: 20px;
 }
 
+.predict-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e4e9f2;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  background: #ffffff;
+  margin-top: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.predict-table-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.predict-table-scroll::-webkit-scrollbar-thumb {
+  background: rgba(9, 90, 139, 0.35);
+  border-radius: 999px;
+}
+
 .predictgame-table {
   width: 100%;
   border-collapse: collapse;
   margin: 0;
+  min-width: 960px;
+}
+
+@media (max-width: 1024px) {
+  .predictgame-table {
+    min-width: 840px;
+  }
 }
 
 .predictgame-table th {
@@ -737,6 +766,7 @@ async function handleSubmitPredictions() {
 
   .predictgame-table {
     font-size: 12px;
+    min-width: 720px;
   }
 
   .predictgame-table th,
@@ -773,6 +803,12 @@ async function handleSubmitPredictions() {
     width: 100%;
     padding: 10px 20px;
     font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .predictgame-table {
+    min-width: 640px;
   }
 }
 </style>

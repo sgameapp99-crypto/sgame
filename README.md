@@ -1,3 +1,47 @@
+# sgame 部署與代理說明
+
+## 目前狀態
+- 系統安裝有 Nginx，主要組態 `nginx.conf` 會載入 `sites-enabled` 內的站台設定。
+- `sites-available/sgame-443.conf` 已定義從 `443` 轉發到本機 `5175` 的反向代理，但尚未在 `sites-enabled` 建立連結，因此目前設定未生效。
+
+## 啟用 443 → 5175 反向代理流程
+1. 確認 Cloudflare 提供的憑證已放在 `ssl_certificate` 與 `ssl_certificate_key` 指定的位置，或依實際路徑調整 `sgame-443.conf`。
+2. 建立啟用連結：
+   ```bash
+   sudo ln -s /etc/nginx/sites-available/sgame-443.conf /etc/nginx/sites-enabled/sgame-443.conf
+   ```
+3. 視需要更新 `server_name`（目前為 `34.80.46.175`）。
+4. 驗證設定：`sudo nginx -t`
+5. 套用設定：`sudo systemctl reload nginx`
+
+## Cloudflare Origin 憑證匯入與系統設定
+- 將 Cloudflare 提供的 **站點憑證** 複製到 `copy/vue/ssl/cert.pem`、`key.pem`，並確認權限為 `600`。
+- 下載 Cloudflare Origin Root CA（RSA）後放入 `/usr/local/share/ca-certificates/cloudflare-origin-ca.crt`，執行：
+  ```bash
+  sudo update-ca-certificates
+  ```
+- 將 `api.sportspro.tw` 指向後端私有 IP：
+  ```bash
+  echo '10.2.0.2 api.sportspro.tw' | sudo tee -a /etc/hosts
+  ```
+- Nginx 連線後端及 Vite 皆需驗證憑證，`sgame-443.conf` 已設定 `proxy_ssl_*` 與 SNI (`proxy_ssl_name`)；更新後記得 `sudo nginx -t && sudo systemctl reload nginx`。
+- PM2 啟動 Vite 的 `ecosystem.config.cjs` 已加入：
+  - `NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/cloudflare-origin-ca.crt`
+  - `VITE_PROXY_TARGET=https://api.sportspro.tw:8080`
+  - `VITE_PROXY_SECURE=true`
+  重新啟動：`cd copy/vue && pm2 restart ecosystem.config.cjs --only app:dev,app:preview --update-env`
+- 若未使用 PM2，需手動匯出 `NODE_EXTRA_CA_CERTS` 後再執行 `npm run dev` / `npm run preview`。
+
+## 驗證與除錯
+- `curl https://api.sportspro.tw:8080/health`（依照 `/etc/hosts` 解析）應回傳 `status: healthy`。
+- `curl -vk https://127.0.0.1:5175/` 驗證 Vite Dev 站台（HTTPS）；正式測試可使用 `--resolve app.sportspro.tw:5175:127.0.0.1`。
+- `curl -vk https://app.sportspro.tw --resolve app.sportspro.tw:443:127.0.0.1` 應回傳前端 HTML；`/api/health` 則回 401 代表代理正常。
+- 若代理有問題，可查閱 `sudo journalctl -u nginx -n 200`、`/var/log/nginx/error.log`、`pm2 logs app:dev`。
+
+## Cloudflare 與 SSL 建議
+- 若 Cloudflare 已啟用「Full」或「Full (Strict)」模式，建議維持本機 Nginx 也使用 TLS（即目前 `sgame-443.conf` 的做法），可確保 Cloudflare 與來源站之間的連線加密。
+- 若僅在 Cloudflare 端加密（Flexible 模式），來源站可改用 HTTP，但連線會有被攔截風險，不建議在正式環境採用。
+- 使用 Cloudflare 產出的起源憑證時，請確保憑證與私鑰檔案權限為 600，並只允許 `root` 存取。
 # 🏀 玩運彩預測平台 - Vue3 前端應用
 
 ## 📖 項目簡介
@@ -416,6 +460,18 @@ npm run test:e2e
 
 ---
 
+### 🧩 最新修復紀錄（2025年11月03日）
+
+- 更新登入與註冊頁面：移除 Google OAuth 「開發環境不可用」警示並啟用按鈕狀態，確保整合完成後的流程一致。
+- 建議後續測試：請在實際可存取 Google OAuth 的環境中進行一次手動登入驗證，確認 redirect 與 Email 驗證流程皆無異常。
+
+### 🧭 頁面標題動態更新（2025年11月04日）
+
+- `copy/vue/src/router/index.ts` 新增 `ROUTE_TITLES` 對應表與 `router.afterEach`，導覽後會自動更新 `document.title`，確保各頁面顯示對應中文名稱。
+- 預設站名常數 `DEFAULT_TITLE` 設為「玩運彩預測平台」，若找不到對應路由標題或在 SSR/快速切換時仍保持一致品牌識別。
+- 保留 `meta.title` 擴充彈性：未來在路由上設定 `meta.title` 會優先於對應表覆寫頁面標題。
+- `copy/vue/index.html` 的 `<title>` 同步改為「玩運彩預測平台」，避免初次載入時顯示舊的「Legacy to Vue」。
+
 ### 🧩 最新修復紀錄（2025年10月24日）
 
 - 修正論壇編輯器 `TipTapEditor` 預設內容缺失造成的初始化錯誤，新增 `defaultContent` 並使用 TipTap 官方 `JSONContent` 型別保護，確保評論與文章編輯表單穩定載入。
@@ -429,6 +485,15 @@ npm run test:e2e
 - 論壇「發文」按鈕會先檢查登入狀態，未登入者導向登入頁並帶入 redirect，登入者則帶到建立文章頁。
 - TipTap 編輯器移除 Link 插件，目前僅保留基本排版與圖片能力。
 - 論壇列表優先顯示置頂文章，且鎖定文章會標示提醒並隱藏「發表回覆」按鈕。
+
+### 📱 行動端 RWD 優化（2025年11月1日）
+
+- 建立全域 `layout-container` 版型（`App.vue`），讓所有頁面在桌機維持 1200px 內容寬度、行動裝置自動縮放並保留左右緩衝。
+- 重構 `AppHeader.vue`：新增手機漢堡選單、移動專用導覽與帳號操作區，並在桌機 (>1024px) 保留原本寬幅漸層視覺與下拉互動。
+- 論壇首頁 (`HomePage.vue`) 及舊制樣式 (`forum-original.css`) 新增水平捲軸容器，避免 1000px 固定寬度造成溢位，同時降低小螢幕字級與間距。
+- `PredictGamesTable.vue` 以 `predict-table-scroll` 包覆表格，提供滾動檢視與陰影強調，同時調整斷點 `min-width`，確保賽事資訊在 360px 手機仍可水平方向瀏覽。
+- 調整註冊頁 (`RegisterPage.vue`) 對話框寬度為 `min(420px, 100%)`，並在窄螢幕下改為縱向操作列，避免表單被左右擠壓。
+- 驗證流程：使用 Chrome DevTools Responsive Mode 分別檢視 360px、768px、1280px；檢查頂部導覽、論壇列表、預測表格與註冊表單的滾動/操作，確認登入與未登入狀態皆無破版，桌機版視覺保持原設計。
 
 ---
 
@@ -452,6 +517,22 @@ npm run test:e2e
 - 介面目前提供上下移動排序，後續可評估引入拖曳排序與批次調整，減少多次 API 呼叫。
 - 新增權限設定預覽與校驗（例如阻止子層繼承限制時的提醒），避免錯誤設定造成文章不可發。
 - 建議串接操作記錄或審計日誌，讓管理員能追蹤看板調整歷史並快速回溯。
+
+### 玩家搜尋功能現況（2025年11月04日）
+- `copy/vue/src/pages/MemberSearchPage.vue` 已串接 `memberAPI.search` 與 `memberAPI.getRecommendations`，即時顯示分頁搜尋結果與後端推薦名單，並以 `PageMeta` 參數驅動上一頁/下一頁控制。
+- 追蹤按鈕現改為調用 `memberAPI.follow` / `memberAPI.unfollow`，自動更新追蹤狀態與粉絲數；未登入時會導向登入頁並保留 redirect 參數。
+- 最近搜尋改為記錄最新 API 結果的玩家資訊；後續若需持久化可評估存放於 LocalStorage 或後端紀錄。
+
+### API 化預測/賽事頁面（2025年11月04日）
+- `PredictPurchasePage.vue` 改用 `predictionsAPI.getPredictions` 取得可購買清單，提供聯盟/賽事篩選、彩幣餘額同步與 `PurchaseDialog` 整合，並支援 `?gameId=` 直接定位賽事。
+- `GamesListPage.vue` 使用 `gamesAPI.getGames` 回傳的資料，建立聯盟、狀態與日期篩選，搭配分頁控制呈現最新賽事列表。
+- `GameDetailPage.vue` 透過 `gamesAPI.getGame` 顯示比分與賠率細節，新增返回列表與「前往購買預測」操作。
+- 移除 `simpleLegacyParser.ts`、舊版 `fetch('/legacy/...')` 依賴，上述頁面不再需要 `dist/legacy` 鏡像內容。
+- 新增 `src/pages/__tests__/PredictPurchasePage.spec.ts`、`GamesListPage.spec.ts`、`GameDetailPage.spec.ts`，以 Vitest 模擬 API 成功/失敗情境，覆蓋核心流程。
+
+### Legacy 靜態資源剩餘情況（2025年11月04日）
+- 僅 `LegacyHeader.vue` 與 `LegacyFooter.vue` 在需要導入舊站導航或版權資訊時會存取 `/legacy/www.playsport.cc/forum/0623c.html`。
+- 若後續計畫完全移除 Legacy 鏡像，請同步提供對應的導覽/頁尾替代方案，或調整上述元件避免發出 Legacy 請求。
 
 ---
 

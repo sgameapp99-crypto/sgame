@@ -11,11 +11,13 @@ export default defineConfig(({ mode }) => {
 	const previewPort = Number(env.VITE_PREVIEW_PORT || port)
 	const proxyTarget = env.VITE_PROXY_TARGET || 'https://10.2.0.2:8080'
 	const proxyEnable = env.VITE_PROXY_ENABLE !== 'false'
+	const proxySecure = env.VITE_PROXY_SECURE !== 'false'
 
 	// 調試日誌
 	console.log('=== Vite 配置調試 ===')
 	console.log('Mode:', mode)
 	console.log('Proxy Enabled:', proxyEnable)
+	console.log('Proxy Secure:', proxySecure)
 	console.log('Proxy Target:', proxyTarget)
 	console.log('Host:', host)
 	console.log('Port:', port)
@@ -57,65 +59,54 @@ export default defineConfig(({ mode }) => {
 			strictPort: false,
 			hmr: hmrConfig,
 			proxy: proxyEnable
-				? {
-					'/api': {
+				? (() => {
+					const insecureAgent = new https.Agent({ rejectUnauthorized: false })
+					const baseProxy = <T extends Record<string, unknown>>(options: T): T & {
+						target: string
+						changeOrigin: boolean
+						secure: boolean
+					} => ({
 						target: proxyTarget,
 						changeOrigin: true,
-						secure: false,
-						ws: true,
-						agent: new https.Agent({
-							rejectUnauthorized: false
-						}),
-						configure: (proxy, options) => {
-							proxy.on('proxyReq', (proxyReq, req, res) => {
-								console.log('🔄 Proxying:', req.method, req.url, '→', proxyTarget + req.url)
-							})
-							proxy.on('proxyRes', (proxyRes, req, res) => {
-								console.log('✅ Response:', proxyRes.statusCode, req.url)
-							})
-							proxy.on('error', (err, req, res) => {
-								console.error('❌ Proxy Error:', err.message, req.url)
-							})
-						}
-					},
-					'/health': {
-						target: proxyTarget,
-						changeOrigin: true,
-						secure: false,
-						agent: new https.Agent({
-							rejectUnauthorized: false
-						})
-					},
-				'/levels': {
-					target: proxyTarget,
-					changeOrigin: true,
-					secure: false,
-					agent: new https.Agent({
-						rejectUnauthorized: false
+						secure: proxySecure,
+						...(proxySecure ? {} : { agent: insecureAgent }),
+						...options
 					})
-				},
-				// 代理靜態資源（頭像等上傳檔案）
-				'/uploads': {
-					target: proxyTarget,
-					changeOrigin: true,
-					secure: false,
-					agent: new https.Agent({
-						rejectUnauthorized: false
-					}),
-					configure: (proxy, options) => {
-						proxy.on('proxyReq', (proxyReq, req, res) => {
-							console.log('🖼️  Proxying static file:', req.method, req.url, '→', proxyTarget + req.url)
-						})
-						proxy.on('proxyRes', (proxyRes, req, res) => {
-							console.log('✅ Static file response:', proxyRes.statusCode, req.url)
-						})
-						proxy.on('error', (err, req, res) => {
-							console.error('❌ Static file proxy error:', err.message, req.url)
+
+					return {
+						'/api': baseProxy({
+							ws: true,
+							configure: (proxy, options) => {
+								proxy.on('proxyReq', (proxyReq, req, res) => {
+									console.log('🔄 Proxying:', req.method, req.url, '→', proxyTarget + req.url)
+								})
+								proxy.on('proxyRes', (proxyRes, req, res) => {
+									console.log('✅ Response:', proxyRes.statusCode, req.url)
+								})
+								proxy.on('error', (err, req, res) => {
+									console.error('❌ Proxy Error:', err.message, req.url)
+								})
+							}
+						}),
+						'/health': baseProxy({}),
+						'/levels': baseProxy({}),
+						// 代理靜態資源（頭像等上傳檔案）
+						'/uploads': baseProxy({
+							configure: (proxy, options) => {
+								proxy.on('proxyReq', (proxyReq, req, res) => {
+									console.log('🖼️  Proxying static file:', req.method, req.url, '→', proxyTarget + req.url)
+								})
+								proxy.on('proxyRes', (proxyRes, req, res) => {
+									console.log('✅ Static file response:', proxyRes.statusCode, req.url)
+								})
+								proxy.on('error', (err, req, res) => {
+									console.error('❌ Static file proxy error:', err.message, req.url)
+								})
+							}
 						})
 					}
-				}
-			  }
-			: undefined
+				})()
+				: undefined
 		},
 		preview: {
 			host,
