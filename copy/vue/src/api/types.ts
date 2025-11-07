@@ -391,6 +391,79 @@ export interface AlliancesResponse {
   data: Alliance[];
 }
 
+// ==================== 即時比分 ====================
+
+export type LivescoreStatus = 'scheduled' | 'live' | 'finished';
+
+export interface LivescoreQueryParams {
+  status?: LivescoreStatus;
+  allianceId?: number;
+  leagueCode?: string;
+  soccerLeagueId?: number;
+  date?: string; // YYYY-MM-DD
+  page?: number;
+  size?: number;
+}
+
+export interface LivescoreTeam {
+  id: number;
+  name: string;
+  pitcher?: string | null;
+}
+
+export interface LivescoreScoreboardPeriod {
+  label: string;
+  home: number | null;
+  away: number | null;
+}
+
+export interface LivescoreScoreboardDetail {
+  periods?: LivescoreScoreboardPeriod[];
+  innings?: Array<{
+    label?: string;
+    inning?: string | number;
+    home?: number | null;
+    away?: number | null;
+  }>;
+  totals?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface LivescoreOdds {
+  international?: Record<string, unknown> | null;
+  taiwan?: Record<string, unknown> | null;
+  live?: Record<string, unknown> | null;
+}
+
+export interface LivescoreItem {
+  game_id: string;
+  alliance_id: number;
+  league_code: string;
+  alliance_name?: string;
+  sport_type: string;
+  status: LivescoreStatus;
+  start_time: string;
+  home_team: LivescoreTeam;
+  away_team: LivescoreTeam;
+  home_score: number | null;
+  away_score: number | null;
+  live_phase?: string | null;
+  scoreboard_detail?: LivescoreScoreboardDetail | null;
+  live_stats?: Record<string, unknown> | null;
+  odds_info?: LivescoreOdds | null;
+  soccer_league?: {
+    id: number;
+    name?: string | null;
+  } | null;
+  last_updated: string;
+}
+
+export interface LivescoreResponse {
+  success: boolean;
+  data: LivescoreItem[];
+  pagination: PageMeta;
+}
+
 // ==================== 論壇相關 ====================
 
 export interface ForumUser {

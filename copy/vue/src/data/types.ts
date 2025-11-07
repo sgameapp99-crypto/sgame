@@ -96,13 +96,13 @@ export interface Odds {
 }
 
 export interface UnifiedGame {
-  id: number;
+  id: number | string;
   league: string;
   time: string;
   homeTeam: string;
   awayTeam: string;
-  homeScore?: number;
-  awayScore?: number;
+  homeScore?: number | null;
+  awayScore?: number | null;
   status: 'scheduled' | 'live' | 'finished';
   inning?: string;
   outs?: number;
@@ -216,14 +216,14 @@ export interface SoccerLeague {
 
 // 籃球比賽接口
 export interface BasketballGame {
-  id: number;
+  id: number | string;
   league: string;
   allianceId: number;
   status: 'scheduled' | 'live' | 'finished';
   homeTeam: string;
   awayTeam: string;
-  homeScore?: number;
-  awayScore?: number;
+  homeScore?: number | null;
+  awayScore?: number | null;
   time: string;
   timeRemaining?: string;
   currentQuarter?: number;
@@ -300,14 +300,14 @@ export interface IceHockeyScoreBreakdown {
 }
 
 export interface IceHockeyGame {
-  id: number;
+  id: number | string;
   league: string;
   allianceId: number;
   status: 'scheduled' | 'live' | 'finished';
   homeTeam: string;
   awayTeam: string;
-  homeScore?: number;
-  awayScore?: number;
+  homeScore?: number | null;
+  awayScore?: number | null;
   time: string;
   venue?: string;
   bettingInfo?: string;
@@ -348,14 +348,14 @@ export interface AmericanFootballScoreBreakdown {
 }
 
 export interface AmericanFootballGame {
-  id: number;
+  id: number | string;
   league: string;
   allianceId: number;
   status: 'scheduled' | 'live' | 'finished';
   homeTeam: string;
   awayTeam: string;
-  homeScore?: number;
-  awayScore?: number;
+  homeScore?: number | null;
+  awayScore?: number | null;
   time: string;
   venue?: string;
   bettingInfo?: string;
@@ -396,14 +396,14 @@ export interface TennisScoreBreakdown {
 }
 
 export interface TennisGame {
-  id: number;
+  id: number | string;
   league: string;
   allianceId: number;
   status: 'scheduled' | 'live' | 'finished';
   homeTeam: string;
   awayTeam: string;
-  homeScore?: number;
-  awayScore?: number;
+  homeScore?: number | null;
+  awayScore?: number | null;
   time: string;
   venue?: string;
   bettingInfo?: string;

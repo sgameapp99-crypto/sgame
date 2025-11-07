@@ -310,9 +310,58 @@ const dateOptions = computed(() => {
   // 檢查是否包含日期範圍選項（week, month, all）
   const hasRangeOptions = props.dateOptionsFilter.some(opt => ['week', 'month', 'all'].includes(opt));
 
-  console.log('📊 dateOptions 計算屬性執行');
-  console.log('📊 props.dateOptionsFilter:', props.dateOptionsFilter);
-  console.log('📊 hasRangeOptions:', hasRangeOptions);
+  const quickDateOptions = props.dateOptionsFilter.filter(opt => ['today', 'yesterday', 'tomorrow'].includes(opt));
+  if (quickDateOptions.length > 0) {
+    const labels: Record<string, string> = {
+      today: '今日',
+      yesterday: '昨日',
+      tomorrow: '明日'
+    };
+
+    const offsets: Record<string, number> = {
+      today: 0,
+      yesterday: -1,
+      tomorrow: 1
+    };
+
+    const selectedDateNormalized = new Date(props.selectedDate);
+    selectedDateNormalized.setHours(0, 0, 0, 0);
+
+    quickDateOptions.forEach(type => {
+      const offset = offsets[type] ?? 0;
+      const targetDate = new Date(today);
+      targetDate.setDate(targetDate.getDate() + offset);
+      const isSelected = targetDate.getTime() === selectedDateNormalized.getTime();
+
+      options.push({
+        display: labels[type] ?? type,
+        type,
+        isSelected
+      });
+    });
+
+    return options;
+  }
+
+  const statusFilters = props.dateOptionsFilter.filter(opt => ['finished', 'live', 'scheduled'].includes(opt));
+  if (!hasRangeOptions && statusFilters.length > 0) {
+    const statusLabelMap: Record<'finished' | 'live' | 'scheduled', string> = {
+      finished: '已結束',
+      live: '進行中',
+      scheduled: '未開始'
+    };
+
+    statusFilters.forEach(type => {
+      const key = type as 'finished' | 'live' | 'scheduled';
+      options.push({
+        display: statusLabelMap[key],
+        type: key,
+        isSelected: props.selectedStatusType === key
+      });
+    });
+
+    return options;
+  }
 
   if (hasRangeOptions) {
     // 會員頁面模式：一週內、一個月內、全部
@@ -331,9 +380,6 @@ const dateOptions = computed(() => {
         });
       }
     });
-    
-    console.log('📊 生成的日期範圍選項:', options);
-    console.log('📊 當前選擇的日期範圍:', props.selectedDateRange);
   } else {
     // 預測頁面模式：今天(未進行)、明天(未進行)、後天(未進行)
     const dateLabels = ['今天', '明天', '後天'];
@@ -362,7 +408,6 @@ const dateOptions = computed(() => {
       }
     }
     
-    console.log('📊 生成的狀態選項:', options);
   }
 
   return options;
@@ -405,11 +450,6 @@ function handleSoccerLeagueClick(leagueId: number, event?: Event) {
 }
 
 function handleDateOptionClick(option: any, event?: Event) {
-  console.log('🎯 AllianceMenu - handleDateOptionClick 被調用');
-  console.log('🎯 接收到的 option:', option);
-  console.log('🎯 option.type:', option?.type);
-  console.log('🎯 option.display:', option?.display);
-  
   if (event) {
     event.preventDefault();
     event.stopPropagation();
@@ -424,9 +464,7 @@ function handleDateOptionClick(option: any, event?: Event) {
     }
   }
   
-  console.log('🎯 準備 emit select-date-option 事件，參數:', option);
   emit('select-date-option', option);
-  console.log('🎯 emit 完成');
 }
 
 function allianceHasGames(allianceId: number): boolean {

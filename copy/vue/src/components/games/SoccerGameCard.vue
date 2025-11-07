@@ -127,17 +127,17 @@ interface TeamStats {
 }
 
 interface SoccerGame {
-  id: number;
+  id: number | string;
   league: string;
-  soccerLeague?: string;
+  soccerLeague?: string | null;
   status: 'scheduled' | 'live' | 'finished';
   homeTeam: string;
   awayTeam: string;
-  homeScore?: number;
-  awayScore?: number;
+  homeScore?: number | null;
+  awayScore?: number | null;
   time: string;
-  matchMinute?: string;
-  matchPeriod?: 'first_half' | 'second_half' | 'extra_time' | 'penalty_shootout';
+  matchMinute?: string | null;
+  matchPeriod?: 'first_half' | 'second_half' | 'extra_time' | 'penalty_shootout' | null;
   venue?: string;
   homeStats?: TeamStats;
   awayStats?: TeamStats;

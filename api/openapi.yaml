@@ -28,6 +28,8 @@ tags:
     description: 會員發文
   - name: levels
     description: 會員等級系統
+  - name: livescore
+    description: 即時比分查詢
 
 paths:
   /health:
@@ -873,6 +875,91 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /livescore:
+    get:
+      tags: [livescore]
+      summary: 查詢即時比分列表
+      description: 依照狀態、聯盟或日期篩選賽事，回傳即時比分與統計資料。
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [scheduled, live, finished]
+          required: false
+          description: 賽事狀態，未指定時回傳全部狀態。
+        - in: query
+          name: allianceId
+          schema:
+            type: integer
+          required: false
+          description: 聯盟識別碼（對應後端 allianceId）。
+        - in: query
+          name: leagueCode
+          schema:
+            type: string
+          required: false
+          description: 聯盟代碼（如 NBA、MLB），供前端使用既有代碼進行篩選。
+        - in: query
+          name: soccerLeagueId
+          schema:
+            type: integer
+          required: false
+          description: 足球子聯賽識別碼。
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+          required: false
+          description: 賽事日期（YYYY-MM-DD），僅回傳當日比賽。
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          required: false
+          description: 分頁頁碼（預設 1）。
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+          required: false
+          description: 每頁筆數（預設 20，最大 100）。
+      responses:
+        '200':
+          description: 成功回傳即時比分清單
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LivescoreItem'
+                  pagination:
+                    $ref: '#/components/schemas/PageMeta'
+        '400':
+          description: 查詢參數錯誤（例如 status 不支援）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 伺服器錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /members/{id}/profile:
     get:
       tags: [members]
@@ -1129,6 +1216,10 @@ components:
     ErrorResponse:
       type: object
       properties:
+        success:
+          type: boolean
+          description: 是否成功，錯誤時固定為 false
+          example: false
         code:
           type: string
         message:
@@ -1160,6 +1251,153 @@ components:
         hasNext:
           type: boolean
           description: 是否仍有下一頁
+
+    LivescoreTeam:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 隊伍資料庫識別碼
+          example: 9101
+        name:
+          type: string
+          description: 隊伍顯示名稱
+          example: "洛杉磯湖人"
+        pitcher:
+          type: string
+          nullable: true
+          description: 投手或先發球員資訊（僅棒球等需要時提供）
+          example: "大谷翔平"
+
+    LivescoreOdds:
+      type: object
+      properties:
+        international:
+          type: object
+          description: 國際盤賠率結構（原樣回傳）
+          example:
+            spread:
+              home: { line: "-5.5", odds: "1.90" }
+              away: { line: "+5.5", odds: "1.90" }
+            total:
+              over: { line: "225.5", odds: "1.88" }
+              under: { line: "225.5", odds: "1.92" }
+        taiwan:
+          type: object
+          description: 台灣盤賠率結構（原樣回傳）
+          example:
+            moneyline:
+              home: { odds: "1.45" }
+              away: { odds: "2.75" }
+            spread:
+              home: { line: "-5.5", odds: "1.90" }
+              away: { line: "+5.5", odds: "1.90" }
+        live:
+          type: object
+          nullable: true
+          description: 即時賠率資料，若尚未串接即為 null
+          example:
+            moneyline:
+              home: { odds: "1.60" }
+              away: { odds: "2.30" }
+
+    LivescoreItem:
+      type: object
+      properties:
+        game_id:
+          type: string
+          description: 賽事唯一編號（字串格式）
+          example: "20251024TEST009"
+        alliance_id:
+          type: integer
+          description: 聯盟識別碼
+          example: 2
+        league_code:
+          type: string
+          description: 聯盟代碼（對應前端篩選條件）
+          example: "NBA"
+        alliance_name:
+          type: string
+          description: 聯盟中文名稱
+          example: "美國職籃"
+        sport_type:
+          type: string
+          description: 運動類型（baseball、basketball、soccer等）
+          example: "basketball"
+        status:
+          type: string
+          enum: [scheduled, live, finished]
+          description: 賽事狀態
+          example: "live"
+        start_time:
+          type: string
+          description: 開賽時間（組合 YYYY-MM-DD 與 HH:mm，格式 yyyy-MM-ddTHH:mm:ss）
+          example: "2025-10-24T19:30:00"
+        home_team:
+          $ref: '#/components/schemas/LivescoreTeam'
+        away_team:
+          $ref: '#/components/schemas/LivescoreTeam'
+        home_score:
+          type: integer
+          nullable: true
+          description: 主隊目前分數，未開賽時為 null
+          example: 98
+        away_score:
+          type: integer
+          nullable: true
+          description: 客隊目前分數，未開賽時為 null
+          example: 102
+        live_phase:
+          type: string
+          nullable: true
+          description: 當前比賽階段（例："Q3 05:21"、"7局上"）
+          example: "Q4 02:14"
+        scoreboard_detail:
+          type: object
+          nullable: true
+          description: 各節/局分數細節，結構依運動類型提供
+          example:
+            periods:
+              - label: "Q1"
+                home: 25
+                away: 30
+              - label: "Q2"
+                home: 28
+                away: 22
+              - label: "Q3"
+                home: 24
+                away: 27
+              - label: "Q4"
+                home: 21
+                away: 19
+        live_stats:
+          type: object
+          nullable: true
+          description: 即時統計資料（如投手資訊、關鍵數據等）
+          example:
+            keyPlayer: "LeBron James"
+            points: 32
+            assists: 8
+        odds_info:
+          $ref: '#/components/schemas/LivescoreOdds'
+        soccer_league:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+              description: 足球子聯賽識別碼
+              example: 501
+            name:
+              type: string
+              nullable: true
+              description: 足球聯賽名稱
+              example: "英格蘭超級聯賽"
+        last_updated:
+          type: string
+          format: date-time
+          description: 資料最後更新時間（ISO 8601）
+          example: "2025-11-04T08:21:15.123Z"
 
     LevelInfo:
       type: object

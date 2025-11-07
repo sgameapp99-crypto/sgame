@@ -381,34 +381,41 @@ interface ScoreData {
   runs: number;
 }
 
+interface ScoreboardTotals {
+  runs: number;
+  hits?: number;
+  errors?: number;
+}
+
 interface Scoreboard {
   innings: number[];
   awayScores: ScoreData[];
   homeScores: ScoreData[];
-  awayTotal: { runs: number; hits: number; errors: number };
-  homeTotal: { runs: number; hits: number; errors: number };
+  awayTotal: ScoreboardTotals;
+  homeTotal: ScoreboardTotals;
 }
 
 interface BaseballGame {
-  id: number;
-  officialId: string;
+  id: number | string;
+  officialId?: string | null;
   status: 'scheduled' | 'live' | 'finished';
   awayTeam: string;
   homeTeam: string;
-  awayTeamId: number;
-  homeTeamId: number;
+  awayTeamId?: number | null;
+  homeTeamId?: number | null;
   time: string;
   date: string;
-  awayScore?: number;
-  homeScore?: number;
+  awayScore?: number | null;
+  homeScore?: number | null;
   winner?: string;
-  betInfo?: string;
-  awayPitcher?: Pitcher;
-  homePitcher?: Pitcher;
+  betInfo?: string | null;
+  awayPitcher?: Pitcher | null;
+  homePitcher?: Pitcher | null;
   awayTeamStats?: any;
   homeTeamStats?: any;
-  scoreboard?: Scoreboard;
+  scoreboard?: Scoreboard | null;
   liveStats?: any;
+  inning?: string | null;
 }
 
 interface Props {
@@ -432,7 +439,10 @@ function formatTime(timeString: string) {
   return `${hours}:${minutes}`;
 }
 
-function getTeamLink(teamId: number) {
+function getTeamLink(teamId?: number | null) {
+  if (teamId === undefined || teamId === null) {
+    return 'javascript:void(0)';
+  }
   return `https://www.playsport.cc/gamesData/teams?allianceid=1&teamid=${teamId}&from=livescore_title#historyGame`;
 }
 
@@ -444,19 +454,26 @@ function getGameStatusText(status: string) {
   }
 }
 
-function getPitcherLink(teamId: number, side: string) {
-  return `https://www.playsport.cc/gamesData/battle?gameid=${props.game.id}&allianceid=1&officialId=${props.game.officialId}&from=livescore_pitcher#pitcher_${side}`;
+function getPitcherLink(teamId: number | string | undefined, side: string) {
+  const gameId = props.game.id;
+  const officialId = props.game.officialId ?? String(gameId);
+  return `https://www.playsport.cc/gamesData/battle?gameid=${gameId}&allianceid=1&officialId=${officialId}&from=livescore_pitcher#pitcher_${side}`;
 }
 
-function getTeamHittingLink(teamId: number, side: string) {
-  return `https://www.playsport.cc/gamesData/battle?gameid=${props.game.id}&allianceid=1&officialId=${props.game.officialId}&from=teamHitting#teamHitting_${side}`;
+function getTeamHittingLink(teamId: number | string | undefined, side: string) {
+  const gameId = props.game.id;
+  const officialId = props.game.officialId ?? String(gameId);
+  return `https://www.playsport.cc/gamesData/battle?gameid=${gameId}&allianceid=1&officialId=${officialId}&from=teamHitting#teamHitting_${side}`;
 }
 
-function getTeamStatsLink(teamId: number) {
+function getTeamStatsLink(teamId?: number | null) {
+  if (teamId === undefined || teamId === null) {
+    return 'javascript:void(0)';
+  }
   return `https://www.playsport.cc/gamesData/teams?allianceid=1&teamid=${teamId}&from=livescore_table#historyGame`;
 }
 
-function getBattleLink(gameId: number) {
+function getBattleLink(gameId: number | string) {
   return `https://www.playsport.cc/gamesData/battle?gameid=${gameId}&allianceid=1&from=livescore#anchorLast10Records`;
 }
 

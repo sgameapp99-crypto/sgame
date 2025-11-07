@@ -38,6 +38,41 @@
 - `curl -vk https://app.sportspro.tw --resolve app.sportspro.tw:443:127.0.0.1` 應回傳前端 HTML；`/api/health` 則回 401 代表代理正常。
 - 若代理有問題，可查閱 `sudo journalctl -u nginx -n 200`、`/var/log/nginx/error.log`、`pm2 logs app:dev`。
 
+## 🚀 API 性能測試（新增於 2025-11-05）
+
+### 快速性能測試
+```bash
+# 運行自動化性能測試腳本
+cd /home/gogofire1774/sgame
+./test-api-performance.sh
+```
+
+### 測試內容
+- ✅ 網路連通性測試（Ping）
+- ✅ 健康檢查端點響應時間
+- ✅ 等級資料端點響應時間
+- ✅ 詳細時間分析（連接、SSL、TTFB）
+- ✅ 並發性能測試
+
+### 最新測試結果（2025-11-05）
+- **健康檢查平均響應**: ~10ms ⭐⭐⭐⭐⭐ 優秀
+- **等級資料平均響應**: ~11ms ⭐⭐⭐⭐⭐ 優秀
+- **網路延遲**: 0.32ms（內網極佳）
+- **TTFB（後端處理）**: ~10ms（極快）
+- **總體評級**: 卓越級別（9.5/10）
+
+### 相關文檔
+- 📊 [API性能測試報告.md](./API性能測試報告.md) - 完整測試結果與分析
+- 📘 [copy/vue/API性能檢查與優化指南.md](./copy/vue/API性能檢查與優化指南.md) - 詳細檢查方法與優化建議
+- 🔧 [test-api-performance.sh](./test-api-performance.sh) - 自動化測試腳本
+
+### 性能標準參考
+| API 類型 | 預期時間 | 當前表現 | 狀態 |
+|---------|---------|---------|------|
+| 健康檢查 | < 200ms | ~10ms | ✅ 超越 20x |
+| 資料查詢 | < 300ms | ~11ms | ✅ 超越 27x |
+| 複雜查詢 | < 1000ms | 待測試 | - |
+
 ## Cloudflare 與 SSL 建議
 - 若 Cloudflare 已啟用「Full」或「Full (Strict)」模式，建議維持本機 Nginx 也使用 TLS（即目前 `sgame-443.conf` 的做法），可確保 Cloudflare 與來源站之間的連線加密。
 - 若僅在 Cloudflare 端加密（Flexible 模式），來源站可改用 HTTP，但連線會有被攔截風險，不建議在正式環境採用。
@@ -157,6 +192,11 @@ sgame/
 ├── README.md                   # 項目說明
 └── quick-start.sh             # 快速啟動腳本
 ```
+
+### 靜態資源與網站圖示
+
+- 預設網站小圖示 `copy/vue/public/favicon.ico` 已內建於專案，Vite 伺服器會直接提供 `/favicon.ico`，避免瀏覽器載入 404。
+- 若需自訂品牌圖示，可以 16×16 或 32×32 的 ICO 檔覆蓋同一路徑；建議同步更新其他靜態資源手冊以便團隊維護。
 
 ## 🔧 開發指令
 
@@ -465,12 +505,30 @@ npm run test:e2e
 - 更新登入與註冊頁面：移除 Google OAuth 「開發環境不可用」警示並啟用按鈕狀態，確保整合完成後的流程一致。
 - 建議後續測試：請在實際可存取 Google OAuth 的環境中進行一次手動登入驗證，確認 redirect 與 Email 驗證流程皆無異常。
 
+### 🧩 最新修復紀錄（2025年11月05日）
+
+- 新增預設 `favicon.ico`（位於 `copy/vue/public/`），避免 Vite 開發環境與正式環境在載入頁面時出現 `/favicon.ico` 404 訊息。
+- 建議：若品牌識別有更新，請同步提供新的 32×32 ICO 檔並更新 `README.md` 對應說明，以確保開發與部署環境一致。
+
+### 🛡️ Edge 安全與相容性警告分析（2025年11月07日）
+
+- 重點提醒：`x-content-type-options` 未設置、缺少 `Cache-Control`、僅使用 `X-Frame-Options`、`Content-Type` 字元集非 `utf-8`、表單欄位缺 `name/id`，均被列為高嚴重度，需後端與前端共同調整。
+- 修復建議：依警告等級排定工作，先處理 HTTP 標頭設定與表單語意，再調整列表結構、動畫屬性與 CSS 前綴；詳細步驟、風險與待辦請參見 `/.doc/edge報告.md`。
+- 後續流程：完成調整後需重新以 Edge/Chrome/Safari 驗證，並將標頭與快取策略納入部署自動化檢查。
+
 ### 🧭 頁面標題動態更新（2025年11月04日）
 
 - `copy/vue/src/router/index.ts` 新增 `ROUTE_TITLES` 對應表與 `router.afterEach`，導覽後會自動更新 `document.title`，確保各頁面顯示對應中文名稱。
 - 預設站名常數 `DEFAULT_TITLE` 設為「玩運彩預測平台」，若找不到對應路由標題或在 SSR/快速切換時仍保持一致品牌識別。
 - 保留 `meta.title` 擴充彈性：未來在路由上設定 `meta.title` 會優先於對應表覆寫頁面標題。
 - `copy/vue/index.html` 的 `<title>` 同步改為「玩運彩預測平台」，避免初次載入時顯示舊的「Legacy to Vue」。
+
+### 📺 即時比分 API 串接（2025年11月05日）
+
+- `copy/vue/src/pages/LivescorePage.vue` 改寫為串接後端 `/api/livescore` 端點，UI 篩選同步支援聯盟、狀態與足球子聯賽。
+- 新增 `copy/vue/src/api/livescore.ts` 以及對應 `LivescoreQueryParams`、`LivescoreItem` 擴充，統一透過 axios 客戶端呼叫。
+- 更新各運動卡片型別與 `src/data/types.ts`，允許字串型 ID 與空值，避免真實資料格式造成渲染錯誤。
+- 現階段僅渲染後端提供的分數與階段資訊；若需顯示更完整投打或盤口細節，可再擴充 `live_stats` 與 scoreboard 映射。
 
 ### 🧩 最新修復紀錄（2025年10月24日）
 

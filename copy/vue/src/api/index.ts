@@ -4,6 +4,7 @@ export { default as api } from './client';
 export { default as authAPI } from './auth';
 export { default as memberAPI } from './member';
 export { default as levelAPI } from './level';
+export { default as livescoreAPI } from './livescore';
 
 // 預測系統相關 API
 export { gamesAPI } from './games';

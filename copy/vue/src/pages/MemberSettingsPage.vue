@@ -184,6 +184,65 @@
       </div>
     </div>
   </div>
+
+  <!-- 大頭貼上傳規範說明彈窗 -->
+  <div v-if="showAvatarGuidelines" class="modal-mask" @click.self="cancelAvatarGuidelines">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>大頭貼上傳規範</h3>
+        <button class="close-btn" @click="cancelAvatarGuidelines" aria-label="close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="guidelines-content">
+          <h4>請遵守以下規範：</h4>
+          <ul class="guidelines-list">
+            <li>請勿上傳裸露、血腥、暴力等不適宜的內容</li>
+            <li>請勿上傳侵犯他人版權或肖像權的圖片</li>
+            <li>請勿上傳含有仇恨、歧視或冒犯性內容的圖片</li>
+            <li>建議使用清晰、正面的個人照片或合適的圖像</li>
+          </ul>
+          <div class="warning-box">
+            <strong>違規處理：</strong>
+            <p>若違反規定，我們可能會移除您的大頭貼。重複違規者可能會被暫時停權。</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" @click="acceptAvatarGuidelines">我已了解並同意</button>
+        <button class="btn-link" @click="cancelAvatarGuidelines">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 名稱修改規範說明彈窗 -->
+  <div v-if="showNameGuidelines" class="modal-mask" @click.self="cancelNameGuidelines">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>顯示名稱修改規範</h3>
+        <button class="close-btn" @click="cancelNameGuidelines" aria-label="close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="guidelines-content">
+          <h4>請遵守以下規範：</h4>
+          <ul class="guidelines-list">
+            <li>名稱長度需為 2-10 個字元</li>
+            <li>僅允許使用中文和英文字母</li>
+            <li>請勿使用不雅、冒犯性或歧視性的名稱</li>
+            <li>請勿冒用他人身份或使用誤導性名稱</li>
+            <li>請勿使用廣告、推廣性質的名稱</li>
+          </ul>
+          <div class="warning-box">
+            <strong>違規處理：</strong>
+            <p>若違反規定，我們可能會強制修改您的名稱。重複違規者可能會被暫時停權。</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" @click="acceptNameGuidelines">我已了解並同意</button>
+        <button class="btn-link" @click="cancelNameGuidelines">取消</button>
+      </div>
+    </div>
+  </div>
   
 </template>
 
@@ -204,6 +263,9 @@ const defaultBlackAvatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.or
 const uploading = ref(false);
 const avatarMessage = ref('');
 const avatarOk = ref(false);
+// 大頭貼規範說明彈窗
+const showAvatarGuidelines = ref(false);
+const pendingFile = ref<File | null>(null);
 // 名稱修改相關
 const displayName = ref('');
 const editingName = ref('');
@@ -213,6 +275,8 @@ const nameUpdating = ref(false);
 const nameMessage = ref('');
 const nameOk = ref(false);
 const nameErrors = ref<string[]>([]);
+// 名稱規範說明彈窗
+const showNameGuidelines = ref(false);
 // 忘記密碼彈窗
 const showRecover = ref(false);
 const recoverEmail = ref('');
@@ -267,13 +331,49 @@ async function submitRecover() {
 
 function onFileChange(e: Event) {
   const files = (e.target as HTMLInputElement).files;
-  selectedFile.value = files && files[0] ? files[0] : null;
-  avatarMessage.value = '';
-  avatarOk.value = false;
-  if (selectedFile.value) {
-    const url = URL.createObjectURL(selectedFile.value);
+  const file = files && files[0] ? files[0] : null;
+  
+  if (file) {
+    // 暫存檔案，等待用戶同意規範後再處理
+    pendingFile.value = file;
+    avatarMessage.value = '';
+    avatarOk.value = false;
+    // 彈出規範說明視窗
+    showAvatarGuidelines.value = true;
+  }
+}
+
+/**
+ * 同意大頭貼上傳規範
+ */
+function acceptAvatarGuidelines() {
+  if (pendingFile.value) {
+    // 將暫存檔案賦值給 selectedFile
+    selectedFile.value = pendingFile.value;
+    // 生成預覽圖
+    const url = URL.createObjectURL(pendingFile.value);
     avatarPreview.value = url;
   }
+  // 關閉彈窗並清空暫存
+  showAvatarGuidelines.value = false;
+  pendingFile.value = null;
+}
+
+/**
+ * 取消大頭貼上傳
+ */
+function cancelAvatarGuidelines() {
+  // 關閉彈窗
+  showAvatarGuidelines.value = false;
+  // 清空暫存檔案
+  pendingFile.value = null;
+  // 清空檔案輸入框
+  if (fileInput.value) {
+    fileInput.value.value = '';
+  }
+  // 重置相關狀態
+  avatarMessage.value = '';
+  avatarOk.value = false;
 }
 
 async function uploadAvatar() {
@@ -319,9 +419,21 @@ async function uploadAvatar() {
 }
 
 /**
- * 開始編輯名稱
+ * 開始編輯名稱（彈出規範說明）
  */
-async function startEditName() {
+function startEditName() {
+  // 先彈出規範說明視窗
+  showNameGuidelines.value = true;
+}
+
+/**
+ * 同意名稱修改規範
+ */
+async function acceptNameGuidelines() {
+  // 關閉規範彈窗
+  showNameGuidelines.value = false;
+  
+  // 執行原本 startEditName 的邏輯
   isEditingName.value = true;
   editingName.value = displayName.value;
   nameErrors.value = [];
@@ -331,6 +443,14 @@ async function startEditName() {
   // 使用 nextTick 確保 input 已經渲染後再聚焦
   await nextTick();
   nameInput.value?.focus();
+}
+
+/**
+ * 取消名稱修改
+ */
+function cancelNameGuidelines() {
+  // 關閉彈窗，不進入編輯模式
+  showNameGuidelines.value = false;
 }
 
 /**
@@ -613,6 +733,15 @@ onUnmounted(() => {
 .input-with-suffix { position: relative; display: flex; align-items: center; }
 .input-suffix { position: absolute; right: 12px; color: #999; font-size: 13px; pointer-events: none; }
 .form-actions { display: flex; gap: 10px; align-items: center; padding-top: 8px; }
+
+/* 規範說明彈窗專屬樣式 */
+.guidelines-content { display: flex; flex-direction: column; gap: 16px; }
+.guidelines-content h4 { margin: 0; font-size: 16px; color: #333; font-weight: 600; }
+.guidelines-list { margin: 0; padding-left: 24px; display: flex; flex-direction: column; gap: 8px; }
+.guidelines-list li { color: #555; font-size: 14px; line-height: 1.6; }
+.warning-box { background: #fff9e6; border: 1px solid #ffe066; border-radius: 4px; padding: 12px; }
+.warning-box strong { display: block; color: #d97706; font-size: 14px; margin-bottom: 6px; }
+.warning-box p { margin: 0; color: #666; font-size: 13px; line-height: 1.5; }
 
 @media (max-width: 768px) {
   .settings-container { padding: 10px; }

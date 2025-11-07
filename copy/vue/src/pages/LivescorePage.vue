@@ -16,7 +16,7 @@
       :selected-date="selectedDate"
       :calendar-dates="calendarDates"
       :show-time-selector="true"
-      :date-options-filter="['live']"
+      :date-options-filter="['today', 'yesterday', 'tomorrow']"
       @select-alliance="selectAlliance"
       @select-soccer-league="selectSoccerLeague"
       @select-date-option="selectDateOption"
@@ -65,8 +65,83 @@ import IceHockeyGameCard from '../components/games/IceHockeyGameCard.vue';
 import AmericanFootballGameCard from '../components/games/AmericanFootballGameCard.vue';
 import TennisGameCard from '../components/games/TennisGameCard.vue';
 import GameCard from '../components/games/GameCard.vue';
-import { getGames, getActiveAlliances } from '../data/mockApi';
-import type { UnifiedGame, BasketballGame, IceHockeyGame, AmericanFootballGame, TennisGame } from '../data/types';
+import livescoreAPI from '../api/livescore';
+import type { LivescoreItem, LivescoreQueryParams, LivescoreStatus, LivescoreOdds, LivescoreScoreboardDetail } from '../api/types';
+
+interface BaseballScoreboardEntry {
+  inning: number;
+  runs: number;
+}
+
+interface BaseballScoreboardTotals {
+  runs: number;
+  hits?: number;
+  errors?: number;
+}
+
+interface BaseballScoreboard {
+  innings: number[];
+  awayScores: BaseballScoreboardEntry[];
+  homeScores: BaseballScoreboardEntry[];
+  awayTotal: BaseballScoreboardTotals;
+  homeTotal: BaseballScoreboardTotals;
+}
+
+interface BasketballQuarterScore {
+  quarter: number;
+  points: number;
+}
+
+interface BasketballScoreBreakdown {
+  quarters: { label: string; quarter: number }[];
+  awayScores: BasketballQuarterScore[];
+  homeScores: BasketballQuarterScore[];
+  ot?: boolean;
+  awayOtScore?: number;
+  homeOtScore?: number;
+}
+
+interface LivescoreCardGame {
+  id: string;
+  allianceId: number;
+  league: string;
+  leagueCode: string;
+  sportType: string;
+  status: LivescoreStatus;
+  time: string;
+  date: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeTeamId?: number;
+  awayTeamId?: number;
+  homeScore: number | null;
+  awayScore: number | null;
+  winner?: string;
+  inning?: string | null;
+  livePhase?: string | null;
+  matchMinute?: string | null;
+  matchPeriod?: string | null;
+  currentPeriod?: number | null;
+  currentQuarter?: number | null;
+  timeRemaining?: string | null;
+  scoreBreakdown?: BasketballScoreBreakdown | null;
+  scoreboard?: BaseballScoreboard | null;
+  liveStats?: Record<string, unknown> | null;
+  oddsInfo?: LivescoreOdds | null;
+  soccerLeagueId?: number | null;
+  soccerLeagueName?: string | null;
+  soccerLeague?: string | null;
+  allianceName?: string | null;
+  officialId?: string | null;
+  betInfo?: string | null;
+  homeStats?: Record<string, unknown> | null;
+  awayStats?: Record<string, unknown> | null;
+  teamStats?: Record<string, unknown> | null;
+  recentForm?: string | null;
+  headToHead?: string | null;
+  lastUpdated: string;
+  raw: LivescoreItem;
+}
 
 // 使用从types.ts导入的类型
 
@@ -92,18 +167,15 @@ const baseballExpanded = ref(false);
 const soccerLeaguesExpanded = ref(false); // 足球聯賽選單展開狀態
 const calendarVisible = ref(false);
 const currentMonth = ref('九月 2025');
-const selectedDate = ref(new Date()); // 保持與日曆功能兼容
-const selectedStatusType = ref<'finished' | 'live' | 'scheduled'>('live'); // 狀態類型篩選
+const selectedDate = ref(new Date()); // 使用者選取的查詢日期
+const selectedStatusType = ref<'finished' | 'live' | 'scheduled'>('live'); // 根據日期自動推斷，也可手動切換
 const selectedSoccerLeague = ref<number | null>(null); // 選中的足球聯賽
-const daysOfWeek = ['一', '二', '三', '四', '五', '六', '日'];
 const calendarDates = ref<{ date: Date; day: number; isToday: boolean; isSelected: boolean; isCurrentMonth: boolean }[]>([]);
 
 // 注意：soccerLeagues 和 dateOptions 現在在 AllianceMenu 組件中處理
 
-function getDayOfWeek(date: Date): string {
-  const days = ['日', '一', '二', '三', '四', '五', '六'];
-  return days[date.getDay()];
-}
+const liveGames = ref<LivescoreCardGame[]>([]);
+const activeStatusFilter = ref<'all' | LivescoreStatus>('all');
 
 // 計算屬性：根據狀態類型過濾比賽（因為API已經根據聯盟過濾了）
 const filteredGames = computed(() => {
@@ -118,8 +190,11 @@ const filteredGames = computed(() => {
       return false;
     }
 
-    // 只根據狀態類型進行篩選（聯盟過濾已經在API中完成）
-    const statusMatch = selectedStatusType.value === game.status;
+    const allianceMatch = !selectedAlliance.value || game.allianceId === selectedAlliance.value;
+
+    // 僅在需要時根據狀態類型進行篩選（聯盟過濾已經在 API 中完成）
+    const statusFilter = activeStatusFilter.value;
+    const statusMatch = statusFilter === 'all' || statusFilter === game.status;
 
     // 足球聯賽的額外過濾
     let soccerMatch = true;
@@ -127,35 +202,53 @@ const filteredGames = computed(() => {
       soccerMatch = (game as any).soccerLeagueId === selectedSoccerLeague.value;
     }
 
-    return statusMatch && soccerMatch;
+    return allianceMatch && statusMatch && soccerMatch;
   });
 });
 
-const liveGames = ref<(UnifiedGame | BasketballGame | IceHockeyGame | AmericanFootballGame | TennisGame)[]>([]);
-
 // 加载游戏数据的函数
-async function loadGamesData(allianceId?: number, date?: string, soccerLeagueId?: number) {
+async function loadGamesData(options: { allianceId?: number; date?: Date; soccerLeagueId?: number | null } = {}) {
   try {
     loading.value = true;
+    errorMessage.value = '';
 
-    // 統一調用 getGames 函數，根據參數決定數據源
-    const response = await getGames({
-      alliance: allianceId,
-      date: date,
-      status: selectedStatusType.value, // 使用選中的狀態類型進行篩選
-      soccerLeagueId: soccerLeagueId
-    });
+    const params: LivescoreQueryParams = {
+      size: 100,
+      page: 1,
+    };
 
-    if (response.success) {
-      liveGames.value = response.data || [];
-    } else {
-      errorMessage.value = '載入比賽數據失敗';
-      liveGames.value = [];
+    const allianceId = options.allianceId ?? selectedAlliance.value;
+    if (allianceId) {
+      params.allianceId = allianceId;
     }
+
+    const targetSoccerLeague = options.soccerLeagueId ?? selectedSoccerLeague.value ?? null;
+    if ((params.allianceId === 5 || allianceId === 5) && targetSoccerLeague && targetSoccerLeague !== 0) {
+      params.soccerLeagueId = targetSoccerLeague;
+    }
+
+    const targetDateInput = options.date ?? selectedDate.value;
+    const normalizedDate = normalizeDate(targetDateInput);
+    selectedDate.value = new Date(normalizedDate);
+
+    const statusMode = determineStatusMode(normalizedDate);
+    if (statusMode === 'all') {
+      activeStatusFilter.value = 'all';
+      selectedStatusType.value = 'live';
+    } else {
+      activeStatusFilter.value = statusMode;
+      selectedStatusType.value = statusMode;
+      params.status = statusMode;
+    }
+
+    params.date = formatDate(normalizedDate);
+
+    const response = await livescoreAPI.getLivescore(params);
+    liveGames.value = (response.data || []).map(mapLivescoreItemToGame);
   } catch (error) {
-    errorMessage.value = '網路錯誤，請稍後再試';
-    liveGames.value = [];
     console.error('載入比賽數據時發生錯誤:', error);
+    errorMessage.value = '載入比賽數據失敗，請稍後再試';
+    liveGames.value = [];
   } finally {
     loading.value = false;
   }
@@ -187,12 +280,14 @@ function selectAlliance(allianceId: number, event?: Event) {
     selectedSoccerLeague.value = null;
   }
 
-  loadGamesData(allianceId);
+  loadGamesData({ allianceId });
 }
 
 // 组件挂载时加载数据
 onMounted(async () => {
   const allianceId = parseInt(route.params.allianceId as string) || 1;
+  selectedDate.value = normalizeDate(new Date());
+  updateMonthDisplay();
   selectAlliance(allianceId);
   // selectAlliance 已經調用了 loadGamesData，所以不需要重複調用
 });
@@ -285,7 +380,6 @@ function generateCalendar() {
   const month = selectedDate.value.getMonth();
 
   const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
   const startDate = new Date(firstDay);
   startDate.setDate(startDate.getDate() - firstDay.getDay() + 1); // 星期一開始
 
@@ -328,7 +422,6 @@ function selectDateOption(option: any, event?: Event) {
     event.preventDefault();
     event.stopPropagation();
 
-    // 添加点击反馈
     const target = event.target as HTMLElement;
     if (target) {
       target.style.transform = 'scale(0.95)';
@@ -337,16 +430,24 @@ function selectDateOption(option: any, event?: Event) {
       }, 150);
     }
   }
-  selectedStatusType.value = option.type;
-  calendarVisible.value = false;
-  // 根據狀態類型篩選比賽，保持當前聯盟
-  loadGamesData(selectedAlliance.value);
+
+  const offsets: Record<string, number> = {
+    today: 0,
+    yesterday: -1,
+    tomorrow: 1,
+  };
+  const offset = offsets[option.type as string] ?? 0;
+  const base = new Date();
+  base.setDate(base.getDate() + offset);
+  selectDate(base);
 }
 
 function selectDate(date: Date) {
-  selectedDate.value = date;
+  const normalized = normalizeDate(date);
+  selectedDate.value = new Date(normalized);
   calendarVisible.value = false;
-  // 这里可以添加加载对应日期比赛的逻辑
+  updateMonthDisplay();
+  loadGamesData({ allianceId: selectedAlliance.value, date: normalized });
 }
 
 function updateMonthDisplay() {
@@ -375,10 +476,248 @@ function selectSoccerLeague(leagueId: number, event?: Event) {
   selectedSoccerLeague.value = leagueId;
 
   // 重新加載數據，使用聯賽過濾
-  loadGamesData(selectedAlliance.value, undefined, leagueId);
+  loadGamesData({ allianceId: selectedAlliance.value, soccerLeagueId: leagueId });
 }
 
 // 原有的loadGames函数已被新的loadGamesData函数替代
+
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function normalizeDate(date: Date): Date {
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized;
+}
+
+function determineStatusMode(date: Date): 'all' | LivescoreStatus {
+  const normalized = normalizeDate(date);
+  const today = normalizeDate(new Date());
+  if (normalized.getTime() === today.getTime()) {
+    return 'all';
+  }
+  return normalized.getTime() < today.getTime() ? 'finished' : 'scheduled';
+}
+
+function toNumber(value: unknown, fallback = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function mapLivescoreItemToGame(item: LivescoreItem): LivescoreCardGame {
+  const startTime = item.start_time;
+  const parsedDate = new Date(startTime);
+  let datePart: string;
+  if (typeof startTime === 'string' && startTime.includes('T')) {
+    datePart = startTime.split('T')[0];
+  } else if (!Number.isNaN(parsedDate.getTime())) {
+    datePart = formatDate(parsedDate);
+  } else {
+    datePart = formatDate(new Date());
+  }
+
+  const homeScore = item.home_score !== undefined && item.home_score !== null ? toNumber(item.home_score) : null;
+  const awayScore = item.away_score !== undefined && item.away_score !== null ? toNumber(item.away_score) : null;
+
+  let winner: string | undefined;
+  if (item.status === 'finished' && homeScore !== null && awayScore !== null) {
+    if (homeScore > awayScore) {
+      winner = item.home_team.name;
+    } else if (awayScore > homeScore) {
+      winner = item.away_team.name;
+    }
+  }
+
+  const { currentQuarter, timeRemaining } = item.sport_type === 'basketball'
+    ? parseBasketballPhase(item.live_phase)
+    : { currentQuarter: null, timeRemaining: null };
+
+  const scoreboard = item.sport_type === 'baseball'
+    ? mapBaseballScoreboard(item.scoreboard_detail)
+    : null;
+
+  const scoreBreakdown = item.sport_type === 'basketball'
+    ? mapBasketballScoreboard(item.scoreboard_detail)
+    : null;
+
+  return {
+    id: String(item.game_id),
+    officialId: item.game_id,
+    allianceId: item.alliance_id,
+    league: item.alliance_name || item.league_code,
+    leagueCode: item.league_code,
+    sportType: item.sport_type,
+    status: item.status,
+    time: startTime,
+    date: datePart,
+    homeTeam: item.home_team.name,
+    awayTeam: item.away_team.name,
+    homeTeamId: item.home_team.id,
+    awayTeamId: item.away_team.id,
+    homeScore,
+    awayScore,
+    winner,
+    inning: item.sport_type === 'baseball' ? item.live_phase ?? null : null,
+    livePhase: item.live_phase ?? null,
+    matchMinute: item.sport_type === 'soccer' ? item.live_phase ?? null : null,
+    matchPeriod: item.sport_type === 'soccer' ? mapSoccerPeriod(item.live_phase) : null,
+    currentPeriod: null,
+    currentQuarter,
+    timeRemaining,
+    scoreBreakdown,
+    scoreboard,
+    liveStats: item.live_stats ?? null,
+    oddsInfo: item.odds_info ?? null,
+    soccerLeagueId: item.soccer_league?.id ?? null,
+    soccerLeagueName: item.soccer_league?.name ?? null,
+    soccerLeague: item.soccer_league?.name ?? null,
+    allianceName: item.alliance_name ?? null,
+    betInfo: null,
+    homeStats: null,
+    awayStats: null,
+    teamStats: null,
+    recentForm: null,
+    headToHead: null,
+    lastUpdated: item.last_updated,
+    raw: item,
+  };
+}
+
+function mapBaseballScoreboard(detail?: LivescoreScoreboardDetail | null): BaseballScoreboard | null {
+  if (!detail) {
+    return null;
+  }
+
+  const inningsData = Array.isArray((detail as any).innings) ? (detail as any).innings : null;
+  if (!inningsData || inningsData.length === 0) {
+    return null;
+  }
+
+  const innings: number[] = [];
+  const awayScores: BaseballScoreboardEntry[] = [];
+  const homeScores: BaseballScoreboardEntry[] = [];
+
+  inningsData.forEach((entry: any, index: number) => {
+    const inningNumber = entry?.inning !== undefined ? toNumber(entry.inning, index + 1) : index + 1;
+    innings.push(inningNumber);
+    awayScores.push({ inning: inningNumber, runs: toNumber(entry?.away ?? entry?.awayScore ?? entry?.awayRuns) });
+    homeScores.push({ inning: inningNumber, runs: toNumber(entry?.home ?? entry?.homeScore ?? entry?.homeRuns) });
+  });
+
+  const totals = (detail as any).totals || {};
+  const awayTotalRaw = totals.away ?? totals.awayTotal ?? (detail as any).awayTotal;
+  const homeTotalRaw = totals.home ?? totals.homeTotal ?? (detail as any).homeTotal;
+
+  const parseTotals = (source: any): BaseballScoreboardTotals => ({
+    runs: toNumber(source?.runs, 0),
+    hits: source?.hits !== undefined ? toNumber(source.hits, 0) : undefined,
+    errors: source?.errors !== undefined ? toNumber(source.errors, 0) : undefined,
+  });
+
+  return {
+    innings,
+    awayScores,
+    homeScores,
+    awayTotal: parseTotals(awayTotalRaw),
+    homeTotal: parseTotals(homeTotalRaw),
+  };
+}
+
+function mapBasketballScoreboard(detail?: LivescoreScoreboardDetail | null): BasketballScoreBreakdown | null {
+  const periods = Array.isArray((detail as any)?.periods) ? (detail as any).periods : null;
+  if (!periods || periods.length === 0) {
+    return null;
+  }
+
+  const regularPeriods = periods.slice(0, 4);
+  const overtimePeriods = periods.slice(4);
+
+  const quarters = regularPeriods.map((period: any, index: number) => ({
+    label: typeof period?.label === 'string' ? period.label : `Q${index + 1}`,
+    quarter: index + 1,
+  }));
+
+  const awayScores = regularPeriods.map((period: any, index: number) => ({
+    quarter: index + 1,
+    points: toNumber(period?.away ?? period?.awayScore ?? period?.away_points),
+  }));
+
+  const homeScores = regularPeriods.map((period: any, index: number) => ({
+    quarter: index + 1,
+    points: toNumber(period?.home ?? period?.homeScore ?? period?.home_points),
+  }));
+
+  const awayOtScore = overtimePeriods.reduce((sum: number, period: any) => sum + toNumber(period?.away ?? period?.awayScore ?? period?.away_points), 0);
+  const homeOtScore = overtimePeriods.reduce((sum: number, period: any) => sum + toNumber(period?.home ?? period?.homeScore ?? period?.home_points), 0);
+
+  const hasOvertime = overtimePeriods.length > 0;
+
+  return {
+    quarters,
+    awayScores,
+    homeScores,
+    ot: hasOvertime || undefined,
+    awayOtScore: hasOvertime ? awayOtScore : undefined,
+    homeOtScore: hasOvertime ? homeOtScore : undefined,
+  };
+}
+
+function parseBasketballPhase(livePhase?: string | null): { currentQuarter: number | null; timeRemaining: string | null } {
+  if (!livePhase) {
+    return { currentQuarter: null, timeRemaining: null };
+  }
+
+  const trimmed = livePhase.trim();
+  const quarterMatch = trimmed.match(/^Q(\d+)(?:\s+(\d{1,2}:\d{2}))?$/i);
+  if (quarterMatch) {
+    const quarter = Number(quarterMatch[1]);
+    const time = quarterMatch[2] ?? null;
+    return {
+      currentQuarter: Number.isFinite(quarter) ? quarter : null,
+      timeRemaining: time,
+    };
+  }
+
+  const overtimeMatch = trimmed.match(/^OT(?:\s+(\d{1,2}:\d{2}))?$/i);
+  if (overtimeMatch) {
+    return {
+      currentQuarter: 5,
+      timeRemaining: overtimeMatch[1] ?? null,
+    };
+  }
+
+  return { currentQuarter: null, timeRemaining: trimmed || null };
+}
+
+function mapSoccerPeriod(livePhase?: string | null): string | null {
+  if (!livePhase) {
+    return null;
+  }
+  const normalized = livePhase.trim();
+  if (!normalized) {
+    return null;
+  }
+  if (normalized.includes('上半')) {
+    return 'first_half';
+  }
+  if (normalized.includes('下半')) {
+    return 'second_half';
+  }
+  if (normalized.includes('延長')) {
+    return 'extra_time';
+  }
+  if (normalized.includes('點球')) {
+    return 'penalty_shootout';
+  }
+  return null;
+}
 
 // 暴露给模板使用的函数和数据
 defineExpose({

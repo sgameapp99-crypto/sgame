@@ -258,16 +258,16 @@ interface BasketballTeamStats {
 }
 
 interface BasketballGame {
-  id: number;
+  id: number | string;
   league: string;
   status: 'scheduled' | 'live' | 'finished';
   homeTeam: string;
   awayTeam: string;
-  homeScore?: number;
-  awayScore?: number;
+  homeScore?: number | null;
+  awayScore?: number | null;
   time: string;
-  timeRemaining?: string;
-  currentQuarter?: number;
+  timeRemaining?: string | null;
+  currentQuarter?: number | null;
   venue?: string;
   bettingInfo?: string;
   winner?: string;
@@ -281,7 +281,7 @@ interface BasketballGame {
   avgPointsAllowed?: string;
 
   // 比賽中數據
-  scoreBreakdown?: ScoreBreakdown;
+  scoreBreakdown?: ScoreBreakdown | null;
 
   // 比賽結束數據
   teamStats?: BasketballTeamStats;
