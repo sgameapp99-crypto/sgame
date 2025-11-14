@@ -47,10 +47,19 @@
           id="comment-form"
           class="comment-form"
         >
-          <TipTapEditor v-model="commentContent" :upload-image="handleImageUpload" />
+          <TipTapEditor 
+            v-model="commentContent" 
+            :upload-image="handleImageUpload"
+            @upload-status-change="handleCommentUploadStatusChange"
+          />
           <div class="comment-form-actions">
-            <el-button type="primary" :loading="commentSubmitting" @click="submitComment">
-              {{ editingCommentId ? '更新回覆' : '發佈回覆' }}
+            <el-button 
+              type="primary" 
+              :loading="commentSubmitting" 
+              :disabled="isCommentUploadingImage"
+              @click="submitComment"
+            >
+              {{ isCommentUploadingImage ? '圖片上傳中...' : (editingCommentId ? '更新回覆' : '發佈回覆') }}
             </el-button>
             <el-button @click="closeCommentForm">取消</el-button>
           </div>
@@ -58,20 +67,29 @@
       </div>
     </div>
 
-    <el-dialog v-model="editDialogVisible" title="編輯文章" width="700px">
+    <el-dialog v-if="editDialogVisible" v-model="editDialogVisible" title="編輯文章" width="700px">
       <el-form label-width="80px" class="edit-form">
         <el-form-item label="標題">
           <el-input v-model="editTitle" placeholder="輸入文章標題" />
         </el-form-item>
         <el-form-item label="內容">
-          <TipTapEditor v-model="editContent" :upload-image="handleImageUpload" />
+          <TipTapEditor 
+            v-model="editContent" 
+            :upload-image="handleImageUpload"
+            @upload-status-change="handleEditUploadStatusChange"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="closeEditDialog">取消</el-button>
-        <el-button type="primary" :loading="editSubmitting" @click="submitArticleEdit"
-          >儲存</el-button
+        <el-button 
+          type="primary" 
+          :loading="editSubmitting"
+          :disabled="isEditUploadingImage"
+          @click="submitArticleEdit"
         >
+          {{ isEditUploadingImage ? '圖片上傳中...' : '儲存' }}
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -106,6 +124,9 @@ const editTitle = ref('');
 const editContent = ref<TipTapDoc | null>(null);
 const editSubmitting = ref(false);
 const commentLikeLoading = ref<Record<number, boolean>>({});
+// 追蹤圖片上傳狀態
+const isCommentUploadingImage = ref(false);
+const isEditUploadingImage = ref(false);
 
 interface ApiErrorPayload {
   response?: {
@@ -135,6 +156,8 @@ async function ensureLoggedIn() {
 }
 
 async function loadPost() {
+  // 重置回覆表單避免在頁面載入時顯示編輯器
+  closeCommentForm();
   const id = Number(route.params.id);
   if (!id || Number.isNaN(id)) {
     errorMessage.value = '無效的文章 ID';
@@ -162,10 +185,10 @@ async function loadComments(page = 1) {
   try {
     const res = await forumAPI.getComments(id, { page, size: 20 });
     comments.value = Array.isArray(res.data) ? res.data : [];
-    commentsPagination.value = res.pagination || {
+    commentsPagination.value = res.pagination ?? {
       page,
       size: 20,
-      total: res.pagination?.total ?? comments.value.length,
+      total: comments.value.length,
     };
   } catch (error) {
     console.error('載入回覆失敗', error);
@@ -323,12 +346,24 @@ function openArticleEditor() {
   editDialogVisible.value = true;
 }
 
+// 處理回覆表單的圖片上傳狀態變化
+function handleCommentUploadStatusChange(uploading: boolean) {
+  isCommentUploadingImage.value = uploading;
+}
+
+// 處理編輯對話框的圖片上傳狀態變化
+function handleEditUploadStatusChange(uploading: boolean) {
+  isEditUploadingImage.value = uploading;
+}
+
 async function handleImageUpload(file: globalThis.File) {
   if (!(await ensureLoggedIn())) return '';
   try {
     console.debug('準備上傳附件', { name: file.name, size: file.size, type: file.type });
     const res = await forumAPI.uploadAttachment(file);
-    return res.data.url;
+    const url = res.data.url;
+    console.log('圖片上傳成功，URL:', url);
+    return url;
   } catch (error: unknown) {
     const err = error as ApiErrorPayload;
     const payload = err.response?.data;

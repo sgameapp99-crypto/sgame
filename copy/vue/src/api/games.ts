@@ -2,8 +2,10 @@
  * 賽事相關 API
  */
 
-import { api } from './index';
+import api from './client';
 import type { Game, GamesResponse, GamesQueryParams } from '../types/game';
+import type { PredictionStats } from '../types/prediction';
+import type { PredictionStatsResponse } from './types';
 
 /**
  * 獲取賽事列表
@@ -21,8 +23,20 @@ export async function getGame(gameId: string): Promise<{ success: boolean; data:
   return response.data;
 }
 
+/**
+ * 查詢單一賽事的預測比例統計
+ */
+export async function getGamePredictionStats(gameId: string): Promise<PredictionStats> {
+  const response = await api.get<PredictionStatsResponse>(`/games/${gameId}/prediction-stats`);
+  if (!response.data.success || !response.data.data) {
+    throw new Error('取得賽事預測統計失敗');
+  }
+  return response.data.data;
+}
+
 export const gamesAPI = {
   getGames,
   getGame,
+  getGamePredictionStats,
 };
 

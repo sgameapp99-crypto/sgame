@@ -45,7 +45,7 @@
         </button>
 
         <div v-if="session.loggedIn" class="filters__balance" aria-live="polite">
-          目前彩幣：<strong>{{ coinBalance }}</strong>
+          目前榮譽點：<strong>{{ coinBalance }}</strong>
         </div>
       </div>
     </div>
@@ -279,7 +279,7 @@ async function loadCoinBalance(): Promise<void> {
       coinBalance.value = info.balance;
     }
   } catch (error) {
-    console.warn('載入彩幣餘額失敗', error);
+    // 靜默失敗
   }
 }
 

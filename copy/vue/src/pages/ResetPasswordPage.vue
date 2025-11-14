@@ -14,15 +14,32 @@
         <p v-if="errorMessage" class="message-error">{{ errorMessage }}</p>
         <p v-if="successMessage" class="message-success">{{ successMessage }}</p>
 
-        <label class="field">
-          <div>重設令牌</div>
-          <input v-model.trim="token" class="inputtext" type="text" placeholder="請貼上重設連結中的 token" />
+        <label class="field" for="resetToken">
+          <div id="resetTokenLabel">重設令牌</div>
+          <input
+            id="resetToken"
+            v-model.trim="token"
+            class="inputtext"
+            name="token"
+            type="text"
+            placeholder="請貼上重設連結中的 token"
+            aria-labelledby="resetTokenLabel"
+          />
         </label>
 
-        <label class="field">
-          <div>新密碼</div>
-          <input v-model="newPassword" class="inputtext" type="password" autocomplete="new-password" />
-          <div class="pwd-rules">
+        <label class="field" for="newPassword">
+          <div id="newPasswordLabel">新密碼</div>
+          <input
+            id="newPassword"
+            v-model="newPassword"
+            class="inputtext"
+            name="newPassword"
+            type="password"
+            autocomplete="new-password"
+            aria-labelledby="newPasswordLabel"
+            aria-describedby="passwordRules"
+          />
+          <div class="pwd-rules" id="passwordRules">
             <div class="rule" :class="{ ok: vLen, bad: newPassword.length>0 && !vLen }">8–12 碼</div>
             <div class="rule" :class="{ ok: vUpper, bad: newPassword.length>0 && !vUpper }">至少 1 個大寫字母</div>
             <div class="rule" :class="{ ok: vLower, bad: newPassword.length>0 && !vLower }">至少 1 個小寫字母</div>
@@ -32,9 +49,17 @@
           </div>
         </label>
 
-        <label class="field">
-          <div>確認新密碼</div>
-          <input v-model="newPassword2" class="inputtext" type="password" autocomplete="new-password" />
+        <label class="field" for="confirmNewPassword">
+          <div id="confirmNewPasswordLabel">確認新密碼</div>
+          <input
+            id="confirmNewPassword"
+            v-model="newPassword2"
+            class="inputtext"
+            name="confirmNewPassword"
+            type="password"
+            autocomplete="new-password"
+            aria-labelledby="confirmNewPasswordLabel"
+          />
           <p v-show="showPwdNotMatchErr" class="message-error">兩次密碼不一致</p>
         </label>
 

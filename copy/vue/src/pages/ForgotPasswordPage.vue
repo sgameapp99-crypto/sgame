@@ -14,9 +14,17 @@
         <p v-if="errorMessage" class="message-error">{{ errorMessage }}</p>
         <p v-if="successMessage" class="message-success">{{ successMessage }}</p>
 
-        <label class="field">
-          <div>Email</div>
-          <input v-model.trim="email" class="inputtext" type="email" autocomplete="email" />
+        <label class="field" for="forgotEmail">
+          <div id="forgotEmailLabel">Email</div>
+          <input
+            id="forgotEmail"
+            v-model.trim="email"
+            class="inputtext"
+            name="email"
+            type="email"
+            autocomplete="email"
+            aria-labelledby="forgotEmailLabel"
+          />
         </label>
 
         <div class="action-row">

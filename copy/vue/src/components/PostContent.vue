@@ -13,12 +13,26 @@
         <el-button type="primary" plain size="small" :loading="likeLoading" @click="$emit('like')">
           {{ isLiked ? '取消按讚' : '按讚' }} ({{ likeCount }})
         </el-button>
-        <el-button v-if="canEdit" type="primary" link size="small" @click="$emit('edit')"
-          >編輯</el-button
+        <el-button
+          v-if="canEdit"
+          type="primary"
+          plain
+          size="small"
+          class="action-button"
+          @click="$emit('edit')"
         >
-        <el-button v-if="canDelete" type="danger" link size="small" @click="$emit('delete')"
-          >刪除</el-button
+          編輯
+        </el-button>
+        <el-button
+          v-if="canDelete"
+          type="danger"
+          plain
+          size="small"
+          class="action-button"
+          @click="$emit('delete')"
         >
+          刪除
+        </el-button>
       </div>
     </div>
     <TipTapViewer :content="content" />
@@ -96,5 +110,11 @@ defineEmits<{ (e: 'like'): void; (e: 'edit'): void; (e: 'delete'): void }>();
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.post-actions :deep(.el-button),
+.post-actions :deep(.el-button *),
+.post-actions :deep(.el-button__text) {
+  cursor: pointer !important;
 }
 </style>

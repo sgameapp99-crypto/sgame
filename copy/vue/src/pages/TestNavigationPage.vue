@@ -105,7 +105,7 @@
               <h3>輸入目標 ID（隱藏 ID 導覽）</h3>
               <p>在網址不顯示 ID 的情況下，前往他人會員頁</p>
               <div style="display:flex; gap:8px; align-items:center;">
-                <input v-model="member.memberId" placeholder="例如：test123" style="flex:1; border: 2px solid #e9ecef; border-radius: 8px; padding: 8px 10px; font-size: 0.95rem;" />
+                <input id="hidden-member-id" v-model="member.memberId" placeholder="例如：test123" style="flex:1; border: 2px solid #e9ecef; border-radius: 8px; padding: 8px 10px; font-size: 0.95rem;" aria-label="輸入目標會員 ID" />
                 <button class="action-btn" @click="navigateToMemberHidden" :disabled="!member.memberId">
                   <span class="icon">➡️</span>
                   前往
@@ -318,12 +318,12 @@
         <div class="api-card">
           <h3>POST /auth/register</h3>
           <div class="field">
-            <label>Email</label>
-            <input v-model="form.email" type="email" placeholder="user+demo@example.com" />
+            <label for="register-email">Email</label>
+            <input id="register-email" v-model="form.email" type="email" placeholder="user+demo@example.com" />
           </div>
           <div class="field">
-            <label>Password</label>
-            <input v-model="form.password" type="password" placeholder="password123" />
+            <label for="register-password">Password</label>
+            <input id="register-password" v-model="form.password" type="password" placeholder="password123" />
             <div class="pwd-rules">
               <div class="rule" :class="{ ok: vLen, bad: form.password && !vLen }">8–12 碼</div>
               <div class="rule" :class="{ ok: vUpper, bad: form.password && !vUpper }">至少 1 個大寫字母</div>
@@ -335,8 +335,8 @@
             </div>
           </div>
           <div class="field">
-            <label>Name</label>
-            <input v-model="form.name" type="text" placeholder="Demo" />
+            <label for="register-name">Name</label>
+            <input id="register-name" v-model="form.name" type="text" placeholder="Demo" />
           </div>
           <button class="action-btn" @click="callRegister" :disabled="loading.register || !strongOk">
             <span class="icon">🆕</span>
@@ -348,12 +348,12 @@
         <div class="api-card">
           <h3>POST /auth/login</h3>
           <div class="field">
-            <label>Email</label>
-            <input v-model="form.email" type="email" placeholder="test@example.com" />
+            <label for="login-email">Email</label>
+            <input id="login-email" v-model="form.email" type="email" placeholder="test@example.com" />
           </div>
           <div class="field">
-            <label>Password</label>
-            <input v-model="form.password" type="password" placeholder="password" />
+            <label for="login-password">Password</label>
+            <input id="login-password" v-model="form.password" type="password" placeholder="password" />
           </div>
           <button class="action-btn" @click="callLogin" :disabled="loading.login">
             <span class="icon">🔐</span>
@@ -389,8 +389,8 @@
         <div class="api-card">
           <h3>目標會員</h3>
           <div class="field">
-            <label>Member ID</label>
-            <input v-model="member.memberId" placeholder="例如：test123 或 test2" />
+            <label for="target-member-id">Member ID</label>
+            <input id="target-member-id" v-model="member.memberId" placeholder="例如：test123 或 test2" />
           </div>
           <div class="field">
             <label>備註</label>
@@ -439,8 +439,8 @@
         <div class="api-card">
           <h3>GET /auth/oauth/google/start</h3>
           <div class="field">
-            <label>重定向 URL</label>
-            <input v-model="oauth.redirectUrl" type="text" placeholder="/member" />
+            <label for="oauth-redirect-url">重定向 URL</label>
+            <input id="oauth-redirect-url" v-model="oauth.redirectUrl" type="text" placeholder="/member" />
           </div>
           <button class="action-btn" @click="callOAuthStart" :disabled="loading.oauthStart">
             <span class="icon">🚀</span>
@@ -452,8 +452,8 @@
         <div class="api-card">
           <h3>GET /auth/oauth/google/callback</h3>
           <div class="field">
-            <label>模擬錯誤參數</label>
-            <select v-model="oauth.errorType">
+            <label for="oauth-error-type">模擬錯誤參數</label>
+            <select id="oauth-error-type" v-model="oauth.errorType">
               <option value="">正常流程</option>
               <option value="access_denied">access_denied</option>
               <option value="invalid_request">invalid_request</option>
@@ -509,8 +509,9 @@
         <div class="api-card">
           <h3>POST /me/avatar</h3>
           <div class="field">
-            <label>選擇圖片檔案</label>
+            <label for="avatar-file-input">選擇圖片檔案</label>
             <input 
+              id="avatar-file-input"
               type="file" 
               ref="avatarFileInput"
               @change="onFileSelect"
@@ -554,12 +555,12 @@
         <div class="api-card">
           <h3>檢測使用者大頭貼 URL</h3>
           <div class="field">
-            <label>使用者 ID</label>
-            <input v-model="avatarCheck.userId" placeholder="例如：test123" />
+            <label for="avatar-check-user-id">使用者 ID</label>
+            <input id="avatar-check-user-id" v-model="avatarCheck.userId" placeholder="例如：test123" />
           </div>
           <div class="field">
-            <label>圖片完整 URL（選填，預設使用 /static/avatars/{id}.webp）</label>
-            <input v-model="avatarCheck.customUrl" placeholder="http://host:port/static/avatars/test123.webp" />
+            <label for="avatar-check-custom-url">圖片完整 URL（選填，預設使用 /static/avatars/{id}.webp）</label>
+            <input id="avatar-check-custom-url" v-model="avatarCheck.customUrl" placeholder="http://host:port/static/avatars/test123.webp" />
           </div>
           <div style="display:flex; gap:8px; flex-wrap: wrap;">
             <button class="action-btn" @click="checkAvatar('HEAD')" :disabled="loading.avatarCheck">

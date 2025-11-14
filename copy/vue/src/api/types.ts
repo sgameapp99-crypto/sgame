@@ -1,4 +1,5 @@
 import type { JSONContent } from '@tiptap/vue-3';
+import type { PredictionStats } from '../types/prediction';
 
 // API 類型定義
 
@@ -16,6 +17,11 @@ export interface ApiError {
   message: string;
   code: string;
   statusCode?: number;
+}
+
+export interface PredictionStatsResponse {
+  success: boolean;
+  data: PredictionStats;
 }
 
 // ==================== 認證相關 ====================
@@ -130,6 +136,11 @@ export interface MemberProfileResponse {
   success: boolean;
   profile: MemberProfile;
   relationships?: MemberRelationships;
+  permissions?: MemberProfilePermissions;
+}
+
+export interface MemberProfilePermissions {
+  canViewCoinInfo?: boolean;
 }
 
 export interface MemberSearchParams {
@@ -190,6 +201,42 @@ export interface MemberSearchResponse {
 export interface MemberRecommendationsResponse {
   success: boolean;
   recommendations: MemberRecommendation[];
+}
+
+export interface MemberFollowing extends MemberSearchResult {
+  followingSince?: string;
+}
+
+export interface MemberFollowingsResponse {
+  success: boolean;
+  data: MemberFollowing[];
+  pagination: PageMeta;
+  keyword?: string | null;
+}
+
+export interface MemberForumStats {
+  hotPosts: number;
+  totalPosts: number;
+  commentsReceived: number;
+  commentsWritten: number;
+  totalLikes: number;
+}
+
+export interface MemberPredictionStats {
+  totals: {
+    total: number;
+    settled: number;
+    pending: number;
+    win: number;
+    lose: number;
+    cancelled: number;
+  };
+  accuracy?: number | null;
+  currentStreak?: {
+    type: 'win' | 'lose';
+    count: number;
+  } | null;
+  lastResultAt?: string | null;
 }
 
 export interface AvatarUploadResponse {

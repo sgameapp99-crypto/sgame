@@ -3,6 +3,10 @@ import vue from '@vitejs/plugin-vue'
 import fs from 'fs'
 import path from 'path'
 import https from 'https'
+// Element Plus 自動按需導入
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, '', 'VITE_')
@@ -45,11 +49,42 @@ export default defineConfig(({ mode }) => {
 	}
 
 	return {
-		plugins: [vue()],
+		plugins: [
+			vue(),
+			// Element Plus 自動按需導入組件
+			AutoImport({
+				resolvers: [ElementPlusResolver()],
+			}),
+			Components({
+				resolvers: [ElementPlusResolver()],
+			}),
+		],
 		resolve: {
 			alias: {
 				'@': '/src'
 			}
+		},
+		build: {
+			rollupOptions: {
+				output: {
+					manualChunks: {
+						// Vue 核心庫
+						'vendor-vue': ['vue', 'vue-router', 'pinia'],
+						// 編輯器（TipTap 較大，單獨分離）
+						'vendor-editor': [
+							'@tiptap/vue-3',
+							'@tiptap/starter-kit',
+							'@tiptap/extension-link',
+							'@tiptap/extension-image',
+							'@tiptap/html'
+						],
+						// HTTP 客戶端
+						'vendor-http': ['axios']
+						// Element Plus 已改為按需導入，不需要單獨分離
+					}
+				}
+			},
+			chunkSizeWarningLimit: 600
 		},
 		server: {
 			host,

@@ -15,7 +15,39 @@ export type PredictionStatus = 'pending' | 'win' | 'lose' | 'cancelled';
 
 export type GameMode = 'international' | 'taiwan' | 'all';
 
-export type DateRange = 'today' | 'week' | 'month' | 'all';
+export type DateRange = 'today' | 'week' | 'month' | 'past7' | 'past30' | 'all';
+
+export type PredictionSortField = 'createdAt' | 'settledAt' | 'featuredAt';
+
+export interface PredictionSelectionStats {
+  count: number;
+  percentage: number;
+}
+
+export interface PredictionTypeStats {
+  total: number;
+  selections: Record<string, PredictionSelectionStats>;
+}
+
+export interface PredictionStats {
+  totalPredictions: number;
+  byType: Record<string, PredictionTypeStats>;
+}
+
+export const PREDICTION_TYPE_LABELS: Record<PredictionType, string> = {
+  international_spread: '國際盤讓分',
+  international_total: '國際盤大小分',
+  taiwan_spread: '台灣盤讓分',
+  taiwan_moneyline: '台灣盤獨贏',
+  taiwan_total: '台灣盤大小分',
+};
+
+export const PREDICTION_SELECTION_LABELS: Record<PredictionSelection, string> = {
+  home: '主隊',
+  away: '客隊',
+  over: '大分',
+  under: '小分',
+};
 
 export interface GameInfo {
   allianceId: number;
@@ -45,11 +77,16 @@ export interface Prediction {
   odds: string;
   price: number;
   isMainPick: boolean;
+  isFeatured?: boolean;
+  featuredAt?: string | null;
+  featuredBy?: number | null;
+  featuredNote?: string | null;
   note: string | null; // 未購買時為 null
   status: PredictionStatus;
   isPurchased: boolean;
   isOwn: boolean;
   purchaseCount?: number; // 購買人數（後端提供）
+  settledAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -67,7 +104,7 @@ export interface CreatePredictionRequest {
 export interface CreatePredictionResponse {
   success: boolean;
   message: string;
-  id: number; // 後端返回 id 而非 predictionId
+  predictionId: number; // 後端實際返回 predictionId
 }
 
 export interface UpdatePredictionRequest {
@@ -87,6 +124,9 @@ export interface PredictionsQueryParams {
   size?: number;
   startDate?: string; // 開始日期 (YYYY-MM-DD)
   endDate?: string; // 結束日期 (YYYY-MM-DD)，未設置時表示不限結束日期
+  isFeatured?: boolean;
+  sortBy?: PredictionSortField;
+  order?: 'asc' | 'desc';
 }
 
 export interface PredictionsResponse {
@@ -128,4 +168,14 @@ export interface UpdatePredictionSettingsRequest {
   allowPurchase?: boolean;
   autoPublish?: boolean;
 }
+
+export interface FeaturePredictionRequest {
+  note?: string;
+}
+
+export interface FeaturePredictionResponse {
+  success: boolean;
+  data: Prediction;
+}
+
 

@@ -49,23 +49,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <!-- 基本SEO標籤 -->
-    <title>玩運彩預測平台 - 專業運動預測分析 | 籃球足球棒球預測</title>
+    <title>運彩王預測平台 - 專業運動預測分析 | 籃球足球棒球預測</title>
     <meta name="description" content="專業的運動預測分享平台，提供籃球、足球、棒球等各類運動的預測分析服務，與高手一起分析賽事，提升預測準確率。">
     <meta name="keywords" content="運動預測,籃球預測,足球預測,棒球預測,運彩分析,預測師,體育預測,賽事分析">
-    <meta name="author" content="玩運彩預測平台">
+    <meta name="author" content="運彩王預測平台">
     <meta name="robots" content="index, follow">
     
     <!-- Open Graph 標籤 -->
-    <meta property="og:title" content="玩運彩預測平台 - 專業運動預測分析">
+    <meta property="og:title" content="運彩王預測平台 - 專業運動預測分析">
     <meta property="og:description" content="專業的運動預測分享平台，提供籃球、足球、棒球等各類運動的預測分析服務">
     <meta property="og:image" content="/images/og-image.jpg">
     <meta property="og:url" content="https://sgame.com">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="玩運彩預測平台">
+    <meta property="og:site_name" content="運彩王預測平台">
     
     <!-- Twitter 卡片 -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="玩運彩預測平台 - 專業運動預測分析">
+    <meta name="twitter:title" content="運彩王預測平台 - 專業運動預測分析">
     <meta name="twitter:description" content="專業的運動預測分享平台，提供籃球、足球、棒球等各類運動的預測分析服務">
     <meta name="twitter:image" content="/images/og-image.jpg">
     
@@ -79,7 +79,7 @@
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      "name": "玩運彩預測平台",
+      "name": "運彩王預測平台",
       "description": "專業的運動預測分享平台，提供籃球、足球、棒球等各類運動的預測分析服務",
       "url": "https://sgame.com",
       "potentialAction": {
@@ -161,7 +161,7 @@ const router = createRouter({
       name: 'home', 
       component: HomePage,
       meta: { 
-        title: '玩運彩預測平台 - 專業運動預測分析',
+        title: '運彩王預測平台 - 專業運動預測分析',
         description: '專業的運動預測分享平台，提供籃球、足球、棒球等各類運動的預測分析服務'
       }
     },
@@ -170,7 +170,7 @@ const router = createRouter({
       name: 'predict', 
       component: () => import('../pages/PredictPage.vue'),
       meta: { 
-        title: '運動預測 - 玩運彩預測平台',
+        title: '運動預測 - 運彩王預測平台',
         description: '查看最新的運動預測分析，包括籃球、足球、棒球等各類運動賽事預測'
       }
     },
@@ -179,7 +179,7 @@ const router = createRouter({
       name: 'games', 
       component: () => import('../pages/GamesPage.vue'),
       meta: { 
-        title: '賽事資料 - 玩運彩預測平台',
+        title: '賽事資料 - 運彩王預測平台',
         description: '查看最新的運動賽事資料和統計分析，包括籃球、足球、棒球等各類運動'
       }
     },
@@ -188,7 +188,7 @@ const router = createRouter({
       name: 'member', 
       component: () => import('../pages/MemberPage.vue'),
       meta: { 
-        title: '會員中心 - 玩運彩預測平台',
+        title: '會員中心 - 運彩王預測平台',
         description: '管理您的個人資料、預測記錄和統計數據'
       }
     },

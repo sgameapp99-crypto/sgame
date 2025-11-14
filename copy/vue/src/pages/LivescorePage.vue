@@ -44,7 +44,7 @@
           <component
             v-for="game in filteredGames"
             :key="`${selectedAlliance}-${game.id}`"
-            :is="getGameComponent(selectedAlliance)"
+            :is="getGameComponent(game.allianceId ?? selectedAlliance)"
             :game="game"
             @click="viewGameDetails(game.id)"
           ></component>
@@ -343,11 +343,11 @@ function getStatusText(status: string): string {
   return statusMap[status] || status;
 }
 
-function viewGameDetails(gameId: number) {
+function viewGameDetails(gameId: string) {
   // TODO: 实现查看比赛详情功能
 }
 
-function followGame(gameId: number) {
+function followGame(gameId: string) {
   // TODO: 实现关注比赛功能
 }
 

@@ -12,7 +12,15 @@
           <div class="avatar-box">
             <img :src="avatarPreview || defaultBlackAvatar" alt="avatar" class="avatar" />
             <div class="avatar-actions">
-              <input ref="fileInput" type="file" accept="image/*" @change="onFileChange" />
+              <input
+                id="avatarUpload"
+                ref="fileInput"
+                name="avatarUpload"
+                type="file"
+                accept="image/*"
+                aria-label="選擇大頭貼檔案"
+                @change="onFileChange"
+              />
               <button class="btn" :disabled="uploading || !selectedFile" @click="uploadAvatar">{{ uploading ? '上傳中…' : '上傳大頭貼' }}</button>
             </div>
             <p v-if="avatarMessage" :class="{ 'ok': avatarOk, 'err': !avatarOk }">{{ avatarMessage }}</p>
@@ -100,12 +108,13 @@
               <div class="form-group">
                 <label for="defaultPrice" class="form-label">
                   <span>預設預測價格</span>
-                  <small class="hint-text">建立預測時的預設彩幣價格（0 表示免費）</small>
+                  <small class="hint-text">建立預測時的預設榮譽點價格（0 表示免費）</small>
                 </label>
                 <div class="input-with-suffix">
                   <input
                     id="defaultPrice"
                     v-model.number="predictionSettings.defaultPrice"
+                    name="defaultPrice"
                     type="number"
                     class="inputtext"
                     placeholder="請輸入價格"
@@ -114,30 +123,36 @@
                     step="10"
                     :disabled="savingSettings"
                   />
-                  <span class="input-suffix">彩幣</span>
+                  <span class="input-suffix">榮譽點</span>
                 </div>
               </div>
 
               <div class="form-group">
-                <label class="form-label checkbox-label">
+                <label class="form-label checkbox-label" for="allowPurchase">
                   <input
+                    id="allowPurchase"
                     v-model="predictionSettings.allowPurchase"
+                    name="allowPurchase"
                     type="checkbox"
                     :disabled="savingSettings"
+                    aria-describedby="allowPurchaseHint"
                   />
-                  <span>允許他人購買我的預測</span>
+                  <span id="allowPurchaseHint">允許他人購買我的預測</span>
                 </label>
                 <small class="hint-text">關閉後，您的預測將不會在市場上顯示</small>
               </div>
 
               <div class="form-group">
-                <label class="form-label checkbox-label">
+                <label class="form-label checkbox-label" for="autoPublish">
                   <input
+                    id="autoPublish"
                     v-model="predictionSettings.autoPublish"
+                    name="autoPublish"
                     type="checkbox"
                     :disabled="savingSettings"
+                    aria-describedby="autoPublishHint"
                   />
-                  <span>自動公開預測</span>
+                  <span id="autoPublishHint">自動公開預測</span>
                 </label>
                 <small class="hint-text">開啟後，建立預測時會自動公開給其他會員</small>
               </div>
@@ -171,9 +186,17 @@
       </div>
       <div class="modal-body">
         <p class="hint">請輸入您的 Email，我們會寄送重設密碼郵件。</p>
-        <label class="field">
-          <div>Email</div>
-          <input v-model.trim="recoverEmail" class="inputtext" type="email" placeholder="name@example.com" />
+        <label class="field" for="recoverEmail">
+          <div id="recoverEmailLabel">Email</div>
+          <input
+            id="recoverEmail"
+            v-model.trim="recoverEmail"
+            class="inputtext"
+            name="recoverEmail"
+            type="email"
+            placeholder="name@example.com"
+            aria-labelledby="recoverEmailLabel"
+          />
         </label>
         <p v-if="recoverError" class="message-error">{{ recoverError }}</p>
         <p v-if="recoverSuccess" class="message-success">{{ recoverSuccess }}</p>

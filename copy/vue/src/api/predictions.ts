@@ -2,7 +2,7 @@
  * 預測相關 API
  */
 
-import { api } from './index';
+import api from './client';
 import type {
   Prediction,
   PredictionsResponse,
@@ -14,6 +14,8 @@ import type {
   PurchaseStatusResponse,
   PredictionSettingsResponse,
   UpdatePredictionSettingsRequest,
+  FeaturePredictionRequest,
+  FeaturePredictionResponse,
 } from '../types/prediction';
 
 /**
@@ -88,6 +90,30 @@ export async function updatePredictionSettings(data: UpdatePredictionSettingsReq
   return response.data;
 }
 
+/**
+ * 設定主推
+ */
+export async function featurePrediction(id: number | string, data?: FeaturePredictionRequest): Promise<FeaturePredictionResponse> {
+  const response = await api.post<FeaturePredictionResponse>(`/predictions/${id}/feature`, data);
+  return response.data;
+}
+
+/**
+ * 取消主推
+ */
+export async function unfeaturePrediction(id: number | string): Promise<FeaturePredictionResponse> {
+  const response = await api.post<FeaturePredictionResponse>(`/predictions/${id}/unfeature`);
+  return response.data;
+}
+
+/**
+ * 取得可設為主推的預測列表
+ */
+export async function getFeatureCandidates(): Promise<PredictionsResponse> {
+  const response = await api.get<PredictionsResponse>('/predictions/feature-candidates');
+  return response.data;
+}
+
 export const predictionsAPI = {
   createPrediction,
   getPredictions,
@@ -98,5 +124,8 @@ export const predictionsAPI = {
   getPurchaseStatus,
   getPredictionSettings,
   updatePredictionSettings,
+  featurePrediction,
+  unfeaturePrediction,
+  getFeatureCandidates,
 };
 

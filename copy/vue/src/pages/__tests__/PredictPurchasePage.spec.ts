@@ -154,7 +154,7 @@ describe('PredictPurchasePage', () => {
     expect(predictionsAPI.getPredictions).toHaveBeenCalledTimes(1);
     expect(wrapper.findAll('.prediction-card')).toHaveLength(2);
     expect(wrapper.text()).toContain('共 2 筆預測');
-    expect(wrapper.text()).toContain('目前彩幣：');
+    expect(wrapper.text()).toContain('目前榮譽點：');
   });
 
   test('redirects to login when purchasing without session', async () => {

@@ -1,50 +1,48 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 
-const DEFAULT_TITLE = '玩運彩預測平台';
+const DEFAULT_TITLE = '運彩王預測平台';
 
 const ROUTE_TITLES: Record<string, string> = {
-  home: '玩運彩討論區首頁｜玩運彩',
-  'test-nav': '測試導覽｜玩運彩',
-  'forum-test': '論壇測試頁｜玩運彩',
-  forum: '討論區｜玩運彩',
-  'forum-create': '發表文章｜玩運彩',
-  login: '會員登入｜玩運彩',
-  register: '加入會員｜玩運彩',
-  'verify-email': 'Email 驗證｜玩運彩',
-  'password-change': '變更密碼｜玩運彩',
-  'forgot-password': '忘記密碼｜玩運彩',
-  'reset-password': '重設密碼｜玩運彩',
-  post: '文章內容｜玩運彩',
-  member: '我的會員中心｜玩運彩',
-  'member-view': '會員資訊｜玩運彩',
-  predict: '預測賽事｜玩運彩',
-  'predict-buy': '預測購買｜玩運彩',
-  guess: '玩競猜｜玩運彩',
-  livescore: '即時比分｜玩運彩',
-  'buy-predict': '找高手｜玩運彩',
-  billboard: '高手排行榜｜玩運彩',
-  'member-search': '玩家搜尋｜玩運彩',
-  games: '賽事資料｜玩運彩',
-  'games-battle': '對戰資訊｜玩運彩',
-  'games-teams': '球隊資訊｜玩運彩',
-  'games-standings': '排名戰績｜玩運彩',
-  'games-results': '賽事結果｜玩運彩',
-  'games-list': '賽事列表｜玩運彩',
-  'game-detail': '賽事詳情｜玩運彩',
-  'member-settings': '帳戶設定｜玩運彩',
-  'coins-purchase': '彩幣購買｜玩運彩',
-  legal: '法律條款｜玩運彩',
-  admin: '管理後台｜玩運彩',
-  'not-found': '頁面不存在｜玩運彩',
+  home: '運彩王討論區首頁｜運彩王',
+  forum: '討論區｜運彩王',
+  'forum-create': '發表文章｜運彩王',
+  login: '會員登入｜運彩王',
+  register: '加入會員｜運彩王',
+  'verify-email': 'Email 驗證｜運彩王',
+  'password-change': '變更密碼｜運彩王',
+  'forgot-password': '忘記密碼｜運彩王',
+  'reset-password': '重設密碼｜運彩王',
+  post: '文章內容｜運彩王',
+  member: '我的會員中心｜運彩王',
+  'member-view': '會員資訊｜運彩王',
+  predict: '預測賽事｜運彩王',
+  'predict-buy': '預測購買｜運彩王',
+  guess: '玩競猜｜運彩王',
+  livescore: '即時比分｜運彩王',
+  'buy-predict': '找高手｜運彩王',
+  billboard: '高手排行榜｜運彩王',
+  'member-search': '玩家搜尋｜運彩王',
+  games: '賽事資料｜運彩王',
+  'games-battle': '對戰資訊｜運彩王',
+  'games-teams': '球隊資訊｜運彩王',
+  'games-standings': '排名戰績｜運彩王',
+  'games-results': '賽事結果｜運彩王',
+  'games-list': '賽事列表｜運彩王',
+  'game-detail': '賽事詳情｜運彩王',
+  'member-settings': '帳戶設定｜運彩王',
+  'coins-purchase': '榮譽點購買｜運彩王',
+  terms: '服務條款｜運彩王',
+  contact: '聯絡我們｜運彩王',
+  legal: '法律條款｜運彩王',
+  admin: '管理後台｜運彩王',
+  'not-found': '頁面不存在｜運彩王',
 };
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'home', component: () => import('../pages/ForumPage.vue') },
-    { path: '/test-nav', name: 'test-nav', component: () => import('../pages/TestNavigationPage.vue') },
-    { path: '/forum-test', name: 'forum-test', component: () => import('../pages/ForumTestPage.vue') },
     { path: '/forum', name: 'forum', component: () => import('../pages/ForumPage.vue') },
     {
       path: '/forum/new',
@@ -125,6 +123,8 @@ const router = createRouter({
     { path: '/member/settings', name: 'member-settings', component: () => import('../pages/MemberSettingsPage.vue'), meta: { requiresAuth: true } },
     { path: '/member/coins/purchase', name: 'coins-purchase', component: () => import('../pages/CoinsPurchasePage.vue'), meta: { requiresAuth: true } },
     // 法律條款頁面
+    { path: '/terms', name: 'terms', component: () => import('../pages/TermsPage.vue') },
+    { path: '/contact', name: 'contact', component: () => import('../pages/ContactPage.vue') },
     { path: '/legal', name: 'legal', component: () => import('../pages/LegalPage.vue') },
     // 管理員後台
     {
@@ -164,7 +164,7 @@ router.beforeEach(async (to) => {
 
   // 全域：若已登入但尚未通過 Email 驗證，限制進入受保護頁（除了 /verify-email 與 /logout）
   const protectedNames = new Set(['member', 'member-view', 'predict', 'predict-buy', 'games', 'games-list', 'game-detail']);
-  const bypassNames = new Set(['verify-email', 'logout', 'login', 'register', 'home', 'forum', 'forum-test', 'test-nav', 'legal', 'post', 'not-found', 'admin']);
+  const bypassNames = new Set(['verify-email', 'logout', 'login', 'register', 'home', 'forum', 'legal', 'terms', 'contact', 'post', 'not-found', 'admin']);
   if (!bypassNames.has((to.name as string) || '')) {
     try {
       await session.fetchSession();

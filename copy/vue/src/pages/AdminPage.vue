@@ -315,15 +315,15 @@
                 </el-card>
 
                 <el-card class="stat-item">
-                  <el-statistic title="彩幣總餘額" :value="stats.coins.totalBalance" />
+                  <el-statistic title="榮譽點總餘額" :value="stats.coins.totalBalance" />
                 </el-card>
 
                 <el-card class="stat-item">
-                  <el-statistic title="彩幣總收入" :value="stats.coins.totalEarned" />
+                  <el-statistic title="榮譽點總收入" :value="stats.coins.totalEarned" />
                 </el-card>
 
                 <el-card class="stat-item">
-                  <el-statistic title="彩幣總支出" :value="stats.coins.totalSpent" />
+                  <el-statistic title="榮譽點總支出" :value="stats.coins.totalSpent" />
                 </el-card>
 
                 <el-card class="stat-item">

@@ -26,25 +26,25 @@
           </div>
           <div class="info-row highlight">
             <span class="label">價格</span>
-            <span class="value price">{{ prediction.price }} 彩幣</span>
+            <span class="value price">{{ prediction.price }} 榮譽點</span>
           </div>
         </div>
 
         <div class="balance-info">
           <div class="balance-row">
             <span class="label">目前餘額</span>
-            <span class="value">{{ currentBalance }} 彩幣</span>
+            <span class="value">{{ currentBalance }} 榮譽點</span>
           </div>
           <div v-if="prediction" class="balance-row">
             <span class="label">購買後餘額</span>
             <span class="value" :class="{ insufficient: remainingBalance < 0 }">
-              {{ remainingBalance }} 彩幣
+              {{ remainingBalance }} 榮譽點
             </span>
           </div>
         </div>
 
         <div v-if="remainingBalance < 0" class="error-message">
-          <p>彩幣餘額不足</p>
+          <p>榮譽點餘額不足</p>
           <button @click="$emit('go-purchase')" class="btn-link">
             前往充值 →
           </button>
@@ -149,7 +149,7 @@ async function handlePurchase() {
     const message = e?.response?.data?.message;
     
     if (code === 'INSUFFICIENT_COINS') {
-      errorMessage.value = '彩幣餘額不足，請先充值';
+      errorMessage.value = '榮譽點餘額不足，請先充值';
     } else if (code === 'ALREADY_PURCHASED') {
       errorMessage.value = '您已經購買過此預測';
     } else if (code === 'OWN_PREDICTION') {

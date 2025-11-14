@@ -77,11 +77,11 @@ cd /home/gogofire1774/sgame
 - 若 Cloudflare 已啟用「Full」或「Full (Strict)」模式，建議維持本機 Nginx 也使用 TLS（即目前 `sgame-443.conf` 的做法），可確保 Cloudflare 與來源站之間的連線加密。
 - 若僅在 Cloudflare 端加密（Flexible 模式），來源站可改用 HTTP，但連線會有被攔截風險，不建議在正式環境採用。
 - 使用 Cloudflare 產出的起源憑證時，請確保憑證與私鑰檔案權限為 600，並只允許 `root` 存取。
-# 🏀 玩運彩預測平台 - Vue3 前端應用
+# 🏀 運彩王預測平台 - Vue3 前端應用
 
 ## 📖 項目簡介
 
-玩運彩預測平台是一個專業的運動預測分享與販售平台，提供籃球、足球、棒球等各類運動的預測分析服務。本項目使用 **Vue3 + Vite + TypeScript** 技術棧構建現代化的前端應用。
+運彩王預測平台是一個專業的運動預測分享與販售平台，提供籃球、足球、棒球等各類運動的預測分析服務。本項目使用 **Vue3 + Vite + TypeScript** 技術棧構建現代化的前端應用。
 
 ### 🌟 主要功能
 
@@ -197,6 +197,13 @@ sgame/
 
 - 預設網站小圖示 `copy/vue/public/favicon.ico` 已內建於專案，Vite 伺服器會直接提供 `/favicon.ico`，避免瀏覽器載入 404。
 - 若需自訂品牌圖示，可以 16×16 或 32×32 的 ICO 檔覆蓋同一路徑；建議同步更新其他靜態資源手冊以便團隊維護。
+
+#### 法律與客服服務頁面（2025-11-13 新增）
+
+- `copy/vue/src/pages/TermsPage.vue`：提供全新排版的「服務條款」頁面，路徑 `/terms`，整合既有 `TermsOfService` 內容並加入平台使用說明。
+- `copy/vue/src/pages/ContactPage.vue`：集中客服電話、服務時間、Email 及聯繫指引於 `/contact`，並提供暫行留言流程，後續可擴充正式表單。
+- `AppFooter` 僅保留「服務條款」「聯絡我們」連結；「關於我們」「常見問題」暫時隱藏，避免導向未完成頁面。
+- 所有政策文件中的聯絡連結已統一指向 `/contact`，確保用戶能快速找到客服資訊。
 
 ## 🔧 開發指令
 
@@ -432,8 +439,8 @@ npm run test:e2e
 - **類型定義**：`copy/vue/src/types/` 目錄下的 `game.ts`、`prediction.ts`、`coin.ts`、`alliance.ts`
 - **API 服務層**：`copy/vue/src/api/` 目錄下的 `games.ts`、`predictions.ts`、`coins.ts`
 - **可重用組件**：
-  - `CoinBalance.vue` - 彩幣餘額顯示
-  - `CoinPurchaseDialog.vue` - 彩幣購買對話框
+  - `CoinBalance.vue` - 榮譽點餘額顯示
+  - `CoinPurchaseDialog.vue` - 榮譽點購買對話框
   - `PurchaseDialog.vue` - 預測購買確認
   - `PredictionCard.vue` - 預測卡片顯示
 
@@ -457,7 +464,7 @@ npm run test:e2e
    - 完善類型：`selection` 和 `note` 可為 `null`
 3. 🔄 **準備開始聯調測試** - 預計 3-5 天
    - 📋 [整合測試計劃](./前後端整合測試計劃.md) - 詳細的測試步驟
-   - 階段一：基礎功能（認證、彩幣、設定）
+   - 階段一：基礎功能（認證、榮譽點、設定）
    - 階段二：賽事與預測建立
    - 階段三：預測查看與購買
    - 階段四：完整流程測試
@@ -472,7 +479,7 @@ npm run test:e2e
 #### 核心功能
 1. **賽事結果更新** - 賽事列表查詢、更新比分、自動判定預測
 2. **預測結果管理** - 預測列表查詢、批量重新計算
-3. **系統統計** - 用戶、賽事、預測、彩幣統計
+3. **系統統計** - 用戶、賽事、預測、榮譽點統計
 4. **賽事管理** - 建立、編輯、刪除賽事（部分待實作）
 5. **論壇維運** - 看板階層管理、文章查詢、置頂/鎖定/刪除、統計監控
 
@@ -510,6 +517,41 @@ npm run test:e2e
 - 新增預設 `favicon.ico`（位於 `copy/vue/public/`），避免 Vite 開發環境與正式環境在載入頁面時出現 `/favicon.ico` 404 訊息。
 - 建議：若品牌識別有更新，請同步提供新的 32×32 ICO 檔並更新 `README.md` 對應說明，以確保開發與部署環境一致。
 
+### 🧩 最新修復紀錄（2025年11月11日）
+
+- 全站品牌統一為「運彩王」，同步更新頁面標題、說明文件與 UI 文案。
+- 「榮譽點」正式取代原彩幣稱呼，調整購買、餘額與提示訊息字詞。
+- 專家稱號更新：莊家殺手→殺莊高手、單場殺手→單月高手、明燈達人→天命師，維持原查詢參數設定。
+- 建議與後端及資料庫協同確認術語同步，避免品牌識別不一致。
+
+### 🧩 最新修復紀錄（2025年11月12日）
+
+- 新增預測重複提交防呆：`PredictPage.vue` 於載入賽事時同步取得使用者當日已建立的預測快照，`PredictGamesTable.vue` 依照賽事＋玩法停用對應選項並顯示「已提交」標記，避免再次呼叫後端 API 造成 409。
+- 預測提交成功後立即刷新前端快照，確保 UI 與後端狀態一致，並保留後端 409 作為第二層保護。
+- 修正會員頁載入狀態：`MemberPage.vue` 新增載入與錯誤視圖並重構 `loadMemberData` 錯誤處理，避免初始閃現預設帳號，無會員時顯示「查無此用戶」。反思：需持續與後端確認 404 與錯誤訊息格式，避免非預期回應造成前端判斷失準。
+- 調整遊戲紀錄分頁：`MemberPage.vue` 將原本的日期按鈕與 placeholder 下注區移除，改為載入最近十筆榮譽點交易並顯示金額、餘額與時間，若 API 回應錯誤或無紀錄時提供對應提示。後續需確認後端交易原因與格式是否足夠辨識不同來源，必要時再補充圖示或分類。
+- 完善榮譽點紀錄權限：`MemberPage.vue` 新增 `isSelf` 計算屬性判斷是否為本人頁面，側邊欄「榮譽點紀錄」分頁與內容區僅在本人時顯示，帳戶編號改從 API 動態取得，並移除未實作的「榮譽點帳戶」與「轉贈榮譽點」按鈕，避免誤導使用者。
+- 重新整理討論分頁：`MemberPage.vue` 移除發文/回文/感謝文等靜態統計，改為單一「討論區」總覽與預設統計區塊，等待後端確認正式 API 後再進行整合。
+- 串接論壇統計 API：`memberAPI.getForumStats` 取得 `hotPosts`、`totalPosts`、`commentsReceived`、`commentsWritten`、`totalLikes`，討論區區塊顯示即時統計並具備載入/錯誤狀態提示。
+- 榮譽點資訊權限化：透過 `permissions.canViewCoinInfo` 判斷是否顯示榮譽點餘額與帳戶資訊，預設僅本人可見，避免在拜訪他人頁面時洩漏資料。
+- 新增「明燈表」分頁：會員頁左側新增僅本人可見的明燈表籤，串接 `GET /me/followings` 顯示追蹤清單並提供載入更多功能，空狀態/錯誤提示亦已涵蓋。
+- 串接戰績統計 API：`memberAPI.getPredictionStats` 顯示會員預測總場次、勝敗、命中率、連勝狀態等資料，並在戰績分頁提供載入/錯誤提示；今日人氣暫時隱藏，待後端提供動態資料再啟用。
+
+### 🧩 最新修復紀錄（2025年11月14日）
+
+- 會員頁 `AllianceMenu` 新增「過去 7 天 / 過去 30 天」日期範圍，並讓 `/api/predictions` 查詢參數支援過去區間，方便檢視歷史預測。
+- 戰績分頁串接 `/api/members/{id}/predictions`，呈現逐筆歷史戰績、分頁與結果篩選，並依 `isOwn / isPurchased` 控制 selection/note 欄位顯示。
+- 補齊 `MemberPrediction` 型別（含 `settledAt`、排序參數），並建立 `memberAPI.getMemberPredictions` 供其他頁面重用。
+- `PredictGamesTable.vue` 新增「指定主推」選項與備註欄，提交時會自動呼叫 `/predictions/{id}/feature` 並提示主推狀態。
+- `MemberPage.vue` 增設「主推管理」卡片，串接 `/predictions/feature-candidates`、`/predictions/{id}/feature`、`/predictions/{id}/unfeature`，可檢視現行主推、候選清單並即時更換。
+- `BuyPredictPage.vue` 主推榜改為使用 `predictionsAPI.getPredictions`（`isFeatured=true`）真實資料，卡片顯示賽事、玩法、售價、更新時間，並可直接導向會員頁或 `/predict/buy`。
+
+### 🔍 外部連結盤點（2025年11月12日）
+
+- 前台仍載入外部資源：Google Material Icons（`copy/vue/src/App.vue`）、Facebook SDK（`copy/vue/src/pages/LoginPage.vue`）、Google reCAPTCHA 政策連結（`copy/vue/src/components/AppFooter.vue`）、財政部法規頁（`copy/vue/src/components/legal/TermsOfService.vue`）。
+- 棒球賽事卡片 (`copy/vue/src/components/games/BaseballGameCard.vue`) 原連向 `playsport.cc` 的外部連結已移除，現以純文字顯示隊名與「預測比例」；待內站對應頁完成後可改為本站路由。
+- Vue Router 已移除測試用路由（`/test-nav`、`/forum-test`），未定義路徑一律導向 404 頁（`NotFound.vue`）；對應的測試靜態頁 `copy/vue/public/test-login.html` 亦已下線。
+
 ### 🛡️ Edge 安全與相容性警告分析（2025年11月07日）
 
 - 重點提醒：`x-content-type-options` 未設置、缺少 `Cache-Control`、僅使用 `X-Frame-Options`、`Content-Type` 字元集非 `utf-8`、表單欄位缺 `name/id`，均被列為高嚴重度，需後端與前端共同調整。
@@ -519,9 +561,9 @@ npm run test:e2e
 ### 🧭 頁面標題動態更新（2025年11月04日）
 
 - `copy/vue/src/router/index.ts` 新增 `ROUTE_TITLES` 對應表與 `router.afterEach`，導覽後會自動更新 `document.title`，確保各頁面顯示對應中文名稱。
-- 預設站名常數 `DEFAULT_TITLE` 設為「玩運彩預測平台」，若找不到對應路由標題或在 SSR/快速切換時仍保持一致品牌識別。
+- 預設站名常數 `DEFAULT_TITLE` 設為「運彩王預測平台」，若找不到對應路由標題或在 SSR/快速切換時仍保持一致品牌識別。
 - 保留 `meta.title` 擴充彈性：未來在路由上設定 `meta.title` 會優先於對應表覆寫頁面標題。
-- `copy/vue/index.html` 的 `<title>` 同步改為「玩運彩預測平台」，避免初次載入時顯示舊的「Legacy to Vue」。
+- `copy/vue/index.html` 的 `<title>` 同步改為「運彩王預測平台」，避免初次載入時顯示舊的「Legacy to Vue」。
 
 ### 📺 即時比分 API 串接（2025年11月05日）
 
@@ -529,6 +571,19 @@ npm run test:e2e
 - 新增 `copy/vue/src/api/livescore.ts` 以及對應 `LivescoreQueryParams`、`LivescoreItem` 擴充，統一透過 axios 客戶端呼叫。
 - 更新各運動卡片型別與 `src/data/types.ts`，允許字串型 ID 與空值，避免真實資料格式造成渲染錯誤。
 - 現階段僅渲染後端提供的分數與階段資訊；若需顯示更完整投打或盤口細節，可再擴充 `live_stats` 與 scoreboard 映射。
+
+### 🔁 即時比分預測比例內站化（2025年11月12日）
+
+- `copy/vue/src/components/games/PredictionStatsBadge.vue` 新增 Element Plus 對話框，點擊「預測比例」即可查看 `/api/games/{id}/prediction-stats` 回傳的各盤口統計。
+- `copy/vue/src/api/games.ts` 擴充 `getGamePredictionStats` 方法並補齊 `PredictionStats` 型別定義，使前端能一致性處理返回資料。
+- `copy/vue/src/pages/LivescorePage.vue` 於每張賽事卡片右上角嵌入預測比例按鈕，與原卡片點擊事件互不干擾，手機版亦維持可用性。
+- 元件端加入 30 秒的再請求間隔與手動「重新整理」按鈕，兼顧 Redis 快取與前端體驗，無資料時會呈現空狀態提示。
+
+### 🔍 預測頁預測統計檢視（2025年11月12日）
+
+- `copy/vue/src/components/PredictGamesTable.vue` 在賽事資訊欄旁加入 `PredictionStatsBadge`，教練可直接於預測表格檢視各盤口統計。
+- 按鈕沿用原有「預測比例」樣式，不影響桌機與行動版排版，並共用同一統計對話框。
+- 測試建議：登入後於 `/predict` 選任一賽事，點擊「預測比例」確認 `/api/games/{gameId}/prediction-stats` 正常回應，無預測時應顯示空狀態。
 
 ### 🧩 最新修復紀錄（2025年10月24日）
 
@@ -557,6 +612,10 @@ npm run test:e2e
 
 ## 📋 後續工作提醒
 
+### 預測模組後續建議
+
+- 若需支援多裝置同步或長時間停留頁面，建議加入手動刷新按鈕或週期性更新既有預測快照，避免用戶在其他裝置建立預測後前端顯示短暫不同步。
+
 ### SEO 優化計劃
 項目完成後，建議進行 SEO 優化以提升搜索引擎可見度：
 
@@ -582,7 +641,7 @@ npm run test:e2e
 - 最近搜尋改為記錄最新 API 結果的玩家資訊；後續若需持久化可評估存放於 LocalStorage 或後端紀錄。
 
 ### API 化預測/賽事頁面（2025年11月04日）
-- `PredictPurchasePage.vue` 改用 `predictionsAPI.getPredictions` 取得可購買清單，提供聯盟/賽事篩選、彩幣餘額同步與 `PurchaseDialog` 整合，並支援 `?gameId=` 直接定位賽事。
+- `PredictPurchasePage.vue` 改用 `predictionsAPI.getPredictions` 取得可購買清單，提供聯盟/賽事篩選、榮譽點餘額同步與 `PurchaseDialog` 整合，並支援 `?gameId=` 直接定位賽事。
 - `GamesListPage.vue` 使用 `gamesAPI.getGames` 回傳的資料，建立聯盟、狀態與日期篩選，搭配分頁控制呈現最新賽事列表。
 - `GameDetailPage.vue` 透過 `gamesAPI.getGame` 顯示比分與賠率細節，新增返回列表與「前往購買預測」操作。
 - 移除 `simpleLegacyParser.ts`、舊版 `fetch('/legacy/...')` 依賴，上述頁面不再需要 `dist/legacy` 鏡像內容。
@@ -591,6 +650,10 @@ npm run test:e2e
 ### Legacy 靜態資源剩餘情況（2025年11月04日）
 - 僅 `LegacyHeader.vue` 與 `LegacyFooter.vue` 在需要導入舊站導航或版權資訊時會存取 `/legacy/www.playsport.cc/forum/0623c.html`。
 - 若後續計畫完全移除 Legacy 鏡像，請同步提供對應的導覽/頁尾替代方案，或調整上述元件避免發出 Legacy 請求。
+
+### 🧠 本次更新反思
+- 即時比分頁的預測比例介面為避免頻繁請求，目前僅在使用者開啟對話框時載入，後續可依實際流量評估是否於滑入視窗時預先快取熱門賽事。
+- `PredictionStats` 採用字串鍵做對應，若後端新增盤口類型或不同選項，需同步更新 label 對照，或考慮由後端直接返回顯示名稱以降低維護成本。
 
 ---
 

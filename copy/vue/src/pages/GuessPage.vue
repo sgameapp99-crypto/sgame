@@ -2,11 +2,11 @@
   <div class="container mx-auto px-lg py-xl">
     <div class="heading-2">玩競猜</div>
 
-    <!-- 彩幣餘額顯示 -->
+    <!-- 榮譽點餘額顯示 -->
     <div v-if="isLoggedIn" class="bet-info mb-md">
       <div class="bet-balance">
-        <img src="/images/cash.png" alt="彩幣" class="cash-icon">
-        彩幣餘額：{{ cashBalance }}
+        <img src="/images/cash.png" alt="榮譽點" class="cash-icon">
+        榮譽點餘額：{{ cashBalance }}
       </div>
       <div v-if="showDailyLimit" class="bet-daily-limit">
         今日剩餘遊戲額度：{{ dailyLimit }}

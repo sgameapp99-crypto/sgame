@@ -31,9 +31,15 @@
           </div>
           <input v-model="password" class="inputtext" name="password" type="password" autocomplete="current-password" />
           <p v-show="showPwdLenErr" class="message-error">請輸入密碼至少 6 位數</p>
-          <label class="remember-row">
-            <input type="checkbox" v-model="rememberMe" />
-            <span>記住我</span>
+          <label class="remember-row" for="rememberMe">
+            <input
+              id="rememberMe"
+              v-model="rememberMe"
+              name="rememberMe"
+              type="checkbox"
+              aria-labelledby="rememberMeLabel"
+            />
+            <span id="rememberMeLabel">記住我</span>
           </label>
         </label>
 

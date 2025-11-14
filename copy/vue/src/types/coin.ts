@@ -1,5 +1,5 @@
 /**
- * 彩幣相關類型定義
+ * 榮譽點相關類型定義
  */
 
 export type TransactionType = 'earn' | 'spend';

@@ -4,7 +4,7 @@
 
 /* Base UI components using design tokens */
 .btn {
-	@apply inline-flex items-center justify-center px-md py-sm rounded-md font-medium transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+	@apply inline-flex items-center justify-center px-md py-sm rounded-md font-medium transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
 }
 .btn-primary {
 	@apply btn bg-primary-600 text-neutral-50 hover:bg-primary-700;
@@ -14,6 +14,34 @@
 }
 .btn-outline {
 	@apply btn border border-neutral-300 text-neutral-700 hover:bg-neutral-50;
+}
+
+:root {
+	--el-color-primary: #409eff;
+}
+
+/* Element Plus 按鈕游標強制設定 */
+.el-button,
+button.el-button,
+.el-button:not(.is-disabled),
+.el-button__text,
+.el-button > span {
+	cursor: pointer !important;
+}
+
+.el-button *:not(.is-disabled) {
+	cursor: pointer !important;
+}
+
+.el-button.is-loading {
+	cursor: pointer !important;
+}
+
+.el-button.is-disabled,
+.el-button.is-disabled *,
+.el-button[disabled],
+.el-button[disabled] * {
+	cursor: not-allowed !important;
 }
 
 .input {

@@ -14,7 +14,7 @@
         :other-expanded="otherExpanded"
         :soccer-leagues-expanded="soccerLeaguesExpanded"
         :show-time-selector="true"
-        :date-options-filter="['scheduled']"
+        :date-options-filter="['today', 'tomorrow']"
         :calendar-visible="calendarVisible"
         :current-month="currentMonth"
         :selected-date="selectedDate"
@@ -51,6 +51,8 @@
         :selected-alliance="selectedAlliance"
         :selected-date="selectedDate"
         :selected-status-type="selectedStatusType"
+        :existing-predictions="existingPredictions"
+        :existing-predictions-loading="existingPredictionsLoading"
         @select-prediction="handlePredictionSelect"
         @submit-success="handleSubmitSuccess"
         @submit-error="handleSubmitError"
@@ -121,7 +123,7 @@ import { useSessionStore } from '../stores/session';
 import AllianceMenu from '../components/AllianceMenu.vue';
 import PredictGamesTable from '../components/PredictGamesTable.vue';
 import type { Game } from '../types/game';
-import type { PredictionType, PredictionSelection } from '../types/prediction';
+import type { PredictionType, PredictionSelection, Prediction as PredictionRecord } from '../types/prediction';
 
 // 組件狀態
 const route = useRoute();
@@ -151,10 +153,43 @@ const calendarDates = ref<{ date: Date; day: number; isToday: boolean; isSelecte
 // 賽事數據（使用真實 API）
 const games = ref<Game[]>([]);
 
+// 已存在的預測快照
+const existingPredictions = ref<Record<string, PredictionRecord>>({});
+const existingPredictionsLoading = ref(false);
+
+function buildPredictionKey(gameId: string, type: PredictionType): string {
+  return `${gameId}__${type}`;
+}
+
 // 篩選後的賽事（明確類型標註以避免 Vue 類型推斷問題）
 const filteredGames = computed<Game[]>(() => {
   return games.value; // API 已經做好篩選，直接返回
 });
+
+// 日期格式化函數（使用本地時間，避免時區問題）
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// 日期標準化函數
+function normalizeDate(date: Date): Date {
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized;
+}
+
+// 根據日期判斷應該查詢的狀態模式
+function determineStatusMode(date: Date): 'all' | 'finished' | 'scheduled' {
+  const normalized = normalizeDate(date);
+  const today = normalizeDate(new Date());
+  if (normalized.getTime() === today.getTime()) {
+    return 'all'; // 今日查詢所有狀態
+  }
+  return normalized.getTime() < today.getTime() ? 'finished' : 'scheduled';
+}
 
 // 載入賽事數據
 async function loadGames() {
@@ -162,13 +197,27 @@ async function loadGames() {
   errorMessage.value = '';
   
   try {
-    const dateStr = selectedDate.value.toISOString().split('T')[0]; // YYYY-MM-DD
-    const result = await gamesAPI.getGames({
+    const normalizedDate = normalizeDate(selectedDate.value);
+    const dateStr = formatDate(normalizedDate); // 使用本地時間格式化
+    const statusMode = determineStatusMode(normalizedDate);
+    
+    const params: any = {
       allianceId: selectedAlliance.value,
       date: dateStr,
-      status: selectedStatusType.value,
       soccerLeagueId: selectedSoccerLeague.value || undefined,
-    });
+    };
+    
+    // 根據日期動態調整狀態查詢
+    if (statusMode === 'all') {
+      // 今日查詢所有狀態，不限制 status 參數
+      selectedStatusType.value = 'scheduled'; // 顯示用
+    } else {
+      // 過去或未來，指定狀態
+      params.status = statusMode;
+      selectedStatusType.value = statusMode;
+    }
+    
+    const result = await gamesAPI.getGames(params);
     
     if (result.success) {
       games.value = result.data;
@@ -180,6 +229,50 @@ async function loadGames() {
     console.error('載入賽事錯誤:', e);
   } finally {
     loading.value = false;
+    loadExistingPredictions();
+  }
+}
+
+// 載入既有預測
+async function loadExistingPredictions() {
+  if (!session.loggedIn || !session.userId) {
+    existingPredictions.value = {};
+    existingPredictionsLoading.value = false;
+    return;
+  }
+
+  existingPredictionsLoading.value = true;
+
+  try {
+    const normalizedDate = normalizeDate(selectedDate.value);
+    const dateStr = formatDate(normalizedDate); // 使用本地時間格式化
+    const params = {
+      memberId: session.userId,
+      allianceId: selectedAlliance.value,
+      startDate: dateStr,
+      endDate: dateStr,
+      status: 'all' as const,
+      size: 200,
+    };
+
+    const result = await predictionsAPI.getPredictions(params);
+
+    if (result.success) {
+      const map: Record<string, PredictionRecord> = {};
+      (result.data || []).forEach((prediction) => {
+        if (prediction.gameId && prediction.predictionType) {
+          map[buildPredictionKey(prediction.gameId, prediction.predictionType)] = prediction;
+        }
+      });
+      existingPredictions.value = map;
+    } else {
+      existingPredictions.value = {};
+    }
+  } catch (e: any) {
+    existingPredictions.value = {};
+    console.error('載入既有預測錯誤:', e);
+  } finally {
+    existingPredictionsLoading.value = false;
   }
 }
 
@@ -405,23 +498,27 @@ function handleSoccerLeagueSelect(leagueId: number) {
 }
 
 function handleDateOptionSelect(option: any) {
-  // 處理日期選項選擇
   const today = new Date();
-  switch (option.type) {
-    case 'scheduled':
-      if (option.display === '今天') {
-        selectedDate.value = new Date(today);
-      } else if (option.display === '明天') {
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
-        selectedDate.value = tomorrow;
-      } else if (option.display === '後天') {
-        const dayAfterTomorrow = new Date(today);
-        dayAfterTomorrow.setDate(today.getDate() + 2);
-        selectedDate.value = dayAfterTomorrow;
-      }
-      break;
+  today.setHours(0, 0, 0, 0);
+
+  if (option.type === 'today') {
+    selectedDate.value = new Date(today);
+  } else if (option.type === 'tomorrow') {
+    const target = new Date(today);
+    target.setDate(today.getDate() + 1);
+    selectedDate.value = target;
+  } else if (option.type === 'scheduled') {
+    // 相容舊版：根據 display 判斷今天/明天/後天
+    const target = new Date(today);
+    if (option.display === '明天') {
+      target.setDate(today.getDate() + 1);
+    } else if (option.display === '後天') {
+      target.setDate(today.getDate() + 2);
+    }
+    selectedDate.value = target;
   }
+
+  updateCalendarDates();
   loadGames(); // 重新載入賽事
 }
 
@@ -496,13 +593,13 @@ interface Prediction {
 function handlePredictionSelect(prediction: Prediction) {
   // 這個函數現在只是記錄用戶的選擇
   // 實際提交由 PredictGamesTable 組件的提交按鈕處理
-  console.log('預測選擇:', prediction);
 }
 
 // 處理批次提交成功
 function handleSubmitSuccess(message: string) {
   submitMessage.value = message;
   submitSuccess.value = true;
+  loadExistingPredictions();
   
   // 3 秒後清除訊息並重新載入賽事（可能有狀態變化）
   setTimeout(() => {

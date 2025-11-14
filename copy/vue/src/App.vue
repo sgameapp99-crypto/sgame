@@ -38,6 +38,16 @@ body,
   margin: 0;
   padding: 0;
   font-family: '微軟正黑體', 'Microsoft JhengHei', Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  appearance: auto;
 }
 
 /* body背景 - 暫時使用純色背景 */

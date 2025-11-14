@@ -30,6 +30,8 @@ tags:
     description: 會員等級系統
   - name: livescore
     description: 即時比分查詢
+  - name: games
+    description: 賽事管理與統計
 
 paths:
   /health:
@@ -616,29 +618,172 @@ paths:
         '200': { description: 更新成功 }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
-  /predictions:
+  /api/predictions:
     get:
       tags: [predictions]
-      summary: 取得預測列表（未完成/暫不提供）
-      description: 未完成/暫不提供
+      summary: 取得預測列表
+      description: |
+        依查詢條件列出預測卡片。未登入也能瀏覽公開預測，若帶入自己的 `memberId`
+        並提供有效 Session/JWT，會自動顯示完整內容（selection/note）與購買狀態。
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - {}
       parameters:
         - in: query
-          name: page
-          schema: { type: integer, default: 1 }
+          name: memberId
+          schema:
+            type: integer
+          required: false
+          description: 指定會員 ID；若為自己且已登入則會完整顯示內容。
         - in: query
-          name: limit
-          schema: { type: integer, default: 10 }
-        - in: query
-          name: sport
+          name: status
           schema:
             type: string
-            enum: [BASKETBALL, FOOTBALL, BASEBALL, TENNIS, SOCCER]
+            enum: [pending, win, lose, cancelled, all]
+            default: all
+          required: false
+          description: 預測狀態，`all` 表示不篩選。
+        - in: query
+          name: allianceId
+          schema:
+            type: integer
+          required: false
+          description: 聯盟 ID，對應 `games.allianceId`。
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date
+          required: false
+          description: 賽事日期（含）起始，格式 `YYYY-MM-DD`，允許早於今日以查詢歷史戰績。
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date
+          required: false
+          description: 賽事日期（含）結束，格式 `YYYY-MM-DD`。
+        - in: query
+          name: dateRange
+          schema:
+            type: string
+            enum: [today, week, month, past7, past30, all]
+          required: false
+          description: 範圍快捷，僅在未帶 `startDate/endDate` 時生效；`past7/past30` 會回傳過去區間。
+        - in: query
+          name: gameMode
+          schema:
+            type: string
+            enum: [international, taiwan, all]
+          required: false
+          description: 盤口分類，會比對 `predictionType` 前綴。
+        - in: query
+          name: isFeatured
+          schema:
+            type: boolean
+          required: false
+          description: `true` 只列出主推，`false` 僅列出非主推，省略則不篩選。
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [createdAt, settledAt, featuredAt]
+            default: settledAt
+          required: false
+          description: 排序欄位，預設依結算時間（settledAt）由新到舊，亦可指定 featuredAt。
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          required: false
+          description: 排序方向，預設 `desc`。
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          required: false
+          description: 分頁頁碼。
+        - in: query
+          name: size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          required: false
+          description: 每頁筆數。
       responses:
-        '200': { description: 預測列表 }
+        '200':
+          description: 成功回傳預測列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictionListResponse'
+              examples:
+                我的預測:
+                  value:
+                    success: true
+                    data:
+                      - id: 402
+                        userId: 3
+                        userName: "王牌高手"
+                        userAvatarUrl: "https://api.sportspro.tw/uploads/avatars/3.png"
+                        gameId: "MLB20251113001"
+                        gameInfo:
+                          allianceId: 2
+                          allianceName: "MLB"
+                          sportType: "baseball"
+                          status: "scheduled"
+                          gameDate: "2025-11-13"
+                          gameTime: "19:05"
+                          homeTeam: "SF Giants"
+                          awayTeam: "HOU Astros"
+                          finalScore: null
+                        predictionType: "international_spread"
+                        predictionTypeLabel: "國際盤讓分"
+                        selection: "home"
+                        selectionLabel: "主隊 -1.5"
+                        odds: "1.92"
+                        price: 50
+                        isMainPick: true
+                        isFeatured: true
+                        featuredAt: "2025-11-12T10:05:11.102Z"
+                        featuredBy: 3
+                        featuredNote: "今日主推"
+                        note: "牛棚偏弱，仍看主隊過盤"
+                        status: "pending"
+                        isPurchased: true
+                        isOwn: true
+                        createdAt: "2025-11-13T10:05:11.102Z"
+                        updatedAt: "2025-11-13T10:05:11.102Z"
+                        settledAt: "2025-11-13T14:10:00.000Z"
+                    pagination:
+                      page: 1
+                      size: 20
+                      total: 4
+                      totalPages: 1
+                      hasNext: false
+        '400':
+          description: 參數錯誤（日期格式或範圍）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 伺服器錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       tags: [predictions]
-      summary: 建立預測（未完成/暫不提供）
-      description: 未完成/暫不提供
+      summary: 建立預測
+      description: 由會員在賽事開打前建立新預測，僅允許對尚未開始的賽事使用一次相同盤口。
       security:
         - bearerAuth: []
         - cookieAuth: []
@@ -648,36 +793,252 @@ paths:
           application/json:
             schema:
               type: object
-              required: [title, description, sport, predictionType, odds, price]
+              required: [gameId, predictionType, selection, odds]
               properties:
-                title: { type: string }
-                description: { type: string }
-                sport: { type: string, enum: [BASKETBALL, FOOTBALL, BASEBALL, TENNIS, SOCCER] }
-                predictionType: { type: string, enum: [WIN_LOSE, HANDICAP, OVER_UNDER, CORRECT_SCORE] }
-                odds: { type: number }
-                price: { type: number }
-                matchInfo: { type: object }
+                gameId:
+                  type: string
+                  description: 賽事 ID，對應 `games.id`。
+                predictionType:
+                  type: string
+                  description: 盤口代碼（如 `international_spread`、`taiwan_total`）。
+                selection:
+                  type: string
+                  description: 選擇代碼（home/away/over/under... 依盤口不同）。
+                odds:
+                  type: string
+                  description: 當下賠率（字串形式保存小數）。
+                price:
+                  type: integer
+                  minimum: 0
+                  maximum: 10000
+                  default: 0
+                  description: 售價（彩幣），0 代表免費。
+                isMainPick:
+                  type: boolean
+                  default: false
+                  description: 是否為主推。
+                note:
+                  type: string
+                  nullable: true
+                  description: 補充說明，僅顯示給購買者或作者本人。
       responses:
-        '201': { description: 預測創建成功 }
-        '401': { description: 未授權 }
+        '201':
+          description: 預測建立成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  predictionId:
+                    type: integer
+              examples:
+                created:
+                  value:
+                    success: true
+                    message: "預測已建立"
+                    predictionId: 402
+        '400':
+          description: 參數錯誤或賽事已開始
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 找不到賽事
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 同類型預測已存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /predictions/{id}:
+  /api/predictions/{id}:
     get:
       tags: [predictions]
-      summary: 取得特定預測詳情（未完成/暫不提供）
-      description: 未完成/暫不提供
+      summary: 取得特定預測詳情
+      description: |
+        取得單筆預測資料。未購買者僅能看到公開欄位；若為作者本人或已購買者，
+        會一併返回 selection/note。
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - {}
       parameters:
         - in: path
           name: id
           required: true
           schema: { type: string }
       responses:
-        '200': { description: 預測詳情 }
-        '404': { description: 預測不存在 }
+        '200':
+          description: 預測詳情
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/PredictionListItem'
+              examples:
+                purchased:
+                  value:
+                    success: true
+                    data:
+                      id: 402
+                      userId: 3
+                      userName: "王牌高手"
+                      userAvatarUrl: "https://api.sportspro.tw/uploads/avatars/3.png"
+                      gameId: "MLB20251113001"
+                      gameInfo:
+                        allianceId: 2
+                        allianceName: "MLB"
+                        sportType: "baseball"
+                        gameDate: "2025-11-13"
+                        gameTime: "19:05"
+                        homeTeam: "SF Giants"
+                        awayTeam: "HOU Astros"
+                        finalScore: null
+                      predictionType: "international_spread"
+                      predictionTypeLabel: "國際盤讓分"
+                      selection: "home"
+                      selectionLabel: "主隊 -1.5"
+                      odds: "1.92"
+                      price: 50
+                      isMainPick: true
+                      note: "牛棚偏弱，仍看主隊過盤"
+                      status: "pending"
+                      isPurchased: true
+                      isOwn: true
+                      createdAt: "2025-11-13T10:05:11.102Z"
+                      updatedAt: "2025-11-13T10:05:11.102Z"
+        '404':
+          description: 預測不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/predictions/{id}/feature:
+    post:
+      tags: [predictions]
+      summary: 設定預測為主推
+      description: |
+        僅預測作者或具備管理權限的帳號可設定主推。若該會員已有其他主推，
+        將自動取消舊主推、更新 `featuredAt/featuredBy` 與備註。
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                note:
+                  type: string
+                  maxLength: 200
+                  description: 主推備註，可顯示在前端卡片上。
+      responses:
+        '200':
+          description: 主推設定成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: '#/components/schemas/PredictionListItem'
+        '400':
+          description: 預測不符合主推條件（已結束/已結算）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 無權限設定主推
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/predictions/{id}/unfeature:
+    post:
+      tags: [predictions]
+      summary: 取消主推
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: 已取消主推
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: '#/components/schemas/PredictionListItem'
+        '403':
+          description: 無權限操作
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/predictions/feature-candidates:
+    get:
+      tags: [predictions]
+      summary: 取得可設為主推的預測列表
+      description: |
+        僅回傳目前登入會員的 `pending + 賽事未開賽` 預測，方便前端提供主推挑選清單。
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: 成功回傳候選清單
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictionListResponse'
+        '401':
+          description: 未登入/認證失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /me/avatar:
     post:
       tags: [me]
-      summary: 上傳並設定我的大頭貼（本機儲存，固定檔名 {userId}.webp）
+      summary: 上傳並設定我的大頭貼（本機儲存）
+      description: |
+        上傳用戶頭像，返回完整的 URL 路徑。
+        - 支援格式：jpeg、png、webp
+        - 檔案大小：< 5MB
+        - 返回：完整 URL（https://api.sportspro.tw/uploads/avatars/xxx.jpg）
+        - 前端可直接使用返回的 URL
       security:
         - bearerAuth: []
         - cookieAuth: []
@@ -688,9 +1049,10 @@ paths:
             schema:
               type: object
               properties:
-                file:
+                avatar:
                   type: string
                   format: binary
+                  description: 頭像圖片文件
       responses:
         '200':
           description: 上傳成功
@@ -704,7 +1066,8 @@ paths:
                     example: true
                   url:
                     type: string
-                    example: "/uploads/avatars/2-1761064089932.jpg"
+                    description: 完整的頭像 URL，可直接使用
+                    example: "https://api.sportspro.tw/uploads/avatars/2-1761064089932.jpg"
                   updatedAt:
                     type: string
                     format: date-time
@@ -780,6 +1143,85 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NameValidationError'
+        '500':
+          description: 伺服器錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /me/followings:
+    get:
+      tags: [me]
+      summary: 取得我追蹤的會員（明燈列表）
+      description: |
+        回傳當前登入會員追蹤的會員清單，可用於「明燈表」與社群追蹤頁。
+        - 依追蹤時間（createdAt）遞減排序
+        - 支援分頁與關鍵字模糊搜尋
+        - 每頁最多 100 筆
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: 第幾頁，預設為 1
+        - in: query
+          name: size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: 每頁筆數，最大 100
+        - in: query
+          name: keyword
+          schema:
+            type: string
+          description: 會員暱稱關鍵字（大小寫不敏感）
+      responses:
+        '200':
+          description: 成功回傳追蹤清單
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MemberFollowing'
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      size:
+                        type: integer
+                        example: 20
+                      total:
+                        type: integer
+                        example: 42
+                      totalPages:
+                        type: integer
+                        example: 3
+                      hasNext:
+                        type: boolean
+                        example: true
+                  keyword:
+                    type: string
+                    nullable: true
+                    description: 若帶入關鍵字則返回原值
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           description: 伺服器錯誤
           content:
@@ -960,6 +1402,120 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/games/{id}/prediction-stats:
+    get:
+      tags: [games]
+      summary: 查詢賽事預測比例統計
+      description: |
+        回傳指定賽事的預測統計資料，依預測類型分組顯示各選項的預測數量與百分比。
+        統計結果會快取 60 秒以提升效能。
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: 賽事 ID（例如：MLB20251111007）
+      responses:
+        '200':
+          description: 成功回傳預測統計資料
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      totalPredictions:
+                        type: integer
+                        description: 該賽事的總預測數量
+                        example: 150
+                      byType:
+                        type: object
+                        description: 依預測類型分組的統計資料
+                        additionalProperties:
+                          type: object
+                          properties:
+                            total:
+                              type: integer
+                              description: 該類型的總預測數
+                              example: 80
+                            selections:
+                              type: object
+                              description: 各選項的統計資料
+                              additionalProperties:
+                                type: object
+                                properties:
+                                  count:
+                                    type: integer
+                                    description: 該選項的預測數量
+                                    example: 48
+                                  percentage:
+                                    type: integer
+                                    description: 該選項的百分比（四捨五入）
+                                    example: 60
+              examples:
+                有預測資料:
+                  value:
+                    success: true
+                    data:
+                      totalPredictions: 150
+                      byType:
+                        international_spread:
+                          total: 80
+                          selections:
+                            home:
+                              count: 48
+                              percentage: 60
+                            away:
+                              count: 32
+                              percentage: 40
+                        international_total:
+                          total: 70
+                          selections:
+                            over:
+                              count: 49
+                              percentage: 70
+                            under:
+                              count: 21
+                              percentage: 30
+                無預測資料:
+                  value:
+                    success: true
+                    data:
+                      totalPredictions: 0
+                      byType: {}
+        '404':
+          description: 賽事不存在
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "賽事不存在"
+        '500':
+          description: 伺服器錯誤
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "取得賽事預測統計失敗"
+
   /members/{id}/profile:
     get:
       tags: [members]
@@ -991,6 +1547,77 @@ paths:
                       isMutual:
                         type: boolean
                         description: 是否互相關注
+                  permissions:
+                    type: object
+                    properties:
+                      canViewCoinInfo:
+                        type: boolean
+                        description: 是否可檢視彩幣帳戶資訊（僅本人或管理員為 true）
+                        example: true
+
+  /members/{id}/forum-stats:
+    get:
+      tags: [members]
+      summary: 會員論壇統計資料
+      description: |
+        獲取指定會員在討論區的整體統計資料，用於會員頁「討論區」總覽卡片。
+        - 無需登入即可查看
+        - 只統計未刪除的文章
+        - 熱門文章標準：讚數 ≥ 10 或 回覆數 ≥ 5
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: 論壇統計資料
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MemberForumStats'
+              examples:
+                有發文記錄:
+                  value:
+                    success: true
+                    data:
+                      hotPosts: 3
+                      totalPosts: 18
+                      commentsReceived: 42
+                      commentsWritten: 15
+                      totalComments: 42
+                      totalLikes: 67
+                無發文記錄:
+                  value:
+                    success: true
+                    data:
+                      hotPosts: 0
+                      totalPosts: 0
+                      commentsReceived: 0
+                      commentsWritten: 0
+                      totalComments: 0
+                      totalLikes: 0
+        '400':
+          description: 無效的會員 ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 會員不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 伺服器錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /members/{id}/relationships:
     get:
@@ -1044,6 +1671,174 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MemberStats'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/members/{id}/prediction-stats:
+    get:
+      tags: [members]
+      summary: 會員預測成績統計
+      description: |
+        公開端點，任何使用者皆可輸入會員 ID 檢視其歷史預測總覽，用於前端會員頁卡片。
+        內容包含總場次、勝敗/未結算筆數、命中率、當前連勝/連敗以及最近一次結算時間。
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - {}
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: 成功回傳統計資料
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  stats:
+                    $ref: '#/components/schemas/MemberPredictionStats'
+              examples:
+                example:
+                  value:
+                    success: true
+                    stats:
+                      totals:
+                        total: 5
+                        settled: 5
+                        pending: 0
+                        win: 4
+                        lose: 1
+                        cancelled: 0
+                      accuracy: 80
+                      currentStreak:
+                        type: "win"
+                        count: 3
+                      lastResultAt: "2025-11-13T21:31:12.371Z"
+        '400':
+          description: 會員 ID 格式錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 會員不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 伺服器錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/members/{id}/predictions:
+    get:
+      tags: [members, predictions]
+      summary: 會員預測戰績列表
+      description: |
+        與 `/api/predictions` 相同的查詢介面，但 `memberId` 由路徑參數指定，可直接用於會員頁籤顯示歷史戰績。
+        - 匿名即可查詢他人戰績（僅公開欄位）
+        - 若帶入自己的 ID 並附上 Session/JWT，會顯示完整 selection/note 與購買狀態
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+        - {}
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, win, lose, cancelled, all]
+            default: all
+          required: false
+        - in: query
+          name: allianceId
+          schema:
+            type: integer
+          required: false
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date
+          required: false
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date
+          required: false
+        - in: query
+          name: dateRange
+          schema:
+            type: string
+            enum: [today, week, month, past7, past30, all]
+          required: false
+        - in: query
+          name: gameMode
+          schema:
+            type: string
+            enum: [international, taiwan, all]
+          required: false
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [createdAt, settledAt]
+            default: settledAt
+          required: false
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          required: false
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          required: false
+        - in: query
+          name: size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          required: false
+      responses:
+        '200':
+          description: 會員預測列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictionListResponse'
+        '400':
+          description: 參數錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 會員不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 伺服器錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /members/{id}/honors:
     get:
@@ -1078,7 +1873,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PredictionsResponse'
+                $ref: '#/components/schemas/PredictionListResponse'
 
   /members/{id}/posts:
     get:
@@ -1461,7 +2256,8 @@ components:
         avatarUrl:
           type: string
           nullable: true
-          description: 頭像URL
+          description: 頭像完整 URL（本地上傳：https://api.sportspro.tw/uploads/avatars/xxx.jpg，Google OAuth：https://lh3.googleusercontent.com/...）
+          example: "https://api.sportspro.tw/uploads/avatars/3-1762490554611.jpg"
         emailVerified:
           type: boolean
           description: 郵箱是否已驗證
@@ -1472,6 +2268,11 @@ components:
         updatedAt:
           type: string
           format: date-time
+        settledAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: 預測結算時間，未結算時為 null
           description: 最後更新時間
         level:
           type: string
@@ -1522,7 +2323,8 @@ components:
         avatarUrl:
           type: string
           nullable: true
-          description: 大頭貼網址
+          description: 大頭貼完整 URL（可直接使用）
+          example: "https://api.sportspro.tw/uploads/avatars/3-1762490554611.jpg"
         level:
           type: string
           description: 等級代碼
@@ -1577,6 +2379,46 @@ components:
                   type: string
                   description: 人類可讀的推薦理由
 
+    MemberFollowing:
+      allOf:
+        - $ref: '#/components/schemas/MemberSearchResult'
+        - type: object
+          properties:
+            followingSince:
+              type: string
+              format: date-time
+              description: 追蹤建立時間（ISO 8601）
+
+    MemberForumStats:
+      type: object
+      description: 會員論壇統計資料
+      properties:
+        hotPosts:
+          type: integer
+          description: 熱門文章數（判定標準：讚數 ≥ 10 或 回覆數 ≥ 5）
+          example: 3
+        totalPosts:
+          type: integer
+          description: 總發文數（含所有公開文章，不含已刪除）
+          example: 18
+        commentsReceived:
+          type: integer
+          description: 會員文章收到的總回覆數（所有文章的 commentCount 總和）
+          example: 42
+        commentsWritten:
+          type: integer
+          description: 會員在全站寫出的總回覆數（包含在他人文章留言）
+          example: 15
+        totalComments:
+          type: integer
+          deprecated: true
+          description: 與 `commentsReceived` 相同，暫時保留給舊版前端
+          example: 42
+        totalLikes:
+          type: integer
+          description: 會員文章累積的總讚數（所有文章的 likeCount 總和）
+          example: 67
+
     MemberStats:
       type: object
       properties:
@@ -1589,6 +2431,42 @@ components:
           type: integer
         ranking:
           type: integer
+
+    MemberPredictionStats:
+      type: object
+      properties:
+        totals:
+          type: object
+          properties:
+            total:
+              type: integer
+            settled:
+              type: integer
+            pending:
+              type: integer
+            win:
+              type: integer
+            lose:
+              type: integer
+            cancelled:
+              type: integer
+        accuracy:
+          type: number
+          format: float
+          nullable: true
+        currentStreak:
+          type: object
+          nullable: true
+          properties:
+            type:
+              type: string
+              enum: [win, lose]
+            count:
+              type: integer
+        lastResultAt:
+          type: string
+          format: date-time
+          nullable: true
 
     MemberHonor:
       type: object
@@ -1626,48 +2504,120 @@ components:
         push:
           type: integer
 
-    PredictionItem:
+    PredictionGameInfo:
       type: object
       properties:
-        id:
+        allianceId:
           type: integer
-        league:
+        allianceName:
           type: string
+          description: 聯盟代碼
           example: MLB
-        gameDateTime:
+        sportType:
           type: string
-          format: date-time
+          example: baseball
+        status:
+          type: string
+          description: 賽事狀態（scheduled/live/finished...）
+        gameDate:
+          type: string
+          format: date
+          example: "2025-11-13"
+        gameTime:
+          type: string
+          nullable: true
+          description: 開賽時間（HH:mm）
         homeTeam:
           type: string
         awayTeam:
           type: string
-        market:
-          type: string
-          example: 讓分
-        selection:
-          type: string
-          example: 主 -1.5
-        isMainPick:
-          type: boolean
-        result:
-          type: string
-          enum: [win, lose, pending]
-        score:
+        finalScore:
           type: object
+          nullable: true
           properties:
             home:
               type: integer
             away:
               type: integer
 
-    PredictionsResponse:
+    PredictionListItem:
       type: object
       properties:
-        items:
+        id:
+          type: integer
+        userId:
+          type: integer
+        userName:
+          type: string
+        userAvatarUrl:
+          type: string
+          nullable: true
+          description: 頭像完整 URL
+        gameId:
+          type: string
+        gameInfo:
+          $ref: '#/components/schemas/PredictionGameInfo'
+        predictionType:
+          type: string
+        predictionTypeLabel:
+          type: string
+        selection:
+          type: string
+          nullable: true
+          description: 僅作者或已購買者可見
+        selectionLabel:
+          type: string
+          nullable: true
+        odds:
+          type: string
+        price:
+          type: number
+        isMainPick:
+          type: boolean
+        isFeatured:
+          type: boolean
+          description: 是否為主推
+        featuredAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: 設為主推的時間
+        featuredBy:
+          type: integer
+          nullable: true
+          description: 設為主推的操作者 ID
+        featuredNote:
+          type: string
+          nullable: true
+          description: 主推備註
+        note:
+          type: string
+          nullable: true
+          description: 僅作者或已購買者可見
+        status:
+          type: string
+          enum: [pending, win, lose, cancelled]
+        isPurchased:
+          type: boolean
+        isOwn:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PredictionListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
           type: array
           items:
-            $ref: '#/components/schemas/PredictionItem'
-        pageMeta:
+            $ref: '#/components/schemas/PredictionListItem'
+        pagination:
           $ref: '#/components/schemas/PageMeta'
 
     PostsResponse:

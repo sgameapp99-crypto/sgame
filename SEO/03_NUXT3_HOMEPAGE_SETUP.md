@@ -94,26 +94,26 @@ export default defineNuxtConfig({
   // SEO 配置
   app: {
     head: {
-      title: '玩運彩預測平台 - 專業運動預測分析',
+      title: '運彩王預測平台 - 專業運動預測分析',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'robots', content: 'index, follow' },
         { name: 'description', content: '專業的運動預測分享平台，提供籃球、足球、棒球等各類運動的預測分析服務，與高手一起分析賽事，提升預測準確率。' },
         { name: 'keywords', content: '運動預測,籃球預測,足球預測,棒球預測,運彩分析,預測師' },
-        { name: 'author', content: '玩運彩預測平台' },
+        { name: 'author', content: '運彩王預測平台' },
         
         // Open Graph 標籤
-        { property: 'og:title', content: '玩運彩預測平台 - 專業運動預測分析' },
+        { property: 'og:title', content: '運彩王預測平台 - 專業運動預測分析' },
         { property: 'og:description', content: '專業的運動預測分享平台，提供籃球、足球、棒球等各類運動的預測分析服務' },
         { property: 'og:image', content: '/og-image.jpg' },
         { property: 'og:url', content: 'https://sgame.com' },
         { property: 'og:type', content: 'website' },
-        { property: 'og:site_name', content: '玩運彩預測平台' },
+        { property: 'og:site_name', content: '運彩王預測平台' },
         
         // Twitter 卡片
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: '玩運彩預測平台 - 專業運動預測分析' },
+        { name: 'twitter:title', content: '運彩王預測平台 - 專業運動預測分析' },
         { name: 'twitter:description', content: '專業的運動預測分享平台，提供籃球、足球、棒球等各類運動的預測分析服務' },
         { name: 'twitter:image', content: '/og-image.jpg' }
       ],
@@ -168,10 +168,10 @@ export default defineNuxtConfig({
   <div>
     <!-- SEO 優化的頭部 -->
     <Head>
-      <Title>玩運彩預測平台 - 專業運動預測分析</Title>
+      <Title>運彩王預測平台 - 專業運動預測分析</Title>
       <Meta name="description" content="專業的運動預測分享平台，提供籃球、足球、棒球等各類運動的預測分析服務，與高手一起分析賽事，提升預測準確率。" />
       <Meta name="keywords" content="運動預測,籃球預測,足球預測,棒球預測,運彩分析,預測師" />
-      <Meta property="og:title" content="玩運彩預測平台" />
+      <Meta property="og:title" content="運彩王預測平台" />
       <Meta property="og:description" content="專業的運動預測分享平台" />
       <Meta property="og:image" content="/og-image.jpg" />
       <Meta name="twitter:card" content="summary_large_image" />
@@ -190,7 +190,7 @@ export default defineNuxtConfig({
 <script setup lang="ts">
 // 設置頁面元數據
 useHead({
-  title: '玩運彩預測平台 - 專業運動預測分析',
+  title: '運彩王預測平台 - 專業運動預測分析',
   meta: [
     { name: 'description', content: '專業的運動預測分享平台，提供籃球、足球、棒球等各類運動的預測分析服務，與高手一起分析賽事，提升預測準確率。' }
   ]
@@ -207,7 +207,7 @@ useHead({
     <div class="container mx-auto px-4">
       <div class="max-w-4xl mx-auto text-center">
         <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-          玩運彩預測平台
+          運彩王預測平台
         </h1>
         <p class="text-xl md:text-2xl text-gray-600 mb-8">
           專業的運動預測分析，與高手一起分析賽事，提升預測準確率

@@ -5,7 +5,7 @@
         <!-- logo start -->
         <div class="logobox">
           <RouterLink to="/" @click="closeMobileMenu">
-            <img src="/images/logo.png" alt="玩運彩" border="0" width="140" height="57">
+            <img src="/images/logo.png" alt="運彩王" border="0" width="140" height="57">
           </RouterLink>
         </div>
         <!-- logo end -->
@@ -48,7 +48,7 @@
                   <li>
                     <RouterLink :to="{ name: 'predict' }" @click="closeMobileMenu">預測賽事</RouterLink>
                   </li>
-                  <li>
+                  <li v-if="false">
                     <RouterLink :to="{ name: 'predict', query: { type: 'scale' } }" @click="closeMobileMenu">觀看預測比例</RouterLink>
                   </li>
                 </ul>
@@ -89,10 +89,10 @@
                   v-show="mobileNavGroups.buy"
                 >
                   <li>
-                    <RouterLink :to="{ name: 'buy-predict', query: { type: 'medalFire' } }" @click="closeMobileMenu">莊家殺手</RouterLink>
+                    <RouterLink :to="{ name: 'buy-predict', query: { type: 'medalFire' } }" @click="closeMobileMenu">殺莊高手</RouterLink>
                   </li>
                   <li>
-                    <RouterLink :to="{ name: 'buy-predict', query: { type: 'singleKiller' } }" @click="closeMobileMenu">單場殺手</RouterLink>
+                    <RouterLink :to="{ name: 'buy-predict', query: { type: 'singleKiller' } }" @click="closeMobileMenu">單月高手</RouterLink>
                   </li>
                   <li>
                     <RouterLink :to="{ name: 'billboard', query: { type: 'winRate' } }" @click="closeMobileMenu">勝率榜</RouterLink>
@@ -162,7 +162,7 @@
                 帳戶設定
               </RouterLink>
               <RouterLink to="/member/coins/purchase" class="mobile-action-link" @click="closeMobileMenu">
-                彩幣購買
+                榮譽點購買
               </RouterLink>
               <button type="button" class="mobile-action-link" @click="handleMobileLogout">
                 登出
@@ -215,10 +215,10 @@
             </RouterLink>
             <ul>
               <li>
-                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'buy-predict', query: { type: 'medalFire' } }">莊家殺手</RouterLink>
+                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'buy-predict', query: { type: 'medalFire' } }">殺莊高手</RouterLink>
               </li>
               <li>
-                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'buy-predict', query: { type: 'singleKiller' } }">單場殺手</RouterLink>
+                <RouterLink class="ddsmoothmenu-link" :to="{ name: 'buy-predict', query: { type: 'singleKiller' } }">單月高手</RouterLink>
               </li>
               <li>
                 <RouterLink class="ddsmoothmenu-link" :to="{ name: 'billboard', query: { type: 'winRate' } }">勝率榜</RouterLink>
@@ -287,7 +287,7 @@
                 <ul class="functionbar-ullv2" v-show="showUserMenu">
                   <li><a href="#" @click.prevent="goToProfile">個人資料</a></li>
                   <li><a href="/member/settings">帳戶設定</a></li>
-                  <li><a href="/member/coins/purchase">彩幣購買</a></li>
+                  <li><a href="/member/coins/purchase">榮譽點購買</a></li>
                   <li><a href="#" @click.prevent="logout">登出</a></li>
                 </ul>
               </li>

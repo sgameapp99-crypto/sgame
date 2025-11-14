@@ -27,20 +27,36 @@
               </li>
 
               <!-- 可展開/收起的分類 -->
-              <div :class="['games-close', { 'expanded': baseballExpanded }]">
-                <li :class="{ 'tag-chosen': selectedAlliance === 83, 'nonepredict': !allianceHasGames(83) }" @click="handleAllianceClick(83, $event)">
-                  <a href="javascript:void(0)">澳洲職棒</a>
-                </li>
-                <li :class="{ 'tag-chosen': selectedAlliance === 114, 'nonepredict': !allianceHasGames(114) }" @click="handleAllianceClick(114, $event)">
-                  <a href="javascript:void(0)">國際棒賽</a>
-                </li>
-              </div>
+              <li
+                :class="[
+                  'games-close',
+                  { 'expanded': baseballExpanded, 'tag-chosen': selectedAlliance === 83, 'nonepredict': !allianceHasGames(83) }
+                ]"
+                @click="handleAllianceClick(83, $event)"
+              >
+                <a href="javascript:void(0)">澳洲職棒</a>
+              </li>
+              <li
+                :class="[
+                  'games-close',
+                  { 'expanded': baseballExpanded, 'tag-chosen': selectedAlliance === 114, 'nonepredict': !allianceHasGames(114) }
+                ]"
+                @click="handleAllianceClick(114, $event)"
+              >
+                <a href="javascript:void(0)">國際棒賽</a>
+              </li>
 
               <!-- 展開/收起按鈕 -->
-              <a href="#" :class="['more_play_btn', 'hide', { 'reportActive': baseballExpanded }]" @click.prevent="emit('toggle-baseball-expanded')">
-                <strong>▼</strong>
-                <span>▲</span>
-              </a>
+              <li>
+                <a
+                  href="#"
+                  :class="['more_play_btn', 'hide', { 'reportActive': baseballExpanded }]"
+                  @click.prevent="emit('toggle-baseball-expanded')"
+                >
+                  <strong>▼</strong>
+                  <span>▲</span>
+                </a>
+              </li>
             </ol>
           </div>
         </div>
@@ -68,41 +84,99 @@
               </li>
 
               <!-- 可展開/收起的分類 -->
-              <div :class="['games-close', { 'expanded': basketballExpanded }]">
-                <li :class="{ 'tag-chosen': selectedAlliance === 2, 'nonepredict': !allianceHasGames(2) }" @click="handleAllianceClick(2, $event)">
-                  <a href="javascript:void(0)">NBA</a>
-                </li>
-                <li :class="{ 'tag-chosen': selectedAlliance === 8, 'nonepredict': !allianceHasGames(8) }" @click="handleAllianceClick(8, $event)">
-                  <a href="javascript:void(0)">歐洲職籃</a>
-                </li>
-                <li :class="{ 'tag-chosen': selectedAlliance === 89, 'nonepredict': !allianceHasGames(89) }" @click="handleAllianceClick(89, $event)">
-                  <a href="javascript:void(0)">SBL</a>
-                </li>
-                <li :class="{ 'tag-chosen': selectedAlliance === 92, 'nonepredict': !allianceHasGames(92) }" @click="handleAllianceClick(92, $event)">
-                  <a href="javascript:void(0)">韓國職籃</a>
-                </li>
-                <li :class="{ 'tag-chosen': selectedAlliance === 94, 'nonepredict': !allianceHasGames(94) }" @click="handleAllianceClick(94, $event)">
-                  <a href="javascript:void(0)">中國職籃</a>
-                </li>
-                <li :class="{ 'tag-chosen': selectedAlliance === 110, 'nonepredict': !allianceHasGames(110) }" @click="handleAllianceClick(110, $event)">
-                  <a href="javascript:void(0)">國際籃賽</a>
-                </li>
-                <li :class="{ 'tag-chosen': selectedAlliance === 121, 'nonepredict': !allianceHasGames(121) }" @click="handleAllianceClick(121, $event)">
-                  <a href="javascript:void(0)">綜合籃賽</a>
-                </li>
-                <li :class="{ 'tag-chosen': selectedAlliance === 16, 'nonepredict': !allianceHasGames(16) }" @click="handleAllianceClick(16, $event)">
-                  <a href="javascript:void(0)">P+</a>
-                </li>
-                <li :class="{ 'tag-chosen': selectedAlliance === 18, 'nonepredict': !allianceHasGames(18) }" @click="handleAllianceClick(18, $event)">
-                  <a href="javascript:void(0)">TPBL</a>
-                </li>
-              </div>
+              <li
+                :class="[
+                  'games-close',
+                  { 'expanded': basketballExpanded, 'tag-chosen': selectedAlliance === 2, 'nonepredict': !allianceHasGames(2) }
+                ]"
+                @click="handleAllianceClick(2, $event)"
+              >
+                <a href="javascript:void(0)">NBA</a>
+              </li>
+              <li
+                :class="[
+                  'games-close',
+                  { 'expanded': basketballExpanded, 'tag-chosen': selectedAlliance === 8, 'nonepredict': !allianceHasGames(8) }
+                ]"
+                @click="handleAllianceClick(8, $event)"
+              >
+                <a href="javascript:void(0)">歐洲職籃</a>
+              </li>
+              <li
+                :class="[
+                  'games-close',
+                  { 'expanded': basketballExpanded, 'tag-chosen': selectedAlliance === 89, 'nonepredict': !allianceHasGames(89) }
+                ]"
+                @click="handleAllianceClick(89, $event)"
+              >
+                <a href="javascript:void(0)">SBL</a>
+              </li>
+              <li
+                :class="[
+                  'games-close',
+                  { 'expanded': basketballExpanded, 'tag-chosen': selectedAlliance === 92, 'nonepredict': !allianceHasGames(92) }
+                ]"
+                @click="handleAllianceClick(92, $event)"
+              >
+                <a href="javascript:void(0)">韓國職籃</a>
+              </li>
+              <li
+                :class="[
+                  'games-close',
+                  { 'expanded': basketballExpanded, 'tag-chosen': selectedAlliance === 94, 'nonepredict': !allianceHasGames(94) }
+                ]"
+                @click="handleAllianceClick(94, $event)"
+              >
+                <a href="javascript:void(0)">中國職籃</a>
+              </li>
+              <li
+                :class="[
+                  'games-close',
+                  { 'expanded': basketballExpanded, 'tag-chosen': selectedAlliance === 110, 'nonepredict': !allianceHasGames(110) }
+                ]"
+                @click="handleAllianceClick(110, $event)"
+              >
+                <a href="javascript:void(0)">國際籃賽</a>
+              </li>
+              <li
+                :class="[
+                  'games-close',
+                  { 'expanded': basketballExpanded, 'tag-chosen': selectedAlliance === 121, 'nonepredict': !allianceHasGames(121) }
+                ]"
+                @click="handleAllianceClick(121, $event)"
+              >
+                <a href="javascript:void(0)">綜合籃賽</a>
+              </li>
+              <li
+                :class="[
+                  'games-close',
+                  { 'expanded': basketballExpanded, 'tag-chosen': selectedAlliance === 16, 'nonepredict': !allianceHasGames(16) }
+                ]"
+                @click="handleAllianceClick(16, $event)"
+              >
+                <a href="javascript:void(0)">P+</a>
+              </li>
+              <li
+                :class="[
+                  'games-close',
+                  { 'expanded': basketballExpanded, 'tag-chosen': selectedAlliance === 18, 'nonepredict': !allianceHasGames(18) }
+                ]"
+                @click="handleAllianceClick(18, $event)"
+              >
+                <a href="javascript:void(0)">TPBL</a>
+              </li>
 
               <!-- 展開/收起按鈕 -->
-              <a href="#" :class="['more_play_btn', 'hide', { 'reportActive': basketballExpanded }]" @click.prevent="emit('toggle-basketball-expanded')">
-                <strong>▼</strong>
-                <span>▲</span>
-              </a>
+              <li>
+                <a
+                  href="#"
+                  :class="['more_play_btn', 'hide', { 'reportActive': basketballExpanded }]"
+                  @click.prevent="emit('toggle-basketball-expanded')"
+                >
+                  <strong>▼</strong>
+                  <span>▲</span>
+                </a>
+              </li>
             </ol>
           </div>
         </div>
@@ -130,20 +204,36 @@
               </li>
 
               <!-- 可展開/收起的分類 -->
-              <div :class="['games-close', { 'expanded': otherExpanded }]">
-                <li :class="{ 'tag-chosen': selectedAlliance === 91, 'nonepredict': !allianceHasGames(91) }" @click="handleAllianceClick(91, $event)">
-                  <a href="javascript:void(0)">NHL冰球</a>
-                </li>
-                <li :class="{ 'tag-chosen': selectedAlliance === 21, 'nonepredict': !allianceHasGames(21) }" @click="handleAllianceClick(21, $event)">
-                  <a href="javascript:void(0)">網球</a>
-                </li>
-              </div>
+              <li
+                :class="[
+                  'games-close',
+                  { 'expanded': otherExpanded, 'tag-chosen': selectedAlliance === 91, 'nonepredict': !allianceHasGames(91) }
+                ]"
+                @click="handleAllianceClick(91, $event)"
+              >
+                <a href="javascript:void(0)">NHL冰球</a>
+              </li>
+              <li
+                :class="[
+                  'games-close',
+                  { 'expanded': otherExpanded, 'tag-chosen': selectedAlliance === 21, 'nonepredict': !allianceHasGames(21) }
+                ]"
+                @click="handleAllianceClick(21, $event)"
+              >
+                <a href="javascript:void(0)">網球</a>
+              </li>
 
               <!-- 展開/收起按鈕 -->
-              <a href="#" :class="['more_play_btn', 'hide', { 'reportActive': otherExpanded }]" @click.prevent="emit('toggle-other-expanded')">
-                <strong>▼</strong>
-                <span>▲</span>
-              </a>
+              <li>
+                <a
+                  href="#"
+                  :class="['more_play_btn', 'hide', { 'reportActive': otherExpanded }]"
+                  @click.prevent="emit('toggle-other-expanded')"
+                >
+                  <strong>▼</strong>
+                  <span>▲</span>
+                </a>
+              </li>
             </ol>
           </div>
         </div>
@@ -243,7 +333,19 @@ interface Props {
   otherExpanded: boolean;
   soccerLeaguesExpanded: boolean;
   showTimeSelector: boolean;
-  dateOptionsFilter: ('finished' | 'live' | 'scheduled' | 'week' | 'month' | 'all')[];
+  dateOptionsFilter: (
+    | 'finished'
+    | 'live'
+    | 'scheduled'
+    | 'week'
+    | 'month'
+    | 'all'
+    | 'today'
+    | 'yesterday'
+    | 'tomorrow'
+    | 'past7'
+    | 'past30'
+  )[];
   calendarVisible: boolean;
   currentMonth: string;
   selectedDate: Date;
@@ -308,7 +410,8 @@ const dateOptions = computed(() => {
   today.setHours(0, 0, 0, 0);
 
   // 檢查是否包含日期範圍選項（week, month, all）
-  const hasRangeOptions = props.dateOptionsFilter.some(opt => ['week', 'month', 'all'].includes(opt));
+  const rangeKeys = ['week', 'month', 'all', 'past7', 'past30'];
+  const hasRangeOptions = props.dateOptionsFilter.some(opt => rangeKeys.includes(opt));
 
   const quickDateOptions = props.dateOptionsFilter.filter(opt => ['today', 'yesterday', 'tomorrow'].includes(opt));
   if (quickDateOptions.length > 0) {
@@ -366,8 +469,10 @@ const dateOptions = computed(() => {
   if (hasRangeOptions) {
     // 會員頁面模式：一週內、一個月內、全部
     const rangeOptions = [
-      { type: 'week', display: '一週內' },
-      { type: 'month', display: '一個月內' },
+      { type: 'past7', display: '過去7天' },
+      { type: 'past30', display: '過去30天' },
+      { type: 'week', display: '未來7天' },
+      { type: 'month', display: '未來30天' },
       { type: 'all', display: '全部' }
     ];
 

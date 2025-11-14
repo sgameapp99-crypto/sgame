@@ -3,13 +3,13 @@
     <div class="settings-container">
       <div class="settings-card">
         <div class="settings-header">
-          <h1>彩幣購買</h1>
+          <h1>榮譽點購買</h1>
           <button class="btn-link" @click="goBack" aria-label="back">返回</button>
         </div>
 
-        <!-- 當前彩幣餘額 -->
+        <!-- 當前榮譽點餘額 -->
         <section class="section">
-          <h2 class="section-title">當前彩幣餘額</h2>
+          <h2 class="section-title">當前榮譽點餘額</h2>
           <div class="balance-display">
             <div v-if="balanceLoading" class="loading-state">載入中...</div>
             <div v-else-if="balanceError" class="error-state">
@@ -18,7 +18,7 @@
             </div>
             <div v-else class="balance-amount">
               <span class="amount-number">{{ currentBalance.toLocaleString() }}</span>
-              <span class="amount-unit">彩幣</span>
+              <span class="amount-unit">榮譽點</span>
             </div>
           </div>
         </section>
@@ -37,8 +37,8 @@
               <div class="package-label">{{ pkg.label }}</div>
               <div class="package-price">NT$ {{ pkg.price.toLocaleString() }}</div>
               <div class="package-coins">
-                <div class="coins-amount">{{ pkg.coins.toLocaleString() }} 彩幣</div>
-                <div v-if="pkg.bonus > 0" class="bonus-amount">贈送 {{ pkg.bonus }} 彩幣</div>
+                <div class="coins-amount">{{ pkg.coins.toLocaleString() }} 榮譽點</div>
+                <div v-if="pkg.bonus > 0" class="bonus-amount">贈送 {{ pkg.bonus }} 榮譽點</div>
               </div>
               <div class="package-check">
                 <i v-if="selectedPackage?.id === pkg.id" class="material-icons">check_circle</i>
@@ -69,8 +69,8 @@
           <div class="notice-box">
             <h3>💡 購買說明</h3>
             <ul>
-              <li>購買後彩幣將立即到帳</li>
-              <li>彩幣可用於購買高手預測</li>
+              <li>購買後榮譽點將立即到帳</li>
+              <li>榮譽點可用於購買高手預測</li>
               <li>目前為測試階段，尚未串接真實金流</li>
               <li>有任何問題請聯繫客服</li>
             </ul>
@@ -125,7 +125,7 @@ function goBack() {
 }
 
 /**
- * 載入彩幣餘額
+ * 載入榮譽點餘額
  */
 async function loadBalance() {
   balanceLoading.value = true;
@@ -153,7 +153,7 @@ function selectPackage(pkg: Package) {
 }
 
 /**
- * 購買彩幣
+ * 購買榮譽點
  */
 async function purchaseCoins() {
   if (!selectedPackage.value) return;
@@ -176,7 +176,7 @@ async function purchaseCoins() {
     });
     
     if (result.success) {
-      purchaseMessage.value = `購買成功！已獲得 ${selectedPackage.value.coins.toLocaleString()} 彩幣`;
+      purchaseMessage.value = `購買成功！已獲得 ${selectedPackage.value.coins.toLocaleString()} 榮譽點`;
       purchaseSuccess.value = true;
       
       // 更新餘額顯示

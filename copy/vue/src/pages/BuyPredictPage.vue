@@ -3,10 +3,10 @@
     <!-- 頁面標題 -->
     <div class="heading-2">{{ pageTitle }}</div>
 
-    <!-- 莊家殺手橫幅 -->
+    <!-- 殺莊高手橫幅 -->
     <div class="banner-section mb-lg">
       <div class="banner-placeholder">
-        <h3>莊家殺手</h3>
+        <h3>殺莊高手</h3>
         <p>尋找最準確的預測高手</p>
       </div>
     </div>
@@ -95,43 +95,56 @@
         <!-- 國際盤高手 -->
         <div class="ranking-section mb-lg">
           <h3 class="ranking-title">國際盤{{ expertType }}</h3>
-          <div v-if="internationalExperts.length === 0" class="no-data">
+          <div v-if="featuredInternational.length === 0" class="no-data">
             目前沒有{{ expertType }}資料
           </div>
           <div v-else class="experts-grid">
             <div
-              v-for="expert in internationalExperts"
-              :key="expert.id"
+              v-for="(prediction, index) in featuredInternational"
+              :key="prediction.id"
               class="expert-card"
-              :class="{ 'top-expert': expert.rank <= 3 }"
+              :class="{ 'top-expert': index < 3 }"
             >
-              <div class="expert-rank">{{ expert.rank }}</div>
+              <div class="expert-rank">{{ index + 1 }}</div>
               <div class="expert-avatar">
-                <img :src="expert.avatar || defaultAvatar" :alt="expert.name">
+                <img :src="prediction.userAvatarUrl || defaultAvatar" :alt="prediction.userName">
               </div>
               <div class="expert-info">
-                <h4 class="expert-name">{{ expert.name }}</h4>
-                <div class="expert-stats">
+                <h4 class="expert-name">{{ prediction.userName }}</h4>
+                <p class="expert-note">
+                  {{ prediction.featuredNote || '主推推薦' }}
+                </p>
+                <div class="expert-stats expert-stats--featured">
                   <div class="stat">
-                    <span class="label">勝率</span>
-                    <span class="value">{{ expert.winRate }}%</span>
+                    <span class="label">賽事</span>
+                    <span class="value">
+                      {{ prediction.gameInfo?.homeTeam || '主隊' }}
+                      <span class="vs">vs</span>
+                      {{ prediction.gameInfo?.awayTeam || '客隊' }}
+                    </span>
                   </div>
                   <div class="stat">
-                    <span class="label">總預測</span>
-                    <span class="value">{{ expert.totalPredictions }}</span>
+                    <span class="label">玩法 / 選擇</span>
+                    <span class="value">
+                      {{ prediction.predictionTypeLabel || prediction.predictionType }}
+                      ｜{{ prediction.selectionLabel || prediction.selection || '—' }}
+                    </span>
                   </div>
                   <div class="stat">
-                    <span class="label">連勝</span>
-                    <span class="value">{{ expert.winStreak }}</span>
+                    <span class="label">售價</span>
+                    <span class="value">{{ formatPrice(prediction.price) }}</span>
                   </div>
                 </div>
               </div>
+              <div class="expert-meta">
+                更新：{{ formatFeaturedTime(prediction.featuredAt) || '—' }}
+              </div>
               <div class="expert-actions">
-                <button class="btn btn-primary btn-sm" @click="followExpert(expert.id)">
-                  關注
+                <button class="btn btn-primary btn-sm" @click="followExpert(prediction.userId)">
+                  前往會員
                 </button>
-                <button class="btn btn-outline btn-sm" @click="viewExpert(expert.id)">
-                  查看
+                <button class="btn btn-outline btn-sm" @click="viewPrediction(prediction)">
+                  查看預測
                 </button>
               </div>
             </div>
@@ -141,43 +154,56 @@
         <!-- 運彩盤高手 -->
         <div class="ranking-section">
           <h3 class="ranking-title">運彩盤{{ expertType }}</h3>
-          <div v-if="bankExperts.length === 0" class="no-data">
+          <div v-if="featuredTaiwan.length === 0" class="no-data">
             目前沒有{{ expertType }}資料
           </div>
           <div v-else class="experts-grid">
             <div
-              v-for="expert in bankExperts"
-              :key="expert.id"
+              v-for="(prediction, index) in featuredTaiwan"
+              :key="prediction.id"
               class="expert-card"
-              :class="{ 'top-expert': expert.rank <= 3 }"
+              :class="{ 'top-expert': index < 3 }"
             >
-              <div class="expert-rank">{{ expert.rank }}</div>
+              <div class="expert-rank">{{ index + 1 }}</div>
               <div class="expert-avatar">
-                <img :src="expert.avatar || defaultAvatar" :alt="expert.name">
+                <img :src="prediction.userAvatarUrl || defaultAvatar" :alt="prediction.userName">
               </div>
               <div class="expert-info">
-                <h4 class="expert-name">{{ expert.name }}</h4>
-                <div class="expert-stats">
+                <h4 class="expert-name">{{ prediction.userName }}</h4>
+                <p class="expert-note">
+                  {{ prediction.featuredNote || '主推推薦' }}
+                </p>
+                <div class="expert-stats expert-stats--featured">
                   <div class="stat">
-                    <span class="label">勝率</span>
-                    <span class="value">{{ expert.winRate }}%</span>
+                    <span class="label">賽事</span>
+                    <span class="value">
+                      {{ prediction.gameInfo?.homeTeam || '主隊' }}
+                      <span class="vs">vs</span>
+                      {{ prediction.gameInfo?.awayTeam || '客隊' }}
+                    </span>
                   </div>
                   <div class="stat">
-                    <span class="label">總預測</span>
-                    <span class="value">{{ expert.totalPredictions }}</span>
+                    <span class="label">玩法 / 選擇</span>
+                    <span class="value">
+                      {{ prediction.predictionTypeLabel || prediction.predictionType }}
+                      ｜{{ prediction.selectionLabel || prediction.selection || '—' }}
+                    </span>
                   </div>
                   <div class="stat">
-                    <span class="label">連勝</span>
-                    <span class="value">{{ expert.winStreak }}</span>
+                    <span class="label">售價</span>
+                    <span class="value">{{ formatPrice(prediction.price) }}</span>
                   </div>
                 </div>
               </div>
+              <div class="expert-meta">
+                更新：{{ formatFeaturedTime(prediction.featuredAt) || '—' }}
+              </div>
               <div class="expert-actions">
-                <button class="btn btn-primary btn-sm" @click="followExpert(expert.id)">
-                  關注
+                <button class="btn btn-primary btn-sm" @click="followExpert(prediction.userId)">
+                  前往會員
                 </button>
-                <button class="btn btn-outline btn-sm" @click="viewExpert(expert.id)">
-                  查看
+                <button class="btn btn-outline btn-sm" @click="viewPrediction(prediction)">
+                  查看預測
                 </button>
               </div>
             </div>
@@ -190,103 +216,96 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import { predictionsAPI } from '../api';
+import type { Prediction } from '../types/prediction';
 
 const route = useRoute();
+const router = useRouter();
 
 // 響應式數據
 const selectedAlliance = ref(1);
 const loading = ref(false);
 const errorMessage = ref('');
-const expertType = ref('莊家殺手');
+const expertType = ref('殺莊高手');
 
 // 模擬預設頭像
 const defaultAvatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60"><rect width="100%" height="100%" fill="%23e0e0e0"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="24" fill="%23999">?</text></svg>';
 
-// 模擬高手數據
-const internationalExperts = ref([
-  {
-    id: 1,
-    rank: 1,
-    name: '棒球高手',
-    avatar: '',
-    winRate: 78.5,
-    totalPredictions: 245,
-    winStreak: 12
-  },
-  {
-    id: 2,
-    rank: 2,
-    name: 'MLB達人',
-    avatar: '',
-    winRate: 76.3,
-    totalPredictions: 198,
-    winStreak: 8
-  },
-  {
-    id: 3,
-    rank: 3,
-    name: '職棒分析師',
-    avatar: '',
-    winRate: 74.1,
-    totalPredictions: 167,
-    winStreak: 5
-  }
-]);
-
-const bankExperts = ref([
-  {
-    id: 4,
-    rank: 1,
-    name: '運彩王',
-    avatar: '',
-    winRate: 82.1,
-    totalPredictions: 134,
-    winStreak: 15
-  },
-  {
-    id: 5,
-    rank: 2,
-    name: '預測大師',
-    avatar: '',
-    winRate: 79.8,
-    totalPredictions: 156,
-    winStreak: 9
-  }
-]);
+const featuredInternational = ref<Prediction[]>([]);
+const featuredTaiwan = ref<Prediction[]>([]);
 
 // 計算屬性
 const pageTitle = computed(() => {
   const type = route.query.type;
-  if (type === 'singleKiller') return '單場殺手';
-  return '莊家殺手';
+  if (type === 'singleKiller') return '單月高手';
+  return '殺莊高手';
 });
 
 // 方法
 function selectAlliance(allianceId: number) {
   selectedAlliance.value = allianceId;
-  loadExperts(allianceId);
+  loadFeaturedPredictions(allianceId);
 }
 
-function followExpert(expertId: number) {
-  alert(`關注高手 ID: ${expertId}`);
+function followExpert(userId: number | undefined) {
+  if (!userId) return;
+  router.push({ name: 'member-view', params: { id: userId } });
 }
 
-function viewExpert(expertId: number) {
-  alert(`查看高手詳情 ID: ${expertId}`);
+function viewExpert(prediction: Prediction) {
+  router.push({
+    name: 'predict-buy',
+    query: {
+      alliance: prediction.gameInfo?.allianceId,
+      gameId: prediction.gameId,
+    },
+  });
 }
 
-async function loadExperts(allianceId: number) {
+function formatPrice(value?: number | null) {
+  if (value == null) return '--';
+  return value > 0 ? `${value.toLocaleString()} 榮譽點` : '免費';
+}
+
+function formatFeaturedTime(value?: string | null) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  return `${mm}/${dd} ${hh}:${min}`;
+}
+
+async function loadFeaturedPredictions(allianceId: number) {
   loading.value = true;
   errorMessage.value = '';
 
   try {
-    // 模擬API調用
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const response = await predictionsAPI.getPredictions({
+      allianceId,
+      isFeatured: true,
+      sortBy: 'featuredAt',
+      order: 'desc',
+      size: 20,
+      status: 'pending',
+    });
 
-    // 根據聯盟ID和類型加載不同的高手數據
-    // 這裡使用模擬數據，實際應該調用API
-
+    if (response.success) {
+      const data = response.data || [];
+      featuredInternational.value = data.filter((item) =>
+        item.predictionType?.startsWith('international_')
+      );
+      featuredTaiwan.value = data.filter((item) =>
+        item.predictionType?.startsWith('taiwan_')
+      );
+    } else {
+      featuredInternational.value = [];
+      featuredTaiwan.value = [];
+      errorMessage.value = '載入主推榜失敗';
+    }
   } catch (error) {
     errorMessage.value = '載入高手數據失敗，請稍後再試';
   } finally {
@@ -298,10 +317,10 @@ onMounted(() => {
   // 從路由查詢參數確定高手類型
   const type = route.query.type;
   if (type === 'singleKiller') {
-    expertType.value = '單場殺手';
+    expertType.value = '單月高手';
   }
 
-  loadExperts(selectedAlliance.value);
+  loadFeaturedPredictions(selectedAlliance.value);
 });
 </script>
 
@@ -508,11 +527,30 @@ onMounted(() => {
   text-align: center;
 }
 
+.expert-note {
+  margin: 0 0 0.5rem 0;
+  font-size: 14px;
+  color: #64748b;
+  text-align: center;
+}
+
 .expert-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
   text-align: center;
+}
+
+.expert-stats--featured .value {
+  display: block;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.expert-stats--featured .value .vs {
+  margin: 0 4px;
+  font-size: 12px;
+  color: #94a3b8;
 }
 
 .stat {
@@ -533,6 +571,13 @@ onMounted(() => {
   font-size: 16px;
   font-weight: bold;
   color: #3498db;
+}
+
+.expert-meta {
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: center;
+  margin-bottom: 0.5rem;
 }
 
 .expert-actions {

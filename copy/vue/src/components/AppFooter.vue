@@ -3,7 +3,7 @@
     <div class="footerbox">
       <!-- 電腦版 -->
       <ul class="footerhint">
-        <div class="service_time">09:30~24:00</div>
+        <li class="service_time">09:30~24:00</li>
         <li>
           <strong class="service_phone">客服電話</strong>
           <span>09 XXXX XXX</span>
@@ -12,23 +12,16 @@
           <RouterLink to="/contact">聯絡我們</RouterLink>
         </li>
         <li>
-          <RouterLink to="/qa">常見問題</RouterLink>
-        </li>
-        <li>
-          <RouterLink to="/terms">服務條款</RouterLink>
+          <RouterLink v-if="false" to="/terms">服務條款</RouterLink>
         </li>
       </ul>
       
       <div class="footernav">
-        <ul>
-          <li>
-            <RouterLink to="/about">關於我們</RouterLink>
-          </li>
-        </ul>
+        <ul />
       </div>
 
       <p class="copyrights" v-if="false">
-        © 2025 玩運彩 
+        © 2025 運彩王 
         <span>法律顧問：XXXX法律事務所 XXXX律師</span>
       </p>
       

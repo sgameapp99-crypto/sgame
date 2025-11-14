@@ -2,7 +2,7 @@
   <div v-if="visible" class="modal-mask" @click.self="close">
     <div class="modal-container">
       <div class="modal-header">
-        <h3>彩幣充值</h3>
+        <h3>榮譽點充值</h3>
         <button class="btn-close" @click="close" aria-label="關閉">×</button>
       </div>
       
@@ -55,9 +55,9 @@
         <div class="info-box">
           <p class="info-title">充值說明</p>
           <ul class="info-list">
-            <li>充值金額範圍：100 - 50,000 彩幣</li>
-            <li>充值後彩幣將立即到帳</li>
-            <li>彩幣可用於購買其他會員的預測</li>
+            <li>充值金額範圍：100 - 50,000 榮譽點</li>
+            <li>充值後榮譽點將立即到帳</li>
+            <li>榮譽點可用於購買其他會員的預測</li>
           </ul>
         </div>
       </div>
@@ -120,11 +120,11 @@ watch(amount, () => {
 async function handlePurchase() {
   // 驗證
   if (amount.value < 100) {
-    validationError.value = '充值金額不得少於 100 彩幣';
+    validationError.value = '充值金額不得少於 100 榮譽點';
     return;
   }
   if (amount.value > 50000) {
-    validationError.value = '充值金額不得超過 50,000 彩幣';
+    validationError.value = '充值金額不得超過 50,000 榮譽點';
     return;
   }
 
@@ -135,7 +135,7 @@ async function handlePurchase() {
   try {
     const result = await coinsAPI.purchaseCoins({
       amount: amount.value,
-      note: '彩幣充值',
+      note: '榮譽點充值',
     });
 
     if (result.success) {

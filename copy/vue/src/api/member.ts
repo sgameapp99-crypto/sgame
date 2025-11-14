@@ -10,7 +10,11 @@ import type {
   MemberSearchParams,
   MemberSearchResponse,
   MemberRecommendationsResponse,
+  MemberForumStats,
+  MemberPredictionStats,
+  MemberFollowingsResponse,
 } from './types';
+import type { PredictionsQueryParams, PredictionsResponse } from '../types/prediction';
 
 /**
  * 會員 API 模組
@@ -22,6 +26,44 @@ export const memberAPI = {
    */
   async getProfile(memberId: string | number) {
     const response = await api.get<MemberProfileResponse>(`/members/${memberId}/profile`);
+    return response.data;
+  },
+
+  /**
+   * 取得會員論壇統計
+   * GET /api/members/{id}/forum-stats
+   */
+  async getForumStats(memberId: string | number) {
+    const response = await api.get<{ success: boolean; data: MemberForumStats }>(`/members/${memberId}/forum-stats`);
+    return response.data.data;
+  },
+
+  /**
+   * 取得會員預測戰績統計
+   * GET /api/members/{id}/prediction-stats
+   */
+  async getPredictionStats(memberId: string | number) {
+    const response = await api.get<{ success: boolean; stats: MemberPredictionStats }>(`/members/${memberId}/prediction-stats`);
+    return response.data.stats;
+  },
+
+  /**
+   * 取得明燈（追蹤）清單
+   * GET /api/me/followings
+   */
+  async getFollowings(params?: { page?: number; size?: number; keyword?: string }) {
+    const response = await api.get<MemberFollowingsResponse>('/me/followings', { params });
+    return response.data;
+  },
+
+  /**
+   * 取得會員預測戰績列表
+   * GET /api/members/{id}/predictions
+   */
+  async getMemberPredictions(memberId: string | number, params?: PredictionsQueryParams) {
+    const response = await api.get<PredictionsResponse>(`/members/${memberId}/predictions`, {
+      params,
+    });
     return response.data;
   },
 

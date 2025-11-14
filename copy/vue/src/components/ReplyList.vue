@@ -11,13 +11,13 @@
           <span v-if="reply.createdAt" class="reply-time">· {{ formatDate(reply.createdAt) }}</span>
         </div>
         <div class="reply-actions">
-          <el-button type="primary" text size="small" @click="$emit('like', reply)">
+          <el-button type="primary" plain size="small" @click="$emit('like', reply)">
             {{ reply.isLikedByMe ? '取消按讚' : '按讚' }} ({{ reply.likeCount || 0 }})
           </el-button>
           <el-button
             v-if="canEdit(reply)"
             type="primary"
-            link
+            plain
             size="small"
             @click="$emit('edit', reply)"
           >
@@ -26,7 +26,7 @@
           <el-button
             v-if="canDelete(reply)"
             type="danger"
-            link
+            plain
             size="small"
             @click="$emit('delete', reply)"
           >
@@ -152,5 +152,11 @@ function canDelete(reply: ForumComment) {
   display: flex;
   gap: 6px;
   align-items: center;
+}
+
+.reply-actions :deep(.el-button),
+.reply-actions :deep(.el-button *),
+.reply-actions :deep(.el-button__text) {
+  cursor: pointer !important;
 }
 </style>

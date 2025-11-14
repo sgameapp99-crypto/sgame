@@ -240,8 +240,13 @@
         <div class="filters-grid">
           <!-- 聯盟選擇 -->
           <div class="filter-group">
-            <label class="filter-label">聯盟</label>
-            <select v-model="filters.alliance_id" class="filter-select">
+            <label class="filter-label" for="allianceFilter">聯盟</label>
+            <select
+              id="allianceFilter"
+              v-model="filters.alliance_id"
+              name="allianceId"
+              class="filter-select"
+            >
               <option value="">全部聯盟</option>
               <option value="1">MLB</option>
               <option value="2">日棒</option>
@@ -254,8 +259,13 @@
 
           <!-- 球隊選擇 -->
           <div class="filter-group">
-            <label class="filter-label">球隊</label>
-            <select v-model="filters.team_id" class="filter-select">
+            <label class="filter-label" for="teamFilter">球隊</label>
+            <select
+              id="teamFilter"
+              v-model="filters.team_id"
+              name="teamId"
+              class="filter-select"
+            >
               <option value="">全部球隊</option>
               <option v-for="team in availableTeams" :key="team.id" :value="team.id">
                 {{ team.name }}
@@ -265,19 +275,36 @@
 
           <!-- 日期範圍 -->
           <div class="filter-group">
-            <label class="filter-label">開始日期</label>
-            <input v-model="filters.date_from" type="date" class="filter-input">
+            <label class="filter-label" for="dateFrom">開始日期</label>
+            <input
+              id="dateFrom"
+              v-model="filters.date_from"
+              name="dateFrom"
+              type="date"
+              class="filter-input"
+            >
           </div>
 
           <div class="filter-group">
-            <label class="filter-label">結束日期</label>
-            <input v-model="filters.date_to" type="date" class="filter-input">
+            <label class="filter-label" for="dateTo">結束日期</label>
+            <input
+              id="dateTo"
+              v-model="filters.date_to"
+              name="dateTo"
+              type="date"
+              class="filter-input"
+            >
           </div>
 
           <!-- 賽季 -->
           <div class="filter-group">
-            <label class="filter-label">賽季</label>
-            <select v-model="filters.season" class="filter-select">
+            <label class="filter-label" for="seasonFilter">賽季</label>
+            <select
+              id="seasonFilter"
+              v-model="filters.season"
+              name="season"
+              class="filter-select"
+            >
               <option value="">全部賽季</option>
               <option value="2025">2025賽季</option>
               <option value="2024">2024賽季</option>

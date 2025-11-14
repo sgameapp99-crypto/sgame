@@ -1,12 +1,25 @@
 <template>
   <div class="tiptap-editor">
     <div class="toolbar">
-      <button type="button" :class="{ active: isActive('bold') }" @click="toggle('bold')">B</button>
-      <button type="button" :class="{ active: isActive('italic') }" @click="toggle('italic')">
+      <button 
+        type="button" 
+        title="粗體 (Ctrl+B)" 
+        :class="{ active: isActive('bold') }" 
+        @click="toggle('bold')"
+      >
+        B
+      </button>
+      <button 
+        type="button" 
+        title="斜體 (Ctrl+I)" 
+        :class="{ active: isActive('italic') }" 
+        @click="toggle('italic')"
+      >
         I
       </button>
       <button
         type="button"
+        title="無序列表"
         :class="{ active: isActive('bulletList') }"
         @click="toggle('bulletList')"
       >
@@ -14,20 +27,21 @@
       </button>
       <button
         type="button"
+        title="有序列表（編號列表）"
         :class="{ active: isActive('orderedList') }"
         @click="toggle('orderedList')"
       >
         1.
       </button>
-      <button type="button" @click="insertLink">Link</button>
-      <button type="button" @click="insertImage">Image</button>
+      <button type="button" title="插入連結" @click="insertLink">Link</button>
+      <button type="button" title="上傳圖片" @click="insertImage">Image</button>
     </div>
     <EditorContent :editor="editor" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, watch } from 'vue';
+import { computed, onBeforeUnmount, watch, ref } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import type { Editor } from '@tiptap/core';
 import type { JSONContent } from '@tiptap/vue-3';
@@ -46,7 +60,13 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const emit = defineEmits<{ (e: 'update:modelValue', value: EditorContentValue): void }>();
+const emit = defineEmits<{ 
+  (e: 'update:modelValue', value: EditorContentValue): void;
+  (e: 'upload-status-change', uploading: boolean): void;
+}>();
+
+// 追蹤正在上傳的圖片數量
+const uploadingCount = ref(0);
 
 const defaultContent: JSONContent = {
   type: 'doc',
@@ -178,6 +198,11 @@ async function insertImage() {
   input.onchange = async () => {
     const file = input.files?.[0];
     if (!file) return;
+    
+    // 開始上傳
+    uploadingCount.value++;
+    emit('upload-status-change', true);
+    
     try {
       const editorInstance = getEditor();
       if (!editorInstance || typeof editorInstance.chain !== 'function') return;
@@ -204,6 +229,12 @@ async function insertImage() {
       }
     } catch (error) {
       console.error('上傳圖片失敗', error);
+    } finally {
+      // 完成上傳
+      uploadingCount.value--;
+      if (uploadingCount.value === 0) {
+        emit('upload-status-change', false);
+      }
     }
   };
 }
@@ -248,6 +279,11 @@ defineExpose({ editor, html });
   cursor: pointer;
 }
 
+.toolbar button:hover {
+  background: #e8e8e8;
+  border-radius: 4px;
+}
+
 .toolbar button.active {
   background: #e0e0e0;
   border-radius: 4px;
@@ -262,5 +298,47 @@ defineExpose({ editor, html });
 .tiptap-editor :deep(img) {
   max-width: 100%;
   height: auto;
+}
+
+/* 無序列表樣式 */
+.tiptap-editor :deep(ul) {
+  margin: 0.5em 0;
+  padding-left: 2em;
+  list-style-type: disc;
+}
+
+.tiptap-editor :deep(ul ul) {
+  list-style-type: circle;
+  margin: 0.25em 0;
+}
+
+.tiptap-editor :deep(ul ul ul) {
+  list-style-type: square;
+}
+
+/* 有序列表樣式 */
+.tiptap-editor :deep(ol) {
+  margin: 0.5em 0;
+  padding-left: 2em;
+  list-style-type: decimal;
+}
+
+.tiptap-editor :deep(ol ol) {
+  list-style-type: lower-alpha;
+  margin: 0.25em 0;
+}
+
+.tiptap-editor :deep(ol ol ol) {
+  list-style-type: lower-roman;
+}
+
+/* 列表項目樣式 */
+.tiptap-editor :deep(li) {
+  margin: 0.25em 0;
+  line-height: 1.6;
+}
+
+.tiptap-editor :deep(li p) {
+  margin: 0;
 }
 </style>

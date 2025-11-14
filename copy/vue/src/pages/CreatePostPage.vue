@@ -19,7 +19,11 @@
         </el-form-item>
 
         <el-form-item label="內容" prop="content" :rules="[{ required: true, message: '請輸入內容' }]">
-          <TipTapEditor v-model="form.content" :upload-image="uploadAttachment" />
+          <TipTapEditor 
+            v-model="form.content" 
+            :upload-image="uploadAttachment"
+            @upload-status-change="handleUploadStatusChange"
+          />
         </el-form-item>
 
         <el-form-item label="狀態">
@@ -30,7 +34,14 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" :loading="submitting" @click="submitPost">提交</el-button>
+          <el-button 
+            type="primary" 
+            :loading="submitting" 
+            :disabled="isUploadingImage"
+            @click="submitPost"
+          >
+            {{ isUploadingImage ? '圖片上傳中...' : '提交' }}
+          </el-button>
           <el-button @click="router.back()">取消</el-button>
         </el-form-item>
       </el-form>
@@ -52,6 +63,8 @@ const session = useSessionStore();
 const formRef = ref<FormInstance>();
 const boards = ref<ForumBoard[]>([]);
 const submitting = ref(false);
+// 追蹤圖片上傳狀態
+const isUploadingImage = ref(false);
 
 const form = reactive({
   boardId: undefined as number | undefined,
@@ -71,11 +84,25 @@ const flatBoards = computed(() => {
   return list;
 });
 
+// 處理圖片上傳狀態變化
+function handleUploadStatusChange(uploading: boolean) {
+  isUploadingImage.value = uploading;
+}
+
 async function uploadAttachment(file: File) {
-  const res = await forumAPI.uploadAttachment(file);
-  const id = res.data.id;
-  if (!form.attachmentIds.includes(id)) form.attachmentIds.push(id);
-  return res.data.url;
+  try {
+    const res = await forumAPI.uploadAttachment(file);
+    const id = res.data.id;
+    if (!form.attachmentIds.includes(id)) form.attachmentIds.push(id);
+    
+    const url = res.data.url;
+    console.log('圖片上傳成功，URL:', url);
+    return url;
+  } catch (error: any) {
+    console.error('圖片上傳失敗:', error);
+    ElMessage.error(error.response?.data?.message || '圖片上傳失敗');
+    throw error;
+  }
 }
 
 async function submitPost() {
@@ -122,6 +149,10 @@ onMounted(async () => {
   margin-bottom: 16px;
 }
 </style>
+
+
+
+
 
 
 

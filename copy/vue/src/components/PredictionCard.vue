@@ -49,7 +49,7 @@
     <div class="card-footer">
       <div class="price-info">
         <span v-if="prediction.isMainPick" class="main-pick-badge">主推</span>
-        <span class="price">{{ prediction.price === 0 ? '免費' : `${prediction.price} 彩幣` }}</span>
+        <span class="price">{{ prediction.price === 0 ? '免費' : `${prediction.price} 榮譽點` }}</span>
       </div>
       
       <div class="action-buttons">

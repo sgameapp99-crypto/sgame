@@ -54,6 +54,48 @@ const html = computed(() => {
   color: #0d6efd;
   text-decoration: underline;
 }
+
+/* 無序列表樣式 */
+.tiptap-viewer :deep(ul) {
+  margin: 0.5em 0;
+  padding-left: 2em;
+  list-style-type: disc;
+}
+
+.tiptap-viewer :deep(ul ul) {
+  list-style-type: circle;
+  margin: 0.25em 0;
+}
+
+.tiptap-viewer :deep(ul ul ul) {
+  list-style-type: square;
+}
+
+/* 有序列表樣式 */
+.tiptap-viewer :deep(ol) {
+  margin: 0.5em 0;
+  padding-left: 2em;
+  list-style-type: decimal;
+}
+
+.tiptap-viewer :deep(ol ol) {
+  list-style-type: lower-alpha;
+  margin: 0.25em 0;
+}
+
+.tiptap-viewer :deep(ol ol ol) {
+  list-style-type: lower-roman;
+}
+
+/* 列表項目樣式 */
+.tiptap-viewer :deep(li) {
+  margin: 0.25em 0;
+  line-height: 1.6;
+}
+
+.tiptap-viewer :deep(li p) {
+  margin: 0;
+}
 </style>
 
 

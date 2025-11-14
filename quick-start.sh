@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 玩運彩預測平台 - Nuxt3 快速啟動腳本
+# 運彩王預測平台 - Nuxt3 快速啟動腳本
 
 set -e
 
@@ -74,7 +74,7 @@ create_env_file() {
         else
             cat > .env << 'EOF'
 # 應用配置
-NUXT_PUBLIC_APP_TITLE=玩運彩預測平台
+NUXT_PUBLIC_APP_TITLE=運彩王預測平台
 NUXT_PUBLIC_APP_ENV=development
 NUXT_PUBLIC_APP_VERSION=1.0.0
 
@@ -114,7 +114,7 @@ check_git() {
         if [[ $init_git =~ ^[Yy]$ ]]; then
             git init
             git add .
-            git commit -m "Initial commit: 玩運彩預測平台 Nuxt3 前端初始化"
+            git commit -m "Initial commit: 運彩王預測平台 Nuxt3 前端初始化"
             log_success "Git 倉庫初始化完成"
         fi
     else
@@ -181,7 +181,7 @@ start_dev_server() {
 
 # 顯示幫助信息
 show_help() {
-    echo "玩運彩預測平台 - Nuxt3 快速啟動腳本"
+    echo "運彩王預測平台 - Nuxt3 快速啟動腳本"
     echo ""
     echo "用法: $0 [選項]"
     echo ""
@@ -230,7 +230,7 @@ main() {
         esac
     done
     
-    echo "🚀 玩運彩預測平台 - Nuxt3 前端環境快速設置"
+    echo "🚀 運彩王預測平台 - Nuxt3 前端環境快速設置"
     echo "=============================================="
     echo ""
     

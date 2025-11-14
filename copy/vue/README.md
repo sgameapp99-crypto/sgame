@@ -1,4 +1,4 @@
-# 玩運彩 Vue 3 前端項目
+# 運彩王 Vue 3 前端項目
 
 這是一個基於 Vue 3 + TypeScript + Vite 的現代化前端項目，使用 Pinia 進行狀態管理，Element Plus 作為 UI 組件庫。
 

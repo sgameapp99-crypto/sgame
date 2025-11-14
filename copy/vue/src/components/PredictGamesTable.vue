@@ -1,5 +1,5 @@
 <template>
-  <div class="predictgamebox">
+  <div class="predictgamebox" :aria-busy="existingPredictionsLoading">
     <div class="menugroupbox">
       <div class="menugroupbox-top"></div>
       <div class="menugroupbox-con">
@@ -34,14 +34,23 @@
                 <!-- 客隊行 -->
                 <tr :gameid="game.gameId" class="">
                   <td rowspan="2" class="td-gameinfo">
-                    <div>
-                      <h3>{{ gameIndex + 1 }}</h3>
-                      <h4>PM {{ game.gameTime }}</h4>
-                      <p>
-                        <a :href="`/gamesData/battle?gameid=${game.gameId}&allianceid=${selectedAlliance}&gameday=${formatDate(selectedDate)}&from=predict_games`" target="new">
-                          對戰資訊
-                        </a>
-                      </p>
+                    <div class="gameinfo-header">
+                      <div class="gameinfo-meta">
+                        <h3>{{ gameIndex + 1 }}</h3>
+                        <h4>PM {{ game.gameTime }}</h4>
+                        <p>
+                          <a :href="`/gamesData/battle?gameid=${game.gameId}&allianceid=${selectedAlliance}&gameday=${formatDate(selectedDate)}&from=predict_games`" target="new">
+                            對戰資訊
+                          </a>
+                        </p>
+                      </div>
+                      <PredictionStatsBadge
+                        :game-id="game.gameId"
+                        :home-team="game.homeTeam.name"
+                        :away-team="game.awayTeam.name"
+                        trigger-class="stats-badge-link"
+                        unstyled
+                      />
                     </div>
                   </td>
 
@@ -57,9 +66,29 @@
                   <!-- 國際盤 - 讓分 -->
                   <td class="td-universal-bet01" style="cursor: pointer;">
                     <div>
-                      <input type="radio" :name="`iap${gameIndex}`" value="2" :id="`iap${gameIndex}_${gameIndex}_away`" @change="handlePredictionChange(game.gameId, 'international_spread', 'away', '2')" class="prediction-radio">
+                      <input
+                        type="radio"
+                        :name="`iap${gameIndex}`"
+                        value="2"
+                        :id="`iap${gameIndex}_${gameIndex}_away`"
+                        @change="handlePredictionChange(game.gameId, 'international_spread', 'away', '2')"
+                        class="prediction-radio"
+                        :disabled="isPredictionDisabled(game.gameId, 'international_spread')"
+                      >
                       <label :for="`iap${gameIndex}_${gameIndex}_away`" class="prediction-label">
                         <strong class="team-side DATA_MID_CLASS">客</strong>
+                        <span
+                          v-if="isPredictionLocked(game.gameId, 'international_spread')"
+                          class="existing-badge"
+                        >
+                          已提交
+                        </span>
+                        <span
+                          v-else-if="isGameStarted(game.gameId)"
+                          class="game-started-badge"
+                        >
+                          比賽已開始
+                        </span>
                       </label>
                     </div>
                   </td>
@@ -67,12 +96,32 @@
                   <!-- 國際盤 - 大小 -->
                   <td class="td-universal-bet02" style="cursor: pointer;">
                     <div>
-                      <input type="radio" :name="`ibp${gameIndex}`" value="1" :id="`ibp${gameIndex}_${gameIndex}_away`" @change="handlePredictionChange(game.gameId, 'international_total', 'over', '1')" class="prediction-radio">
+                      <input
+                        type="radio"
+                        :name="`ibp${gameIndex}`"
+                        value="1"
+                        :id="`ibp${gameIndex}_${gameIndex}_away`"
+                        @change="handlePredictionChange(game.gameId, 'international_total', 'over', '1')"
+                        class="prediction-radio"
+                        :disabled="isPredictionDisabled(game.gameId, 'international_total')"
+                      >
                       <label :for="`ibp${gameIndex}_${gameIndex}_away`" class="prediction-label">
                         <strong class="team-side DATA_MID_CLASS">大</strong>
                         <span class="data-wrap">
                           <strong>{{ game.internationalOdds.total.over.line }}輸</strong>
                           <span>50%</span>
+                        </span>
+                        <span
+                          v-if="isPredictionLocked(game.gameId, 'international_total')"
+                          class="existing-badge"
+                        >
+                          已提交
+                        </span>
+                        <span
+                          v-else-if="isGameStarted(game.gameId)"
+                          class="game-started-badge"
+                        >
+                          比賽已開始
                         </span>
                       </label>
                     </div>
@@ -81,12 +130,32 @@
                   <!-- 運彩盤 - 讓分 -->
                   <td class="td-bank-bet01" style="cursor: pointer;">
                     <div>
-                      <input type="radio" :name="`ap${gameIndex}`" value="2" :id="`ap${gameIndex}_${gameIndex}_away`" @change="handlePredictionChange(game.gameId, 'taiwan_spread', 'away', '2')" class="prediction-radio">
+                      <input
+                        type="radio"
+                        :name="`ap${gameIndex}`"
+                        value="2"
+                        :id="`ap${gameIndex}_${gameIndex}_away`"
+                        @change="handlePredictionChange(game.gameId, 'taiwan_spread', 'away', '2')"
+                        class="prediction-radio"
+                        :disabled="isPredictionDisabled(game.gameId, 'taiwan_spread')"
+                      >
                       <label :for="`ap${gameIndex}_${gameIndex}_away`" class="prediction-label">
                         <strong class="team-side DATA_MID_CLASS">客</strong>
                         <span class="data-wrap">
                           <strong>{{ game.taiwanOdds.spread.away.line }}</strong>
                           <span>, {{ game.taiwanOdds.spread.away.odds }}</span>
+                        </span>
+                        <span
+                          v-if="isPredictionLocked(game.gameId, 'taiwan_spread')"
+                          class="existing-badge"
+                        >
+                          已提交
+                        </span>
+                        <span
+                          v-else-if="isGameStarted(game.gameId)"
+                          class="game-started-badge"
+                        >
+                          比賽已開始
                         </span>
                       </label>
                     </div>
@@ -95,12 +164,32 @@
                   <!-- 運彩盤 - 不讓分 -->
                   <td class="td-bank-bet03" style="cursor: pointer;">
                     <div>
-                      <input type="radio" :name="`pkp${gameIndex}`" value="2" :id="`pkp${gameIndex}_${gameIndex}_away`" @change="handlePredictionChange(game.gameId, 'taiwan_moneyline', 'away', '2')" class="prediction-radio">
+                      <input
+                        type="radio"
+                        :name="`pkp${gameIndex}`"
+                        value="2"
+                        :id="`pkp${gameIndex}_${gameIndex}_away`"
+                        @change="handlePredictionChange(game.gameId, 'taiwan_moneyline', 'away', '2')"
+                        class="prediction-radio"
+                        :disabled="isPredictionDisabled(game.gameId, 'taiwan_moneyline')"
+                      >
                       <label :for="`pkp${gameIndex}_${gameIndex}_away`" class="prediction-label">
                         <strong class="team-side DATA_MID_CLASS">客</strong>
                         <span class="data-wrap">
                           <strong></strong>
                           <span>{{ game.taiwanOdds.moneyline.away.odds }}</span>
+                        </span>
+                        <span
+                          v-if="isPredictionLocked(game.gameId, 'taiwan_moneyline')"
+                          class="existing-badge"
+                        >
+                          已提交
+                        </span>
+                        <span
+                          v-else-if="isGameStarted(game.gameId)"
+                          class="game-started-badge"
+                        >
+                          比賽已開始
                         </span>
                       </label>
                     </div>
@@ -109,12 +198,32 @@
                   <!-- 運彩盤 - 大小 -->
                   <td class="td-bank-bet02" style="cursor: pointer;">
                     <div>
-                      <input type="radio" :name="`bp${gameIndex}`" value="1" :id="`bp${gameIndex}_${gameIndex}_away`" @change="handlePredictionChange(game.gameId, 'taiwan_total', 'over', '1')" class="prediction-radio">
+                      <input
+                        type="radio"
+                        :name="`bp${gameIndex}`"
+                        value="1"
+                        :id="`bp${gameIndex}_${gameIndex}_away`"
+                        @change="handlePredictionChange(game.gameId, 'taiwan_total', 'over', '1')"
+                        class="prediction-radio"
+                        :disabled="isPredictionDisabled(game.gameId, 'taiwan_total')"
+                      >
                       <label :for="`bp${gameIndex}_${gameIndex}_away`" class="prediction-label">
                         <strong class="team-side DATA_MID_CLASS">大</strong>
                         <span class="data-wrap">
                           <strong>{{ game.taiwanOdds.total.over.line }}</strong>
                           <span>, {{ game.taiwanOdds.total.over.odds }}</span>
+                        </span>
+                        <span
+                          v-if="isPredictionLocked(game.gameId, 'taiwan_total')"
+                          class="existing-badge"
+                        >
+                          已提交
+                        </span>
+                        <span
+                          v-else-if="isGameStarted(game.gameId)"
+                          class="game-started-badge"
+                        >
+                          比賽已開始
                         </span>
                       </label>
                     </div>
@@ -135,12 +244,32 @@
                   <!-- 國際盤 - 讓分 -->
                   <td class="td-universal-bet01" style="cursor: pointer;">
                     <div>
-                      <input type="radio" :name="`iap${gameIndex}`" value="1" :id="`iap${gameIndex}_${gameIndex}_home`" @change="handlePredictionChange(game.gameId, 'international_spread', 'home', '1')" class="prediction-radio">
+                      <input
+                        type="radio"
+                        :name="`iap${gameIndex}`"
+                        value="1"
+                        :id="`iap${gameIndex}_${gameIndex}_home`"
+                        @change="handlePredictionChange(game.gameId, 'international_spread', 'home', '1')"
+                        class="prediction-radio"
+                        :disabled="isPredictionDisabled(game.gameId, 'international_spread')"
+                      >
                       <label :for="`iap${gameIndex}_${gameIndex}_home`" class="prediction-label">
                         <strong class="team-side DATA_MID_CLASS">主</strong>
                         <span class="data-wrap">
                           <strong>{{ game.internationalOdds.spread.home.line }}分贏</strong>
                           <span>50%</span>
+                        </span>
+                        <span
+                          v-if="isPredictionLocked(game.gameId, 'international_spread')"
+                          class="existing-badge"
+                        >
+                          已提交
+                        </span>
+                        <span
+                          v-else-if="isGameStarted(game.gameId)"
+                          class="game-started-badge"
+                        >
+                          比賽已開始
                         </span>
                       </label>
                     </div>
@@ -149,11 +278,31 @@
                   <!-- 國際盤 - 大小 -->
                   <td class="td-universal-bet02" style="cursor: pointer;">
                     <div>
-                      <input type="radio" :name="`ibp${gameIndex}`" value="2" :id="`ibp${gameIndex}_${gameIndex}_home`" @change="handlePredictionChange(game.gameId, 'international_total', 'under', '2')" class="prediction-radio">
+                      <input
+                        type="radio"
+                        :name="`ibp${gameIndex}`"
+                        value="2"
+                        :id="`ibp${gameIndex}_${gameIndex}_home`"
+                        @change="handlePredictionChange(game.gameId, 'international_total', 'under', '2')"
+                        class="prediction-radio"
+                        :disabled="isPredictionDisabled(game.gameId, 'international_total')"
+                      >
                       <label :for="`ibp${gameIndex}_${gameIndex}_home`" class="prediction-label">
                         <strong class="team-side DATA_MID_CLASS">小</strong>
                         <strong></strong>
                         <span></span>
+                        <span
+                          v-if="isPredictionLocked(game.gameId, 'international_total')"
+                          class="existing-badge"
+                        >
+                          已提交
+                        </span>
+                        <span
+                          v-else-if="isGameStarted(game.gameId)"
+                          class="game-started-badge"
+                        >
+                          比賽已開始
+                        </span>
                       </label>
                     </div>
                   </td>
@@ -161,12 +310,32 @@
                   <!-- 運彩盤 - 讓分 -->
                   <td class="td-bank-bet01" style="cursor: pointer;">
                     <div>
-                      <input type="radio" :name="`ap${gameIndex}`" value="1" :id="`ap${gameIndex}_${gameIndex}_home`" @change="handlePredictionChange(game.gameId, 'taiwan_spread', 'home', '1')" class="prediction-radio">
+                      <input
+                        type="radio"
+                        :name="`ap${gameIndex}`"
+                        value="1"
+                        :id="`ap${gameIndex}_${gameIndex}_home`"
+                        @change="handlePredictionChange(game.gameId, 'taiwan_spread', 'home', '1')"
+                        class="prediction-radio"
+                        :disabled="isPredictionDisabled(game.gameId, 'taiwan_spread')"
+                      >
                       <label :for="`ap${gameIndex}_${gameIndex}_home`" class="prediction-label">
                         <strong class="team-side DATA_MID_CLASS">主</strong>
                         <span class="data-wrap">
                           <strong>{{ game.taiwanOdds.spread.home.line }}</strong>
                           <span>, {{ game.taiwanOdds.spread.home.odds }}</span>
+                        </span>
+                        <span
+                          v-if="isPredictionLocked(game.gameId, 'taiwan_spread')"
+                          class="existing-badge"
+                        >
+                          已提交
+                        </span>
+                        <span
+                          v-else-if="isGameStarted(game.gameId)"
+                          class="game-started-badge"
+                        >
+                          比賽已開始
                         </span>
                       </label>
                     </div>
@@ -175,12 +344,32 @@
                   <!-- 運彩盤 - 不讓分 -->
                   <td class="td-bank-bet03" style="cursor: pointer;">
                     <div>
-                      <input type="radio" :name="`pkp${gameIndex}`" value="1" :id="`pkp${gameIndex}_${gameIndex}_home`" @change="handlePredictionChange(game.gameId, 'taiwan_moneyline', 'home', '1')" class="prediction-radio">
+                      <input
+                        type="radio"
+                        :name="`pkp${gameIndex}`"
+                        value="1"
+                        :id="`pkp${gameIndex}_${gameIndex}_home`"
+                        @change="handlePredictionChange(game.gameId, 'taiwan_moneyline', 'home', '1')"
+                        class="prediction-radio"
+                        :disabled="isPredictionDisabled(game.gameId, 'taiwan_moneyline')"
+                      >
                       <label :for="`pkp${gameIndex}_${gameIndex}_home`" class="prediction-label">
                         <strong class="team-side DATA_MID_CLASS">主</strong>
                         <span class="data-wrap">
                           <strong></strong>
                           <span>{{ game.taiwanOdds.moneyline.home.odds }}</span>
+                        </span>
+                        <span
+                          v-if="isPredictionLocked(game.gameId, 'taiwan_moneyline')"
+                          class="existing-badge"
+                        >
+                          已提交
+                        </span>
+                        <span
+                          v-else-if="isGameStarted(game.gameId)"
+                          class="game-started-badge"
+                        >
+                          比賽已開始
                         </span>
                       </label>
                     </div>
@@ -189,12 +378,32 @@
                   <!-- 運彩盤 - 大小 -->
                   <td class="td-bank-bet02" style="cursor: pointer;">
                     <div>
-                      <input type="radio" :name="`bp${gameIndex}`" value="2" :id="`bp${gameIndex}_${gameIndex}_home`" @change="handlePredictionChange(game.gameId, 'taiwan_total', 'under', '2')" class="prediction-radio">
+                      <input
+                        type="radio"
+                        :name="`bp${gameIndex}`"
+                        value="2"
+                        :id="`bp${gameIndex}_${gameIndex}_home`"
+                        @change="handlePredictionChange(game.gameId, 'taiwan_total', 'under', '2')"
+                        class="prediction-radio"
+                        :disabled="isPredictionDisabled(game.gameId, 'taiwan_total')"
+                      >
                       <label :for="`bp${gameIndex}_${gameIndex}_home`" class="prediction-label">
                         <strong class="team-side DATA_MID_CLASS">小</strong>
                         <span class="data-wrap">
                           <strong>{{ game.taiwanOdds.total.under.line }}</strong>
                           <span>, {{ game.taiwanOdds.total.under.odds }}</span>
+                        </span>
+                        <span
+                          v-if="isPredictionLocked(game.gameId, 'taiwan_total')"
+                          class="existing-badge"
+                        >
+                          已提交
+                        </span>
+                        <span
+                          v-else-if="isGameStarted(game.gameId)"
+                          class="game-started-badge"
+                        >
+                          比賽已開始
                         </span>
                       </label>
                     </div>
@@ -239,6 +448,52 @@
                         </span>
                       </button>
                     </div>
+
+                    <div v-if="pendingFeaturedOptions.length > 0" class="featured-toggle-row">
+                      <button
+                        type="button"
+                        class="btn-featured-toggle"
+                        :disabled="submitting"
+                        @click="toggleFeaturedSelector"
+                      >
+                        <i class="fas" :class="showFeaturedSelector ? 'fa-chevron-up' : 'fa-star'"></i>
+                        {{ showFeaturedSelector ? '收合主推設定' : '指定主推' }}
+                      </button>
+                    </div>
+
+                    <transition name="featured-collapse">
+                      <div
+                        v-if="showFeaturedSelector && pendingFeaturedOptions.length > 0"
+                        class="featured-selector"
+                      >
+                        <div class="featured-selector__header">
+                          <div>
+                            <span class="featured-selector__label">同時指定主推</span>
+                            <p class="featured-selector__hint">
+                              同時間僅能有一筆主推，選定後會自動替換現有主推。
+                            </p>
+                          </div>
+                          <span class="featured-selector__limit">最多 200 字備註</span>
+                        </div>
+                        <select v-model="featuredPendingKey" class="featured-selector__dropdown">
+                          <option value="">不設定主推</option>
+                          <option
+                            v-for="option in pendingFeaturedOptions"
+                            :key="option.key"
+                            :value="option.key"
+                          >
+                            {{ option.description }}
+                          </option>
+                        </select>
+                        <textarea
+                          v-model="featuredNote"
+                          class="featured-selector__note"
+                          :maxlength="200"
+                          :disabled="!featuredPendingKey"
+                          placeholder="主推備註（可選）"
+                        />
+                      </div>
+                    </transition>
                   </div>
                 </td>
               </tr>
@@ -256,17 +511,22 @@
 </template>
 
 <script setup lang="ts" name="PredictGamesTable">
-import { defineProps, defineEmits, ref, computed } from 'vue';
+import { defineProps, defineEmits, ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import { predictionsAPI } from '../api';
 import type { Game } from '../types/game';
+import type { Prediction as PredictionRecord } from '../types/prediction';
+import { PREDICTION_TYPE_LABELS, PREDICTION_SELECTION_LABELS } from '../types/prediction';
+import PredictionStatsBadge from './games/PredictionStatsBadge.vue';
 
 const props = defineProps<{
   games: Game[];
   selectedAlliance: number;
   selectedDate: Date;
   selectedStatusType: 'finished' | 'live' | 'scheduled';
+  existingPredictions: Record<string, PredictionRecord>;
+  existingPredictionsLoading: boolean;
 }>();
 
 // 定義 Emits
@@ -281,25 +541,107 @@ const session = useSessionStore();
 const router = useRouter();
 
 // 響應式數據：追蹤每個游戲的預測選擇
-interface Prediction {
+interface PendingPrediction {
   gameId: string;
   type: 'international_spread' | 'international_total' | 'taiwan_spread' | 'taiwan_moneyline' | 'taiwan_total';
   selection: 'home' | 'away' | 'over' | 'under';
   value: string;
 }
 
-const predictions = ref<Record<string, Prediction>>({});
+const predictions = ref<Record<string, PendingPrediction>>({});
 const submitting = ref(false);
+const featuredPendingKey = ref<string>('');
+const featuredNote = ref('');
+const showFeaturedSelector = ref(false);
+
+interface PendingFeaturedOption {
+  key: string;
+  description: string;
+}
+
+const pendingFeaturedOptions = computed<PendingFeaturedOption[]>(() => {
+  return Object.entries(predictions.value)
+    .filter(([key, pred]) => !isPredictionLocked(pred.gameId, pred.type))
+    .map(([key, pred]) => {
+      const game = props.games.find((g) => g.gameId === pred.gameId);
+      const teams = game ? `${game.awayTeam.name} @ ${game.homeTeam.name}` : pred.gameId;
+      const typeLabel = PREDICTION_TYPE_LABELS[pred.type] ?? pred.type;
+      const selectionLabel = PREDICTION_SELECTION_LABELS[pred.selection] ?? pred.selection;
+      return {
+        key,
+        description: `${teams}｜${typeLabel}｜${selectionLabel}`,
+      };
+    });
+});
+
+function getPredictionKey(gameId: string, type: PendingPrediction['type']) {
+  return `${gameId}__${type}`;
+}
+
+function isPredictionLocked(gameId: string, type: PendingPrediction['type']) {
+  const key = getPredictionKey(gameId, type);
+  return Boolean(props.existingPredictions?.[key]);
+}
+
+// 檢查比賽是否已開始或已結束（禁止預測）
+function isGameStarted(gameId: string): boolean {
+  const game = props.games.find(g => g.gameId === gameId);
+  if (!game) return false;
+  return game.status === 'live' || game.status === 'finished';
+}
+
+// 檢查預測是否應該被禁用（已提交或比賽已開始）
+function isPredictionDisabled(gameId: string, type: PendingPrediction['type']): boolean {
+  return isPredictionLocked(gameId, type) || isGameStarted(gameId);
+}
 
 // 計算選擇的預測數量
 const selectedCount = computed(() => {
   // 計算有多少個不同的 gameId
   const gameIds = new Set<string>();
   Object.values(predictions.value).forEach(p => {
-    gameIds.add(p.gameId);
+    if (!isPredictionLocked(p.gameId, p.type)) {
+      gameIds.add(p.gameId);
+    }
   });
   return gameIds.size;
 });
+
+watch(
+  () => props.existingPredictions,
+  (newMap) => {
+    if (!newMap) return;
+    let mutated = false;
+    Object.keys(predictions.value).forEach((key) => {
+      if (newMap[key]) {
+        delete predictions.value[key];
+        mutated = true;
+      }
+    });
+    if (mutated) {
+      // 移除已存在的預測，避免重複提交
+    }
+  },
+  { deep: true }
+);
+
+watch(pendingFeaturedOptions, (options) => {
+  if (!options.some((option) => option.key === featuredPendingKey.value)) {
+    featuredPendingKey.value = '';
+    featuredNote.value = '';
+  }
+  if (options.length === 0) {
+    showFeaturedSelector.value = false;
+  }
+});
+function toggleFeaturedSelector() {
+  if (pendingFeaturedOptions.value.length === 0) {
+    showFeaturedSelector.value = false;
+    return;
+  }
+  showFeaturedSelector.value = !showFeaturedSelector.value;
+}
+
 
 // 工具函數
 function formatDate(date: Date): string {
@@ -310,15 +652,25 @@ function formatDate(date: Date): string {
 }
 
 // 事件處理函數
-function handlePredictionChange(gameId: string, type: Prediction['type'], selection: Prediction['selection'], value: string) {
-  const prediction: Prediction = {
+function handlePredictionChange(gameId: string, type: PendingPrediction['type'], selection: PendingPrediction['selection'], value: string) {
+  if (isGameStarted(gameId)) {
+    emit('submit-error', '比賽已開始或已結束，無法進行預測');
+    return;
+  }
+  
+  if (isPredictionLocked(gameId, type)) {
+    emit('submit-error', '已對該賽事建立過相同玩法的預測，無需重複提交');
+    return;
+  }
+
+  const prediction: PendingPrediction = {
     gameId,
     type,
     selection,
     value
   };
 
-  predictions.value[`${gameId}_${type}`] = prediction;
+  predictions.value[getPredictionKey(gameId, type)] = prediction;
 
   // 發送事件給父組件
   emit('select-prediction', prediction);
@@ -326,16 +678,23 @@ function handlePredictionChange(gameId: string, type: Prediction['type'], select
 
 // 提交預測
 async function handleSubmitPredictions() {
-  if (selectedCount.value === 0) {
+  const pendingPredictions = Object.values(predictions.value).filter(pred => !isPredictionLocked(pred.gameId, pred.type));
+
+  if (pendingPredictions.length === 0) {
+    emit('submit-error', '已對所選賽事建立過相同玩法的預測，無需重複提交');
     return;
   }
 
   submitting.value = true;
+  const selectedFeaturedKey = featuredPendingKey.value;
+  const featuredNotePayload = featuredNote.value.trim();
+  const featureRequested = Boolean(selectedFeaturedKey);
+  let featuredPredictionId: number | null = null;
 
   try {
     // 將預測按 gameId 分組
-    const predictionsByGame: Record<string, Prediction[]> = {};
-    Object.values(predictions.value).forEach(p => {
+    const predictionsByGame: Record<string, PendingPrediction[]> = {};
+    pendingPredictions.forEach(p => {
       if (!predictionsByGame[p.gameId]) {
         predictionsByGame[p.gameId] = [];
       }
@@ -384,30 +743,45 @@ async function handleSubmitPredictions() {
             price: 100, // 預設價格，可以從設定中獲取
             isMainPick: false
           };
-          
-          console.log('提交預測請求:', requestData);
 
           const result = await predictionsAPI.createPrediction(requestData);
-
           results.push(result);
+
+          const predKey = getPredictionKey(pred.gameId, pred.type);
+          if (selectedFeaturedKey && predKey === selectedFeaturedKey) {
+            featuredPredictionId = result?.predictionId ?? null;
+          }
         } catch (e: any) {
           console.error(`提交預測失敗 (${gameId}):`, e);
-          console.error('錯誤詳情:', {
-            status: e?.response?.status,
-            code: e?.response?.data?.code,
-            message: e?.response?.data?.message,
-            data: e?.response?.data
-          });
           throw e;
         }
       }
     }
 
     // 提交成功
-    emit('submit-success', `成功提交 ${results.length} 筆預測！`);
+    if (featuredPredictionId) {
+      try {
+        await predictionsAPI.featurePrediction(
+          featuredPredictionId,
+          featuredNotePayload ? { note: featuredNotePayload } : undefined
+        );
+      } catch (featureError) {
+        console.error('設定主推失敗:', featureError);
+        emit('submit-error', '預測建立成功，但主推設定失敗，請稍後在會員中心重新設定。');
+        return;
+      }
+    }
+
+    const successMessage = featureRequested && featuredPredictionId
+      ? `成功提交 ${results.length} 筆預測，並更新主推！`
+      : `成功提交 ${results.length} 筆預測！`;
+    emit('submit-success', successMessage);
 
     // 清空選擇
     predictions.value = {};
+    featuredPendingKey.value = '';
+    featuredNote.value = '';
+    showFeaturedSelector.value = false;
     
     // 清除所有 radio 選項
     const form = document.getElementById('predict_form') as HTMLFormElement;
@@ -422,12 +796,7 @@ async function handleSubmitPredictions() {
     const message = e?.response?.data?.message;
     const status = e?.response?.status;
     
-    console.error('提交預測失敗:', {
-      status,
-      code,
-      message,
-      fullError: e
-    });
+    console.error('提交預測失敗:', e);
     
     if (status === 500) {
       emit('submit-error', '伺服器錯誤，請稍後再試或聯絡管理員');
@@ -522,6 +891,104 @@ async function handleSubmitPredictions() {
   vertical-align: middle;
 }
 
+.featured-toggle-row {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-featured-toggle {
+  border: 1px solid #cbd5f5;
+  background: #f8f9ff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.btn-featured-toggle:hover {
+  background: #e0e7ff;
+}
+
+.btn-featured-toggle i {
+  font-size: 12px;
+}
+
+.featured-selector {
+  margin-top: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.featured-selector__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.featured-selector__label {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.featured-selector__hint {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.featured-selector__limit {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.featured-selector__dropdown {
+  width: 100%;
+  border: 1px solid #cbd5f5;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.featured-selector__note {
+  width: 100%;
+  min-height: 60px;
+  border: 1px solid #cbd5f5;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  resize: vertical;
+  background: #fff;
+}
+
+.featured-selector__note:disabled {
+  background: #f1f5f9;
+  cursor: not-allowed;
+}
+
+.featured-collapse-enter-active,
+.featured-collapse-leave-active {
+  transition: all 0.2s ease;
+}
+
+.featured-collapse-enter-from,
+.featured-collapse-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
 .th-gameinfo {
   width: 80px;
   min-width: 80px;
@@ -551,6 +1018,31 @@ async function handleSubmitPredictions() {
   background: #f8f9fa;
 }
 
+.gameinfo-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.gameinfo-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.stats-badge-link {
+  color: #0f4af2;
+  font-size: 12px;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.stats-badge-link:hover {
+  color: #163dd6;
+}
+
 .td-gameinfo h3 {
   font-size: 18px;
   font-weight: bold;
@@ -576,6 +1068,24 @@ async function handleSubmitPredictions() {
 
 .td-gameinfo a:hover {
   text-decoration: underline;
+}
+
+.stats-badge-link {
+  align-self: center;
+}
+
+@media (min-width: 768px) {
+  .gameinfo-header {
+    align-items: stretch;
+  }
+
+  .gameinfo-meta {
+    align-items: flex-start;
+  }
+
+  .stats-badge-link {
+    align-self: flex-start;
+  }
 }
 
 .td-teaminfo {
@@ -651,6 +1161,32 @@ async function handleSubmitPredictions() {
 
 .data-wrap span {
   color: #666;
+}
+
+.existing-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  margin-left: 6px;
+  background: #fef3c7;
+  color: #b45309;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.game-started-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  margin-left: 6px;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .gaprow {

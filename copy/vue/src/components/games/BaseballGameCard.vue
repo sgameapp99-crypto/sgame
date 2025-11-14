@@ -11,15 +11,15 @@
         <tbody>
         <tr>
           <td class="team_left team--underline">
-            <a :href="getTeamLink(game.awayTeamId)" target="_blank">
+            <span class="team-link-text">
               {{ game.awayTeam }}
-            </a>
+            </span>
           </td>
           <td class="team_cinter">{{ formatTime(game.time) }}</td>
           <td class="team_right team--underline">
-            <a :href="getTeamLink(game.homeTeamId)" target="_blank">
+            <span class="team-link-text">
               {{ game.homeTeam }}
-            </a>
+            </span>
           </td>
         </tr>
       </tbody>
@@ -109,7 +109,13 @@
       </div>
 
       <div class="no_start_link">
-        <a :href="getPredictLink(game.date)" target="_blank">預測比例</a>
+        <PredictionStatsBadge
+          :game-id="String(game.id)"
+          :home-team="game.homeTeam"
+          :away-team="game.awayTeam"
+          unstyled
+          trigger-class="no_start_link-text"
+        />
       </div>
     </div>
 
@@ -363,6 +369,7 @@
 
 <script setup lang="ts">
 import { defineProps, ref } from 'vue';
+import PredictionStatsBadge from './PredictionStatsBadge.vue';
 
 interface Pitcher {
   record: string;
@@ -439,46 +446,12 @@ function formatTime(timeString: string) {
   return `${hours}:${minutes}`;
 }
 
-function getTeamLink(teamId?: number | null) {
-  if (teamId === undefined || teamId === null) {
-    return 'javascript:void(0)';
-  }
-  return `https://www.playsport.cc/gamesData/teams?allianceid=1&teamid=${teamId}&from=livescore_title#historyGame`;
-}
-
 function getGameStatusText(status: string) {
   switch (status) {
     case 'live': return '比賽進行中';
     case 'finished': return '比賽結束';
     default: return '未開始';
   }
-}
-
-function getPitcherLink(teamId: number | string | undefined, side: string) {
-  const gameId = props.game.id;
-  const officialId = props.game.officialId ?? String(gameId);
-  return `https://www.playsport.cc/gamesData/battle?gameid=${gameId}&allianceid=1&officialId=${officialId}&from=livescore_pitcher#pitcher_${side}`;
-}
-
-function getTeamHittingLink(teamId: number | string | undefined, side: string) {
-  const gameId = props.game.id;
-  const officialId = props.game.officialId ?? String(gameId);
-  return `https://www.playsport.cc/gamesData/battle?gameid=${gameId}&allianceid=1&officialId=${officialId}&from=teamHitting#teamHitting_${side}`;
-}
-
-function getTeamStatsLink(teamId?: number | null) {
-  if (teamId === undefined || teamId === null) {
-    return 'javascript:void(0)';
-  }
-  return `https://www.playsport.cc/gamesData/teams?allianceid=1&teamid=${teamId}&from=livescore_table#historyGame`;
-}
-
-function getBattleLink(gameId: number | string) {
-  return `https://www.playsport.cc/gamesData/battle?gameid=${gameId}&allianceid=1&from=livescore#anchorLast10Records`;
-}
-
-function getPredictLink(date: string) {
-  return `https://www.playsport.cc/predict/scale?allianceid=1&gametime=${date}&from=livescore`;
 }
 
 function isLastInningAndGameEnded(index: number): boolean {
@@ -593,6 +566,12 @@ function getLeadingTeam(game: BaseballGame): string {
   border-left: 1px solid #ddd;
 }
 
+.team-link-text {
+  color: inherit;
+  text-decoration: underline;
+  display: inline-block;
+}
+
 .team_cinter {
   text-align: center;
   font-weight: bold;
@@ -620,6 +599,13 @@ function getLeadingTeam(game: BaseballGame): string {
 
 .team-data-a:hover {
   background: #e5e5e5;
+}
+
+.no_start_link-text {
+  display: inline-block;
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 .dataActive {

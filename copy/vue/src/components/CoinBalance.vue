@@ -9,7 +9,7 @@
     </div>
     <div v-else class="balance-content">
       <div class="balance-item">
-        <span class="balance-label">彩幣餘額</span>
+        <span class="balance-label">榮譽點餘額</span>
         <span class="balance-value">{{ balance }}</span>
         <span class="balance-currency">幣</span>
       </div>
@@ -48,7 +48,7 @@ async function loadBalance() {
     balance.value = data.balance;
     emit('loaded', data.balance);
   } catch (e: any) {
-    error.value = e?.response?.data?.message || '載入彩幣餘額失敗';
+    error.value = e?.response?.data?.message || '載入榮譽點餘額失敗';
     emit('error', error.value);
   } finally {
     loading.value = false;
